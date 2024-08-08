@@ -1,0 +1,14 @@
+server:
+  addr: :8080
+  mode: development
+  read_timeout: 5
+  write_timeout: 5
+  ctx_timeout: 10
+  debug: false
+
+logger:
+  mode: development
+  disable_caller: false
+  disable_stacktrace: false
+  encoding: info
+  level: info
