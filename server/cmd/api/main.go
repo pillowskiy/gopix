@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/pillowskiy/gopix/internal/config"
+	"github.com/pillowskiy/gopix/pkg/logger"
 )
 
 func main() {
@@ -20,5 +21,6 @@ func main() {
 		log.Fatalf("ParseConfig: %v", err)
 	}
 
-	fmt.Println(config)
+	logger := logger.NewZap(&config.Logger).Init()
+	logger.Info("Logger successfully initialized")
 }

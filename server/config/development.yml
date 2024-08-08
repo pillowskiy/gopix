@@ -10,5 +10,5 @@ logger:
   mode: development
   disable_caller: false
   disable_stacktrace: false
-  encoding: info
+  encoding: console
   level: info
