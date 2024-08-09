@@ -11,8 +11,9 @@ import (
 )
 
 type Config struct {
-	Server Server
-	Logger Logger
+	Server   Server
+	Logger   Logger
+	Postgres Postgres
 }
 
 type Server struct {
@@ -30,6 +31,16 @@ type Logger struct {
 	DisableStacktrace bool   `mapstructure:"disable_stacktrace"`
 	Encoding          string `mapstructure:"encoding"`
 	Level             string `mapstructure:"level"`
+}
+
+type Postgres struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	Database string `mapstructure:"database"`
+	SSL      bool   `mapstructure:"ssl"`
+	Driver   string `mapstructure:"driver"`
 }
 
 func FetchAndLoadConfig() (*viper.Viper, error) {

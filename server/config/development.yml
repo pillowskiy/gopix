@@ -12,3 +12,12 @@ logger:
   disable_stacktrace: false
   encoding: console
   level: info
+
+postgres:
+  host: postgres
+  port: 5432
+  user: postgres
+  password: postgres
+  database: gopix_dev
+  ssl: false
+  driver: pgx
