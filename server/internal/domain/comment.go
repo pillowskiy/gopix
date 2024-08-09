@@ -1,11 +1,13 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type Comment struct {
-	ID        int `json:"id"`
-	AuthorID  int
-	ImageID   int
+	ID        int       `json:"id"`
+	AuthorID  int       `json:"-"`
+	ImageID   int       `json:"-"`
 	Message   string    `json:"message"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`

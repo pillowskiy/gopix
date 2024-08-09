@@ -3,8 +3,8 @@ package domain
 import "time"
 
 type Image struct {
-	ID          int `json:"id"`
-	AuthorID    int
+	ID          int       `json:"id"`
+	AuthorID    int       `json:"-"`
 	Path        string    `json:"path"`
 	Title       string    `json:"title,omitempty"`
 	Description string    `json:"description,omitempty"`

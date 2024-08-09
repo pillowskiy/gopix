@@ -3,10 +3,10 @@ package domain
 import "time"
 
 type Album struct {
-	ID          int `json:"id"`
-	AuthorID    int
+	ID          int       `json:"id"`
+	AuthorID    int       `json:"-"`
 	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	Description string    `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
