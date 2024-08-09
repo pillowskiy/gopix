@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ./
+      dockerfile: docker/Dockerfile.dev
+    container_name: gopix-api
+    logging:
+      driver: "none"
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - CONFIG_PATH=./config/development
+    depends_on:
+      - postgres
+    restart: always
+    volumes:
+      - ./:/app
+    networks:
+      - gopix
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: gopix-postgres
+    logging:
+      driver: "none"
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gopix_dev
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - gopix
+
+networks:
+  gopix:
+    driver: bridge

@@ -1,0 +1,17 @@
+FROM golang:1.22-alpine as builder
+
+WORKDIR /app
+
+RUN go install github.com/air-verse/air@latest
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+FROM builder as runner
+
+WORKDIR /app
+COPY --from=builder ./app ./
+
+EXPOSE $PORT
+
+CMD air --build.cmd "go build -o bin/api cmd/api/main.go" --build.bin "./bin/api" --build.exclude_dir="vendor,pgdata,bin"
