@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+bin
 
 # Test binary, built with `go test -c`
 *.test
@@ -29,3 +30,7 @@ main
 .idea
 pgdata
 vendor
+
+# Temporary files
+uploads
+tmp
