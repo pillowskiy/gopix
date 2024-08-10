@@ -22,13 +22,9 @@ func main() {
 	logger := logger.NewZap(&config.Logger).Init()
 	logger.Info("Logger successfully initialized")
 
-	db, err := storage.NewPostgres(&config.Postgres)
-	if err != nil {
-		logger.Fatalf("NewPostgres: %v", err)
-	} else {
-		logger.Infof(
-			"Postgres connected with driver '%s', max connections: %v",
-			config.Postgres.Driver, db.Stats().MaxOpenConnections,
-		)
+	sh := storage.NewStorageHolder(config)
+	if err := sh.Setup(); err != nil {
+		logger.Fatalf("StorageHolderSetup: %v", err)
 	}
+	defer sh.Close()
 }
