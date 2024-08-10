@@ -14,4 +14,4 @@ COPY --from=builder ./app ./
 
 EXPOSE $PORT
 
-CMD air --build.cmd "go build -o bin/api cmd/api/main.go" --build.bin "./bin/api" --build.exclude_dir="vendor,pgdata,bin"
+CMD air --build.cmd "go build -o bin/api cmd/api/main.go" --build.bin "./bin/api" --build.exclude_dir="vendor,pgdata,bin,docker,migrations"

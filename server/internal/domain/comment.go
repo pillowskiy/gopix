@@ -5,21 +5,21 @@ import (
 )
 
 type Comment struct {
-	ID        int       `json:"id"`
-	AuthorID  int       `json:"-"`
-	ImageID   int       `json:"-"`
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID        int       `json:"id" db:"id"`
+	AuthorID  int       `json:"-" db:"author_id"`
+	ImageID   int       `json:"-" db:"image_id"`
+	Comment   string    `json:"message" db:"comment"`
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
 
 type DetailedComment struct {
 	Comment
-	Author CommentAuthor `json:"author"`
+	Author CommentAuthor `json:"author" db:"author"`
 }
 
 type CommentAuthor struct {
-	ID        int    `json:"id"`
-	Username  string `json:"username"`
-	AvatarURL string `json:"avatarURL"`
+	ID        int    `json:"id" db:"id"`
+	Username  string `json:"username" db:"username"`
+	AvatarURL string `json:"avatarURL" db:"avatar_url"`
 }
