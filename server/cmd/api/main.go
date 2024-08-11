@@ -10,26 +10,21 @@ import (
 )
 
 func main() {
-	configFile, err := config.FetchAndLoadConfig()
+	cfg, err := config.FetchAndLoadConfig()
 	if err != nil {
 		log.Fatalf("FetchAndLoadConfig: %v", err)
 	}
 
-	config, err := config.ParseConfig(configFile)
-	if err != nil {
-		log.Fatalf("ParseConfig: %v", err)
-	}
-
-	logger := logger.NewZap(&config.Logger).Init()
+	logger := logger.NewZap(&cfg.Logger).Init()
 	logger.Info("Logger successfully initialized")
 
-	sh := storage.NewStorageHolder(config)
+	sh := storage.NewStorageHolder(cfg)
 	if err := sh.Setup(); err != nil {
 		logger.Fatalf("StorageHolderSetup: %v", err)
 	}
 	defer sh.Close()
 
-	s := api.NewEchoServer(&config.Server, sh, logger)
+	s := api.NewEchoServer(&cfg.Server, sh, logger)
 	if err := s.Listen(); err != nil {
 		logger.Fatalf("ServerListen: %v", err)
 	}

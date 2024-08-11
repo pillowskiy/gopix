@@ -43,7 +43,7 @@ type Postgres struct {
 	Driver   string `mapstructure:"driver"`
 }
 
-func FetchAndLoadConfig() (*viper.Viper, error) {
+func FetchAndLoadConfig() (*Config, error) {
 	path := fetchConfigPath()
 	if path == "" {
 		return nil, fmt.Errorf("unable to fetch config path")
@@ -52,10 +52,10 @@ func FetchAndLoadConfig() (*viper.Viper, error) {
 	configParts := strings.Split(path, "/")
 	configFilename := configParts[len(configParts)-1]
 	configPath := strings.Join(configParts[:len(configParts)-1], "/")
-	return LoadConfig(configFilename, configPath)
+	return LoadViper(configFilename, configPath)
 }
 
-func LoadConfig(filename string, path string) (*viper.Viper, error) {
+func LoadViper(filename string, path string) (*Config, error) {
 	v := viper.New()
 
 	v.SetConfigName(filename)
@@ -70,7 +70,7 @@ func LoadConfig(filename string, path string) (*viper.Viper, error) {
 		return nil, err
 	}
 
-	return v, nil
+	return ParseConfig(v)
 }
 
 func fetchConfigPath() string {
