@@ -6,6 +6,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pillowskiy/gopix/internal/config"
+	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
+	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
+	"github.com/pillowskiy/gopix/internal/respository/postgres"
+	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/storage"
 )
@@ -28,14 +32,28 @@ func (s *EchoServer) Listen() error {
 		WriteTimeout: time.Second * s.cfg.WriteTimeout,
 	}
 
-	s.echo.GET("/ping", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"message": "Pong!"})
-	})
+	if err := s.MapHandlers(); err != nil {
+		return err
+	}
 
 	s.logger.Infof("Server is listening on ADDR: %s", s.cfg.Addr)
 	if err := s.echo.StartServer(server); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *EchoServer) MapHandlers() error {
+	userRepo := postgres.NewUserRepository(s.sh.Postgres)
+
+	authUC := usecase.NewAuthUseCase(userRepo, s.logger)
+
+	v1 := s.echo.Group("/api/v1")
+
+	authGroup := v1.Group("/auth")
+	authHandlers := handlers.NewAuthHandlers(authUC, s.logger)
+	routes.MapEchoAuthRoutes(authGroup, authHandlers)
 
 	return nil
 }
