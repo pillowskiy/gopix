@@ -1,6 +1,11 @@
 package domain
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
 	ID           int       `json:"id" db:"id"`
@@ -14,6 +19,31 @@ type User struct {
 }
 
 type UserWithToken struct {
-	User  User   `json:"user"`
+	User  *User  `json:"user"`
 	Token string `json:"token"`
+}
+
+func (u *User) PreCreate() error {
+	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
+	u.PasswordHash = strings.TrimSpace(u.PasswordHash)
+
+	if err := u.hashPassword(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (u *User) HidePassword() {
+	u.PasswordHash = ""
+}
+
+func (u *User) hashPassword() error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.PasswordHash), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.PasswordHash = string(hashedPassword)
+	return nil
 }
