@@ -12,6 +12,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/storage"
+	"github.com/pillowskiy/gopix/pkg/token"
 )
 
 type EchoServer struct {
@@ -47,12 +48,16 @@ func (s *EchoServer) Listen() error {
 func (s *EchoServer) MapHandlers() error {
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
-	authUC := usecase.NewAuthUseCase(userRepo, s.logger)
+	jwtTokenGen := token.NewJWTTokenGenerator(
+		s.cfg.Session.Secret,
+		s.cfg.Session.Expire*time.Second,
+	)
+	authUC := usecase.NewAuthUseCase(userRepo, s.logger, jwtTokenGen)
 
 	v1 := s.echo.Group("/api/v1")
 
 	authGroup := v1.Group("/auth")
-	authHandlers := handlers.NewAuthHandlers(authUC, s.logger)
+	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Cookie)
 	routes.MapEchoAuthRoutes(authGroup, authHandlers)
 
 	return nil

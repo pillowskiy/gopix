@@ -8,4 +8,5 @@ import (
 
 func MapEchoAuthRoutes(g *echo.Group, h *handlers.AuthHandlers) {
 	g.POST("/register", rest.MakeEchoHandler(h.Register))
+	g.POST("/login", rest.MakeEchoHandler(h.Login))
 }
