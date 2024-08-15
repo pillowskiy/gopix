@@ -23,6 +23,11 @@ type UserWithToken struct {
 	Token string `json:"token"`
 }
 
+type UserPayload struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+}
+
 func (u *User) PreCreate() error {
 	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
 	u.PasswordHash = strings.TrimSpace(u.PasswordHash)
@@ -32,7 +37,10 @@ func (u *User) PreCreate() error {
 	}
 
 	return nil
+}
 
+func (u *User) ComparePassword(password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
 }
 
 func (u *User) HidePassword() {

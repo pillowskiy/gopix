@@ -23,6 +23,20 @@ type Server struct {
 	WriteTimeout time.Duration `mapstructure:"write_timeout"`
 	CtxTimeout   time.Duration `mapstructure:"ctx_timeout"`
 	Debug        bool          `mapstructure:"debug"`
+	Cookie       *Cookie       `mapstructure:"cookie"`
+	Session      *Session      `mapstructure:"session"`
+}
+
+type Cookie struct {
+	Name     string        `mapstructure:"name"`
+	Expire   time.Duration `mapstructure:"expire"`
+	Secure   bool          `mapstructure:"secure"`
+	HttpOnly bool          `mapstructure:"http_only"`
+}
+
+type Session struct {
+	Expire time.Duration `mapstructure:"expire"`
+	Secret string        `mapstructure:"secret"`
 }
 
 type Logger struct {
