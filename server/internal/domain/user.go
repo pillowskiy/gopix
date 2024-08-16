@@ -24,8 +24,8 @@ type UserWithToken struct {
 }
 
 type UserPayload struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
+	ID       int    `mapstructure:"sub"`
+	Username string `mapstructure:"username"`
 }
 
 func (u *User) PreCreate() error {

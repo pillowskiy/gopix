@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mitchellh/mapstructure"
 )
 
 type JWTTokenGenerator struct {
@@ -12,6 +13,12 @@ type JWTTokenGenerator struct {
 	expires time.Duration
 }
 
+// Should implements TokenGenerator
+var _ TokenGenerator = (*JWTTokenGenerator)(nil)
+
+// This generator doesn't implements default logic of jwt, it follows DIP and SRP
+// We create token generator as infrastructure and use it inside a usecase layer
+// so we shouldn't depends on JWT.Claims or any other stuff
 func NewJWTTokenGenerator(secret string, expires time.Duration) *JWTTokenGenerator {
 	return &JWTTokenGenerator{
 		secret:  secret,
@@ -20,10 +27,14 @@ func NewJWTTokenGenerator(secret string, expires time.Duration) *JWTTokenGenerat
 }
 
 func (g *JWTTokenGenerator) Generate(payload interface{}) (string, error) {
-	claims := jwt.MapClaims{
-		"payload": payload,
-		"exp":     time.Now().Add(g.expires).Unix(),
+	claims := &jwt.MapClaims{
+		"exp": time.Now().Add(g.expires).Unix(),
 	}
+
+	if err := mapstructure.Decode(payload, claims); err != nil {
+		return "", err
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenStr, err := token.SignedString([]byte(g.secret))
@@ -58,6 +69,15 @@ func (g *JWTTokenGenerator) VerifyAndScan(token string, dest interface{}) error 
 	if err != nil {
 		return err
 	}
-	dest = payload
+
+	claims, ok := payload.(jwt.MapClaims)
+	if !ok {
+		return fmt.Errorf("failed to assert payload as jwt.MapClaims")
+	}
+
+	if err := mapstructure.Decode(claims, dest); err != nil {
+		return fmt.Errorf("failed to decode payload: %w", err)
+	}
+
 	return nil
 }
