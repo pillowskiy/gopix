@@ -5,16 +5,14 @@ server:
   write_timeout: 5
   ctx_timeout: 10
   debug: false
-
-cookie:
-  name: token
-  expire: 86400
-  secure: false
-  http_only: true
-
-session:
-  expire: 86400
-  secret: secret
+  cookie:
+    name: token
+    expire: 86400
+    secure: false
+    http_only: true
+  session:
+    expire: 86400
+    secret: secret
 
 logger:
   mode: development
