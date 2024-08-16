@@ -40,7 +40,7 @@ func (r *userRepository) GetUnique(ctx context.Context, user *domain.User) (*dom
 	return u, nil
 }
 
-func (r *userRepository) GetById(ctx context.Context, id int) (*domain.User, error) {
+func (r *userRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
 	q := `SELECT * FROM users WHERE id = $1`
 
 	u := new(domain.User)

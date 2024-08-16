@@ -15,7 +15,7 @@ type User struct {
 	AvatarURL    string    `json:"avatarURL" db:"avatar_url"`
 	PasswordHash string    `json:"-" db:"password_hash"`
 	CreatedAt    time.Time `json:"-" db:"created_at"`
-	UpdatedAt    time.Time `json:"updatedAt" db:"updated_at"`
+	UpdatedAt    time.Time `json:"-" db:"updated_at"`
 }
 
 type UserWithToken struct {

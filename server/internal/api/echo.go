@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pillowskiy/gopix/internal/config"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
+	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
 	"github.com/pillowskiy/gopix/internal/respository/postgres"
 	"github.com/pillowskiy/gopix/internal/usecase"
@@ -58,7 +59,8 @@ func (s *EchoServer) MapHandlers() error {
 
 	authGroup := v1.Group("/auth")
 	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Cookie)
-	routes.MapEchoAuthRoutes(authGroup, authHandlers)
+	authMiddlewares := middlewares.NewAuthMiddlewares(authUC, s.logger, s.cfg.Cookie)
+	routes.MapAuthRoutes(authGroup, authHandlers, authMiddlewares)
 
 	return nil
 }

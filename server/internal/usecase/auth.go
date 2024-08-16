@@ -12,6 +12,7 @@ import (
 type AuthRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetUnique(ctx context.Context, user *domain.User) (*domain.User, error)
+	GetByID(ctx context.Context, id int) (*domain.User, error)
 }
 
 type AuthUseCase struct {
@@ -63,10 +64,28 @@ func (uc *AuthUseCase) Login(ctx context.Context, user *domain.User) (*domain.Us
 	uniqueUser.HidePassword()
 
 	t, err := uc.generateToken(uniqueUser)
+	if err != nil {
+		return nil, err
+	}
+
 	return &domain.UserWithToken{
 		User:  uniqueUser,
 		Token: t,
 	}, nil
+}
+
+func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, error) {
+	payload := new(domain.UserPayload)
+	if err := uc.tokenGen.VerifyAndScan(token, payload); err != nil {
+		return nil, err
+	}
+
+	user, err := uc.repo.GetByID(ctx, payload.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (uc *AuthUseCase) generateToken(user *domain.User) (string, error) {
@@ -75,12 +94,6 @@ func (uc *AuthUseCase) generateToken(user *domain.User) (string, error) {
 		Username: user.Username,
 	})
 	if err != nil {
-		return "", err
-	}
-
-	p := new(domain.UserPayload)
-	if err := uc.tokenGen.VerifyAndScan(t, p); err != nil {
-		uc.logger.Errorf("AuthUseCase.generateToken.VerifyAndScan: %v", err)
 		return "", err
 	}
 
