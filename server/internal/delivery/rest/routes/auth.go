@@ -6,7 +6,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 )
 
-func MapAuthRoutes(g *echo.Group, h *handlers.AuthHandlers, mw *middlewares.AuthMiddlewares) {
+func MapAuthRoutes(g *echo.Group, h *handlers.AuthHandlers, mw *middlewares.GuardMiddlewares) {
 	g.POST("/register", h.Register())
 	g.POST("/login", h.Login())
 	g.DELETE("/logout", h.Logout(), mw.OnlyAuth)

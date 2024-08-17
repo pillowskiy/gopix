@@ -6,7 +6,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 )
 
-func MapUserRoutes(g *echo.Group, h *handlers.UserHandlers, mw *middlewares.AuthMiddlewares) {
+func MapUserRoutes(g *echo.Group, h *handlers.UserHandlers, mw *middlewares.GuardMiddlewares) {
 	g.GET("/@me", h.Me(), mw.OnlyAuth)
 	g.PUT("/:id", h.Update(), mw.OnlyAuth, mw.OwnerOrAdmin)
 	g.PUT("/:id/permissions", h.OverwritePermissions(), mw.OnlyAuth, mw.OnlyAdmin)

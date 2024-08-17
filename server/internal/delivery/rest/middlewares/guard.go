@@ -16,7 +16,7 @@ type AuthUseCase interface {
 	Verify(ctx context.Context, token string) (*domain.User, error)
 }
 
-type AuthMiddlewares struct {
+type GuardMiddlewares struct {
 	authUC AuthUseCase
 	logger logger.Logger
 	cfg    *config.Cookie
@@ -24,11 +24,15 @@ type AuthMiddlewares struct {
 
 type UserCtxKey struct{}
 
-func NewAuthMiddlewares(authUC AuthUseCase, logger logger.Logger, cfg *config.Cookie) *AuthMiddlewares {
-	return &AuthMiddlewares{authUC: authUC, logger: logger, cfg: cfg}
+func NewGuardMiddlewares(
+	authUC AuthUseCase,
+	logger logger.Logger,
+	cfg *config.Cookie,
+) *GuardMiddlewares {
+	return &GuardMiddlewares{authUC: authUC, logger: logger, cfg: cfg}
 }
 
-func (mw *AuthMiddlewares) OnlyAuth(next echo.HandlerFunc) echo.HandlerFunc {
+func (mw *GuardMiddlewares) OnlyAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		reqID := rest.GetEchoRequestID(c)
 		cookie, err := c.Cookie(mw.cfg.Name)
@@ -58,7 +62,7 @@ func (mw *AuthMiddlewares) OnlyAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func (mw *AuthMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+func (mw *GuardMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		restErr := rest.NewForbiddenError("Only owner or admin can access this resource")
 
@@ -81,7 +85,7 @@ func (mw *AuthMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc 
 	}
 }
 
-func (mw *AuthMiddlewares) WithSomePermission(permissions ...domain.Permission) echo.MiddlewareFunc {
+func (mw *GuardMiddlewares) WithSomePermission(permissions ...domain.Permission) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			restErr := rest.NewForbiddenError("You don't have permission to access this resource")
@@ -105,7 +109,7 @@ func (mw *AuthMiddlewares) WithSomePermission(permissions ...domain.Permission) 
 	}
 }
 
-func (mw *AuthMiddlewares) WithEveryPermission(permissions ...domain.Permission) echo.MiddlewareFunc {
+func (mw *GuardMiddlewares) WithEveryPermission(permissions ...domain.Permission) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			restErr := rest.NewForbiddenError("You don't have permission to access this resource")
@@ -129,11 +133,11 @@ func (mw *AuthMiddlewares) WithEveryPermission(permissions ...domain.Permission)
 	}
 }
 
-func (mw *AuthMiddlewares) OnlyAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+func (mw *GuardMiddlewares) OnlyAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 	return mw.WithSomePermission(domain.PermissionsAdmin)(next)
 }
 
-func (mw *AuthMiddlewares) getUserFromCtx(c echo.Context) (*domain.User, error) {
+func (mw *GuardMiddlewares) getUserFromCtx(c echo.Context) (*domain.User, error) {
 	user, ok := c.Get("user").(*domain.User)
 	if !ok || user == nil {
 		mw.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")

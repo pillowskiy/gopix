@@ -59,15 +59,15 @@ func (s *EchoServer) MapHandlers() error {
 	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
 
 	v1 := s.echo.Group("/api/v1")
-	authMiddlewares := middlewares.NewAuthMiddlewares(authUC, s.logger, s.cfg.Cookie)
+	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Cookie)
 
 	authGroup := v1.Group("/auth")
 	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Cookie)
-	routes.MapAuthRoutes(authGroup, authHandlers, authMiddlewares)
+	routes.MapAuthRoutes(authGroup, authHandlers, guardMiddlewares)
 
 	userGroup := v1.Group("/users")
 	userHandlers := handlers.NewUserHandlers(userUC, s.logger)
-	routes.MapUserRoutes(userGroup, userHandlers, authMiddlewares)
+	routes.MapUserRoutes(userGroup, userHandlers, guardMiddlewares)
 
 	return nil
 }
