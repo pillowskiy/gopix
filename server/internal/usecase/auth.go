@@ -9,20 +9,33 @@ import (
 	"github.com/pillowskiy/gopix/pkg/token"
 )
 
+const userTTL = 3600
+
 type AuthRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetUnique(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetByID(ctx context.Context, id int) (*domain.User, error)
 }
 
+type AuthCache interface {
+	SetUser(ctx context.Context, id int, user *domain.User, ttl int) error
+	GetByID(ctx context.Context, id int) (*domain.User, error)
+}
+
 type AuthUseCase struct {
 	repo     AuthRepository
+	cache    AuthCache
 	tokenGen token.TokenGenerator
 	logger   logger.Logger
 }
 
-func NewAuthUseCase(repo AuthRepository, logger logger.Logger, tokenGen token.TokenGenerator) *AuthUseCase {
-	return &AuthUseCase{repo: repo, logger: logger, tokenGen: tokenGen}
+func NewAuthUseCase(
+	repo AuthRepository,
+	cache AuthCache,
+	logger logger.Logger,
+	tokenGen token.TokenGenerator,
+) *AuthUseCase {
+	return &AuthUseCase{repo: repo, logger: logger, tokenGen: tokenGen, cache: cache}
 }
 
 func (uc *AuthUseCase) Register(ctx context.Context, user *domain.User) (*domain.UserWithToken, error) {
@@ -80,9 +93,22 @@ func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, 
 		return nil, err
 	}
 
+	cachedUser, err := uc.cache.GetByID(ctx, payload.ID)
+	if cachedUser != nil {
+		return cachedUser, nil
+	}
+
+	if err != nil {
+		uc.logger.Errorf("authUseCase.cache.GetById: %v", err)
+	}
+
 	user, err := uc.repo.GetByID(ctx, payload.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if err := uc.cache.SetUser(ctx, payload.ID, user, userTTL); err != nil {
+		uc.logger.Errorf("authUseCase.cache.SetUser: %v", err)
 	}
 
 	return user, nil

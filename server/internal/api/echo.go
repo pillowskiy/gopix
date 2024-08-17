@@ -10,6 +10,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
 	"github.com/pillowskiy/gopix/internal/respository/postgres"
+	"github.com/pillowskiy/gopix/internal/respository/redis"
 	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/storage"
@@ -47,14 +48,15 @@ func (s *EchoServer) Listen() error {
 }
 
 func (s *EchoServer) MapHandlers() error {
+	userCache := redis.NewUserCache(s.sh.Redis)
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
 	jwtTokenGen := token.NewJWTTokenGenerator(
 		s.cfg.Session.Secret,
 		s.cfg.Session.Expire*time.Second,
 	)
-	authUC := usecase.NewAuthUseCase(userRepo, s.logger, jwtTokenGen)
-	userUC := usecase.NewUserUseCase(userRepo)
+	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
+	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
 
 	v1 := s.echo.Group("/api/v1")
 	authMiddlewares := middlewares.NewAuthMiddlewares(authUC, s.logger, s.cfg.Cookie)

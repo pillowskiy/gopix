@@ -4,22 +4,28 @@ import (
 	"context"
 
 	"github.com/pillowskiy/gopix/internal/domain"
+	"github.com/pillowskiy/gopix/pkg/logger"
 )
+
+type UserCache interface {
+	DeleteUser(ctx context.Context, id int) error
+}
 
 type UserRepository interface {
 	GetUnique(ctx context.Context, user *domain.User) (*domain.User, error)
-	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetByID(ctx context.Context, id int) (*domain.User, error)
 	Update(ctx context.Context, id int, user *domain.User) (*domain.User, error)
 	SetPermissions(ctx context.Context, id int, permissions int) error
 }
 
 type UserUseCase struct {
-	repo UserRepository
+	repo   UserRepository
+	cache  UserCache
+	logger logger.Logger
 }
 
-func NewUserUseCase(repo UserRepository) *UserUseCase {
-	return &UserUseCase{repo: repo}
+func NewUserUseCase(repo UserRepository, cache UserCache, logger logger.Logger) *UserUseCase {
+	return &UserUseCase{repo: repo, cache: cache, logger: logger}
 }
 
 func (uc *UserUseCase) Update(ctx context.Context, id int, user *domain.User) (*domain.User, error) {
@@ -43,6 +49,7 @@ func (uc *UserUseCase) Update(ctx context.Context, id int, user *domain.User) (*
 	}
 	u.HidePassword()
 
+	uc.deleteCachedUser(ctx, id)
 	return u, nil
 }
 
@@ -68,5 +75,12 @@ func (uc *UserUseCase) OverwritePermissions(
 		return err
 	}
 
+	uc.deleteCachedUser(ctx, id)
 	return nil
+}
+
+func (uc *UserUseCase) deleteCachedUser(ctx context.Context, id int) {
+	if err := uc.cache.DeleteUser(ctx, id); err != nil {
+		uc.logger.Errorf("UserUseCase.deleteCached: %v", err)
+	}
 }
