@@ -7,6 +7,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Permission int
+
+const (
+	PermissionsAdmin Permission = 1 << 0
+)
+
 type User struct {
 	ID           int       `json:"id" db:"id"`
 	Username     string    `json:"username" db:"username"`
@@ -28,7 +34,11 @@ type UserPayload struct {
 	Username string `mapstructure:"username"`
 }
 
-func (u *User) PreCreate() error {
+func (u *User) HasPermission(permission Permission) bool {
+	return u.Permissions&int(permission) != 0
+}
+
+func (u *User) PrepareMutation() error {
 	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
 	u.PasswordHash = strings.TrimSpace(u.PasswordHash)
 

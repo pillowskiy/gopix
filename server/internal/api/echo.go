@@ -54,13 +54,18 @@ func (s *EchoServer) MapHandlers() error {
 		s.cfg.Session.Expire*time.Second,
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, s.logger, jwtTokenGen)
+	userUC := usecase.NewUserUseCase(userRepo)
 
 	v1 := s.echo.Group("/api/v1")
+	authMiddlewares := middlewares.NewAuthMiddlewares(authUC, s.logger, s.cfg.Cookie)
 
 	authGroup := v1.Group("/auth")
 	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Cookie)
-	authMiddlewares := middlewares.NewAuthMiddlewares(authUC, s.logger, s.cfg.Cookie)
 	routes.MapAuthRoutes(authGroup, authHandlers, authMiddlewares)
+
+	userGroup := v1.Group("/users")
+	userHandlers := handlers.NewUserHandlers(userUC, s.logger)
+	routes.MapUserRoutes(userGroup, userHandlers, authMiddlewares)
 
 	return nil
 }

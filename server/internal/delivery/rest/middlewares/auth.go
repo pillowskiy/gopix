@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pillowskiy/gopix/internal/config"
@@ -51,6 +52,31 @@ func (mw *AuthMiddlewares) OnlyAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Set("user", user)
 		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, user)
 		c.SetRequest(c.Request().WithContext(ctx))
+
+		return next(c)
+	}
+}
+
+func (mw *AuthMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		restErr := rest.NewForbiddenError("Only owner or admin can access this resource")
+
+		user, ok := c.Get("user").(*domain.User)
+		if !ok || user == nil {
+			mw.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+			return c.JSON(restErr.Response())
+		}
+
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			mw.logger.Errorf("OwnerOrAdminMiddleware: Error: %s", err.Error())
+			return c.JSON(restErr.Response())
+		}
+
+		isAdmin := user.HasPermission(domain.PermissionsAdmin)
+		if user.ID != id && !isAdmin {
+			return c.JSON(restErr.Response())
+		}
 
 		return next(c)
 	}

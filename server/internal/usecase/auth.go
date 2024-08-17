@@ -31,7 +31,7 @@ func (uc *AuthUseCase) Register(ctx context.Context, user *domain.User) (*domain
 		return nil, ErrAlreadyExists
 	}
 
-	if err = user.PreCreate(); err != nil {
+	if err = user.PrepareMutation(); err != nil {
 		return nil, fmt.Errorf("AuthUseCase.Register.PreCreate: %v", err)
 	}
 

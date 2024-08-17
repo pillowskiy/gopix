@@ -60,7 +60,7 @@ func (h *AuthHandlers) Register() echo.HandlerFunc {
 		authUser, err := h.uc.Register(ctx, user)
 		if err != nil {
 			if errors.Is(err, usecase.ErrAlreadyExists) {
-				return c.JSON(rest.NewConflictError("User already exists").Response())
+				return c.JSON(rest.NewConflictError("That username or email is already taken").Response())
 			}
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
