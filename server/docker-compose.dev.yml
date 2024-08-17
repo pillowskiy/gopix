@@ -38,6 +38,15 @@ services:
     networks:
       - gopix
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: gopix-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - gopix
+
 networks:
   gopix:
     driver: bridge

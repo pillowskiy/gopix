@@ -14,6 +14,7 @@ type Config struct {
 	Server   Server
 	Logger   Logger
 	Postgres Postgres
+	Redis    Redis
 }
 
 type Server struct {
@@ -55,6 +56,16 @@ type Postgres struct {
 	Database string `mapstructure:"database"`
 	SSL      bool   `mapstructure:"ssl"`
 	Driver   string `mapstructure:"driver"`
+}
+
+type Redis struct {
+	RedisAddr      string        `mapstructure:"redis_addr"`
+	RedisPass      string        `mapstructure:"redis_pass"`
+	RedisDB        int           `mapstructure:"redis_db"`
+	RedisDefaultDB int           `mapstructure:"redis_default_db"`
+	MinIdleConns   int           `mapstructure:"min_idle_conns"`
+	PoolSize       int           `mapstructure:"pool_size"`
+	PoolTimeout    time.Duration `mapstructure:"pool_timeout"`
 }
 
 func FetchAndLoadConfig() (*Config, error) {
