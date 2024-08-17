@@ -15,6 +15,7 @@ import (
 
 type userUseCase interface {
 	Update(ctx context.Context, id int, user *domain.User) (*domain.User, error)
+	OverwritePermissions(ctx context.Context, id int, deny domain.Permission, allow domain.Permission) error
 }
 
 type UserHandlers struct {
@@ -37,7 +38,6 @@ func (h *UserHandlers) Update() echo.HandlerFunc {
 
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			h.logger.Errorf("Update.ParseID: %v", err)
 			return c.JSON(rest.NewBadRequestError("ID has incorrect type").Response())
 		}
 
@@ -73,6 +73,44 @@ func (h *UserHandlers) Update() echo.HandlerFunc {
 	}
 }
 
+func (h *UserHandlers) OverwritePermissions() echo.HandlerFunc {
+	type overwriteDTO struct {
+		Deny  domain.Permission `json:"deny" validate:"number"`
+		Allow domain.Permission `json:"allow" validate:"number"`
+	}
+
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("ID has incorrect type").Response())
+		}
+
+		ovr := new(overwriteDTO)
+		if err := rest.DecodeEchoBody(c, ovr); err != nil {
+			h.logger.Errorf("OverwritePermissions.DecodeBody: %v", err)
+			return c.JSON(rest.NewBadRequestError("OverwritePermissions body has incorrect type").Response())
+		}
+
+		if err := validator.ValidateStruct(ctx, ovr); err != nil {
+			return c.JSON(rest.NewBadRequestError("OverwritePermissions body has incorrect type").Response())
+		}
+
+		err = h.uc.OverwritePermissions(ctx, id, ovr.Deny, ovr.Allow)
+		if err != nil {
+			switch err {
+			case usecase.ErrNotFound:
+				return c.JSON(rest.NewNotFoundError("User not found").Response())
+			default:
+				h.logger.Errorf("User.OverwritePermissions: %v", err)
+				return c.JSON(rest.NewInternalServerError().Response())
+			}
+		}
+
+		return c.JSON(http.StatusOK, true)
+	}
+}
 func (h *UserHandlers) Me() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user, ok := c.Get("user").(*domain.User)

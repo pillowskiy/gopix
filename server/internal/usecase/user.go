@@ -11,6 +11,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetByID(ctx context.Context, id int) (*domain.User, error)
 	Update(ctx context.Context, id int, user *domain.User) (*domain.User, error)
+	SetPermissions(ctx context.Context, id int, permissions int) error
 }
 
 type UserUseCase struct {
@@ -43,4 +44,29 @@ func (uc *UserUseCase) Update(ctx context.Context, id int, user *domain.User) (*
 	u.HidePassword()
 
 	return u, nil
+}
+
+func (uc *UserUseCase) OverwritePermissions(
+	ctx context.Context, id int, deny domain.Permission, allow domain.Permission,
+) error {
+	user, err := uc.repo.GetByID(ctx, id)
+	if err != nil {
+		return ErrNotFound
+	}
+
+	perms := user.Permissions
+
+	if deny != 0 {
+		perms = perms &^ int(deny)
+	}
+
+	if allow != 0 {
+		perms |= int(allow)
+	}
+
+	if err := uc.repo.SetPermissions(ctx, id, perms); err != nil {
+		return err
+	}
+
+	return nil
 }

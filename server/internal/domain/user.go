@@ -10,7 +10,7 @@ import (
 type Permission int
 
 const (
-	PermissionsAdmin Permission = 1 << 0
+	PermissionsAdmin Permission = 1 << 10
 )
 
 type User struct {
@@ -35,7 +35,7 @@ type UserPayload struct {
 }
 
 func (u *User) HasPermission(permission Permission) bool {
-	return u.Permissions&int(permission) != 0
+	return u.Permissions&int(permission) == int(permission)
 }
 
 func (u *User) PrepareMutation() error {

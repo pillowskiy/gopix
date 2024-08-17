@@ -57,8 +57,6 @@ func (r *userRepository) Update(ctx context.Context, id int, user *domain.User) 
     username = COALESCE(NULLIF($2, ''), username),
     email = COALESCE(NULLIF($3, ''), email),
     avatar_url = COALESCE(NULLIF($4, ''), avatar_url),
-    permissions = COALESCE(NULLIF($5, 0), permissions),
-    password_hash = COALESCE(NULLIF($6, ''), password_hash)
   WHERE id = $1 RETURNING *`
 
 	u := new(domain.User)
@@ -67,12 +65,21 @@ func (r *userRepository) Update(ctx context.Context, id int, user *domain.User) 
 		user.Username,
 		user.Email,
 		user.AvatarURL,
-		user.Permissions,
-		user.PasswordHash,
 	)
 	if err := rowx.StructScan(u); err != nil {
 		return nil, fmt.Errorf("UserRepository.Update.StructScan: %v", err)
 	}
 
 	return u, nil
+}
+
+func (r *userRepository) SetPermissions(ctx context.Context, id int, permissions int) error {
+	q := `UPDATE users SET permissions = $1 WHERE id = $2`
+
+	_, err := r.db.ExecContext(ctx, q, permissions, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

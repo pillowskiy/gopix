@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -33,4 +34,12 @@ func DecodeEchoBody(c echo.Context, s interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func IntParam(c echo.Context, name string) (int, error) {
+	id, err := strconv.Atoi(c.Param(name))
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
