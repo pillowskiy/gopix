@@ -56,7 +56,7 @@ func (r *userRepository) Update(ctx context.Context, id int, user *domain.User) 
 	q := `UPDATE users SET 
     username = COALESCE(NULLIF($2, ''), username),
     email = COALESCE(NULLIF($3, ''), email),
-    avatar_url = COALESCE(NULLIF($4, ''), avatar_url),
+    avatar_url = COALESCE(NULLIF($4, ''), avatar_url)
   WHERE id = $1 RETURNING *`
 
 	u := new(domain.User)
