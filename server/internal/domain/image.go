@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type Image struct {
 	ID          int       `json:"id" db:"id"`
@@ -10,7 +12,7 @@ type Image struct {
 	Description string    `json:"description,omitempty" db:"description"`
 	AccessLevel string    `json:"accessLevel" db:"access_level"`
 	ExpiresAt   time.Time `json:"expiresAt,omitempty" db:"expires_at"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
+	CreatedAt   time.Time `json:"createdAt" db:"uploaded_at"`
 	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
 }
 
