@@ -15,6 +15,7 @@ type Config struct {
 	Logger   Logger
 	Postgres Postgres
 	Redis    Redis
+	S3       S3
 }
 
 type Server struct {
@@ -66,6 +67,15 @@ type Redis struct {
 	MinIdleConns   int           `mapstructure:"min_idle_conns"`
 	PoolSize       int           `mapstructure:"pool_size"`
 	PoolTimeout    time.Duration `mapstructure:"pool_timeout"`
+}
+
+type S3 struct {
+	Endpoint       string `mapstructure:"endpoint"`
+	Bucket         string `mapstructure:"bucket"`
+	Region         string `mapstructure:"region"`
+	AccessKey      string `mapstructure:"access_key"`
+	SecretAccess   string `mapstructure:"secret_access_key"`
+	ForcePathStyle bool   `mapstructure:"force_path_style"`
 }
 
 func FetchAndLoadConfig() (*Config, error) {

@@ -38,3 +38,11 @@ redis:
   min_idle_conns: 10
   pool_size: 100
   pool_timeout: 240
+
+s3:
+  endpoint: https://<account_id>.r2.cloudflarestorage.com/gopix # cloudflare r2
+  bucket: gopix
+  region: auto
+  access_key: access_key
+  secret_access_key: secret_access_key
+  force_path_style: true

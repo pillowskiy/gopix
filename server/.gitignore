@@ -20,6 +20,8 @@ media
 config/apple_config_files
 /config/configs.env
 /config/config_file.go
+/config/development.yml
+/config/production.yml
 
 # Enviroment files
 envs/.env
