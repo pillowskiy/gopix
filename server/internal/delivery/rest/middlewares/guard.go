@@ -3,7 +3,6 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pillowskiy/gopix/internal/config"
@@ -71,7 +70,7 @@ func (mw *GuardMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc
 			return c.JSON(restErr.Response())
 		}
 
-		id, err := strconv.Atoi(c.Param("id"))
+		id, err := rest.IntParam(c, "id")
 		if err != nil {
 			return c.JSON(restErr.Response())
 		}
