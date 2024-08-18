@@ -11,6 +11,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
 	"github.com/pillowskiy/gopix/internal/respository/postgres"
 	"github.com/pillowskiy/gopix/internal/respository/redis"
+	"github.com/pillowskiy/gopix/internal/respository/s3"
 	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/storage"
@@ -51,12 +52,16 @@ func (s *EchoServer) MapHandlers() error {
 	userCache := redis.NewUserCache(s.sh.Redis)
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
+	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
+	imageStorage := s3.NewImageStorage(s.sh.S3, "gopix")
+
 	jwtTokenGen := token.NewJWTTokenGenerator(
 		s.cfg.Session.Secret,
 		s.cfg.Session.Expire*time.Second,
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
+	imageUC := usecase.NewImageUseCase(imageStorage, imageRepo)
 
 	v1 := s.echo.Group("/api/v1")
 	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Cookie)
@@ -68,6 +73,10 @@ func (s *EchoServer) MapHandlers() error {
 	userGroup := v1.Group("/users")
 	userHandlers := handlers.NewUserHandlers(userUC, s.logger)
 	routes.MapUserRoutes(userGroup, userHandlers, guardMiddlewares)
+
+	imagesGroup := v1.Group("/images")
+	imagesHandlers := handlers.NewImageHandlers(imageUC, s.logger)
+	routes.MapImageRoutes(imagesGroup, imagesHandlers, guardMiddlewares)
 
 	return nil
 }

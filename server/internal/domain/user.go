@@ -10,7 +10,8 @@ import (
 type Permission int
 
 const (
-	PermissionsAdmin Permission = 1 << 10
+	PermissionsUploadImage Permission = 1 << 0
+	PermissionsAdmin       Permission = 1 << 10
 )
 
 type User struct {
