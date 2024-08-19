@@ -46,3 +46,5 @@ s3:
   access_key: access_key
   secret_access_key: secret_access_key
   force_path_style: true
+  upload_buffer_size_mb: 25
+  multipart_chunk_size_mb: 25

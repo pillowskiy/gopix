@@ -6,6 +6,7 @@ services:
       context: ./
       dockerfile: docker/Dockerfile.dev
     container_name: gopix-api
+    mem_limit: 1024m
     logging:
       driver: "none"
     ports:

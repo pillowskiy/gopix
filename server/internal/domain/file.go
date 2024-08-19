@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	MaxFileSize = 10 * 1024 * 1024
+	MaxFileSize = 300 * 1024 * 1024
 )
 
 var allowedImagesContentType = map[string]string{
@@ -17,6 +17,8 @@ var allowedImagesContentType = map[string]string{
 	"image/gif":  "gif",
 	"image/webp": "webp",
 	"image/avif": "avif",
+	"video/mp4":  "mp4",
+	"video/webm": "webm",
 }
 
 type FileNode struct {

@@ -1,17 +1,18 @@
 package storage
 
 import (
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/config"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
+
+	errs "errors"
 )
 
 type StorageHolder struct {
 	Postgres *sqlx.DB
 	Redis    *redis.Client
-	S3       *s3.S3
+	S3       *S3
 	cfg      *config.Config
 }
 
@@ -38,5 +39,8 @@ func (s *StorageHolder) Setup() error {
 }
 
 func (s *StorageHolder) Close() error {
-	return s.Postgres.Close()
+	pgErr := s.Postgres.Close()
+	redisErr := s.Redis.Close()
+
+	return errs.Join(pgErr, redisErr)
 }

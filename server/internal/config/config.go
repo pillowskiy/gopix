@@ -76,6 +76,9 @@ type S3 struct {
 	AccessKey      string `mapstructure:"access_key"`
 	SecretAccess   string `mapstructure:"secret_access_key"`
 	ForcePathStyle bool   `mapstructure:"force_path_style"`
+	// The buffer size for file uploads, including multipart uploads, in megabytes.
+	UploadBufferSizeMB   int   `mapstructure:"upload_buffer_size_mb"`
+	MultipartChunkSizeMB int64 `mapstructure:"multipart_chunk_size_mb"`
 }
 
 func FetchAndLoadConfig() (*Config, error) {

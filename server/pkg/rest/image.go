@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"io"
 	"mime/multipart"
 	"net/textproto"
 	"strings"
@@ -21,7 +22,7 @@ var (
 func ReadEchoImage(c echo.Context, field string) (*domain.FileNode, error) {
 	image, err := c.FormFile(field)
 	if err != nil {
-		return nil, errors.Wrap(err, "ReadEchoImage.FormFile")
+		return nil, errInvalidImageData
 	}
 
 	if err := checkImageContentType(image); err != nil {
@@ -35,7 +36,7 @@ func ReadEchoImage(c echo.Context, field string) (*domain.FileNode, error) {
 	defer file.Close()
 
 	binImage := bytes.NewBuffer(nil)
-	if _, err := binImage.ReadFrom(file); err != nil {
+	if _, err := io.Copy(binImage, file); err != nil {
 		return nil, errors.Wrap(err, "ReadEchoImage.ReadFrom")
 	}
 
@@ -56,7 +57,8 @@ func checkImageContentType(file *multipart.FileHeader) error {
 	}
 
 	isImage := strings.HasPrefix(contentType, "image")
-	if !isImage {
+	isVideo := strings.HasPrefix(contentType, "video")
+	if !isImage && !isVideo {
 		return errNotAllowedImageExt
 	}
 
