@@ -36,10 +36,6 @@ func (uc *imageUseCase) Create(
 	image *domain.Image,
 	file *domain.FileNode,
 ) (*domain.Image, error) {
-	if err := file.Prepare(); err != nil {
-		return nil, ErrUnprocessableEntity
-	}
-
 	image.Path = file.Name
 	img, err := uc.repo.Create(ctx, image)
 	if err != nil {

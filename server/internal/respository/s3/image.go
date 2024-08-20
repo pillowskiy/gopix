@@ -3,7 +3,6 @@ package s3
 import (
 	"bytes"
 	"context"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -35,12 +34,6 @@ func (s *imageStorage) Put(ctx context.Context, file *domain.FileNode) error {
 		})
 		return err
 	}
-
-	log.Printf(
-		"File size is greater than %vMB (is: %vMV) -> Multipart upload",
-		multipartUploadThreshold/1024/1024,
-		file.Size/1024/1024,
-	)
 
 	_, err := s.s3.Uploader.UploadWithContext(ctx, &manager.UploadInput{
 		Bucket: aws.String(s.bucket),
