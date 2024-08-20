@@ -27,6 +27,7 @@ type Server struct {
 	Debug        bool          `mapstructure:"debug"`
 	Cookie       *Cookie       `mapstructure:"cookie"`
 	Session      *Session      `mapstructure:"session"`
+	CORS         *CORS         `mapstructure:"cors"`
 }
 
 type Cookie struct {
@@ -39,6 +40,13 @@ type Cookie struct {
 type Session struct {
 	Expire time.Duration `mapstructure:"expire"`
 	Secret string        `mapstructure:"secret"`
+}
+
+type CORS struct {
+	AllowCredentials bool     `mapstructure:"allow_credentials"`
+	AllowHeaders     []string `mapstructure:"allow_headers"`
+	AllowMethods     []string `mapstructure:"allow_methods"`
+	AllowOrigins     []string `mapstructure:"allow_origins"`
 }
 
 type Logger struct {

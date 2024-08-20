@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+
 	"github.com/pillowskiy/gopix/internal/config"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
@@ -16,6 +17,8 @@ import (
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/storage"
 	"github.com/pillowskiy/gopix/pkg/token"
+
+	_ "net/http/pprof"
 )
 
 type EchoServer struct {
@@ -61,7 +64,10 @@ func (s *EchoServer) MapHandlers() error {
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
-	imageUC := usecase.NewImageUseCase(imageStorage, imageRepo)
+	imageUC := usecase.NewImageUseCase(imageStorage, imageRepo, s.logger)
+
+	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
+	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
 
 	v1 := s.echo.Group("/api/v1")
 	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Cookie)
