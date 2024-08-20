@@ -1,15 +1,11 @@
 package rest
 
 import (
-	"bytes"
-	"io"
 	"mime/multipart"
 	"net/textproto"
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pillowskiy/gopix/internal/domain"
-	"github.com/pkg/errors"
 )
 
 const fileHeaderSize int64 = 512
@@ -19,7 +15,7 @@ var (
 	errInvalidImageData   = NewBadRequestError("Invalid image data")
 )
 
-func ReadEchoImage(c echo.Context, field string) (*domain.FileNode, error) {
+func ReadEchoImage(c echo.Context, field string) (*multipart.FileHeader, error) {
 	image, err := c.FormFile(field)
 	if err != nil {
 		return nil, errInvalidImageData
@@ -29,25 +25,7 @@ func ReadEchoImage(c echo.Context, field string) (*domain.FileNode, error) {
 		return nil, err
 	}
 
-	file, err := image.Open()
-	if err != nil {
-		return nil, errors.Wrap(err, "ReadEchoImage.Open")
-	}
-	defer file.Close()
-
-	binImage := bytes.NewBuffer(nil)
-	if _, err := io.Copy(binImage, file); err != nil {
-		return nil, errors.Wrap(err, "ReadEchoImage.ReadFrom")
-	}
-
-	node := &domain.FileNode{
-		Data:        binImage.Bytes(),
-		Name:        image.Filename,
-		Size:        int(image.Size),
-		ContentType: image.Header["Content-Type"][0],
-	}
-
-	return node, nil
+	return image, nil
 }
 
 func checkImageContentType(file *multipart.FileHeader) error {
