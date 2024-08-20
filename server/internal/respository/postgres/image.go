@@ -2,10 +2,12 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
+	repository "github.com/pillowskiy/gopix/internal/respository"
 	"github.com/pkg/errors"
 )
 
@@ -44,7 +46,11 @@ func (r *imageRepository) GetById(ctx context.Context, id int) (*domain.Image, e
 
 	img := new(domain.Image)
 	rowx := r.db.QueryRowxContext(ctx, q, id)
+
 	if err := rowx.StructScan(img); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, repository.ErrNotFound
+		}
 		return nil, errors.Wrap(err, "ImageRepository.GetById.StructScan")
 	}
 
@@ -79,14 +85,14 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
     u.id AS "author.id",
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url",
-      COALESCE(l.likes_count, 0) AS likes,
-      COALESCE(v.views_count, 0) AS views,
-      COALESCE(
-        ARRAY_AGG(
-            json_build_object('id', t.id, 'name', t.name)
-        ) FILTER (WHERE t.id IS NOT NULL), 
-        '{}'::json[]
-    ) AS tags
+    COALESCE(l.likes_count, 0) AS likes,
+    COALESCE(v.views_count, 0) AS views,
+    TO_JSON(COALESCE(
+      ARRAY_AGG(
+        json_build_object('id', t.id, 'name', t.name)
+      ) FILTER (WHERE t.id IS NOT NULL), 
+      '{}'
+    )) AS tags
     FROM
       images i
     JOIN
@@ -124,13 +130,16 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 	)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repository.ErrNotFound
+		}
+		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Scan")
 	}
 
 	// TEMP: We shouldn't depend on JSON, probably we can use annonymous struct
 	err = json.Unmarshal(tagsJSON, &detailedImage.Tags)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
 	}
 
 	return &detailedImage, nil

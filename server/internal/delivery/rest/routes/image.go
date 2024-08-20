@@ -11,9 +11,11 @@ import (
 
 func MapImageRoutes(g *echo.Group, h *handlers.ImageHandlers, mw *middlewares.GuardMiddlewares) {
 	g.POST("/",
-		h.Create(),
+		h.Upload(),
 		mw.OnlyAuth,
 		mw.WithSomePermission(domain.PermissionsUploadImage),
 		middlewares.TimeoutMiddleware(15*time.Minute),
 	)
+	g.DELETE("/:id", h.Delete(), mw.OnlyAuth, mw.OnlyAdmin)
+	g.GET("/:id", h.GetDetailed())
 }
