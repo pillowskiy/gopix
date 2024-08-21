@@ -19,6 +19,7 @@ type ImageRepository interface {
 	GetById(ctx context.Context, id int) (*domain.Image, error)
 	Delete(ctx context.Context, id int) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
+	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 }
 
 type imageUseCase struct {
@@ -93,4 +94,17 @@ func (uc *imageUseCase) GetById(ctx context.Context, id int) (*domain.Image, err
 		return nil, err
 	}
 	return img, nil
+}
+
+func (uc *imageUseCase) Update(
+	ctx context.Context,
+	id int,
+	image *domain.Image,
+) (*domain.Image, error) {
+	_, err := uc.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return uc.repo.Update(ctx, id, image)
 }

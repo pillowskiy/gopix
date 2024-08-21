@@ -13,12 +13,14 @@ import (
 	"github.com/pillowskiy/gopix/pkg/image"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/rest"
+	"github.com/pillowskiy/gopix/pkg/validator"
 )
 
 type imageUseCase interface {
 	Create(ctx context.Context, image *domain.Image, file *domain.FileNode) (*domain.Image, error)
 	Delete(ctx context.Context, id int) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
+	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 }
 
 type ImageHandlers struct {
@@ -125,6 +127,46 @@ func (h *ImageHandlers) GetDetailed() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, img)
+	}
+}
+
+func (h *ImageHandlers) Update() echo.HandlerFunc {
+	type updateDTO struct {
+		Title       string `json:"title" validate:"required"`
+		Description string `json:"description" validate:"required"`
+		AccessLevel string `json:"accessLevel" validate:"oneof=link private public"`
+	}
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		id, err := rest.IntParam(c, "id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
+		}
+
+		dto := new(updateDTO)
+		if err := rest.DecodeEchoBody(c, dto); err != nil {
+			h.logger.Errorf("Update.DecodeBody: %v", err)
+			return c.JSON(rest.NewBadRequestError("Update body has incorrect type").Response())
+		}
+
+		if err := validator.ValidateStruct(ctx, dto); err != nil {
+			return c.JSON(rest.NewBadRequestError("Update body has incorrect type").Response())
+		}
+
+		image := &domain.Image{
+			Title:       dto.Title,
+			Description: dto.Description,
+			AccessLevel: dto.AccessLevel,
+		}
+
+		img, err := h.uc.Update(ctx, id, image)
+		if err != nil {
+			return h.responseWithUseCaseErr(c, err, "Update")
+		}
+
+		return c.JSON(http.StatusOK, img)
+
 	}
 }
 

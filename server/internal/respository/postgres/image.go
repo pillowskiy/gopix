@@ -144,3 +144,30 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 
 	return &detailedImage, nil
 }
+
+func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error) {
+	q := `UPDATE images SET 
+    title = COALESCE(NULLIF($1, ''), title),
+    description = COALESCE(NULLIF($2, ''), description),
+    access_level = COALESCE(NULLIF($3, '')::access_level, access_level)::access_level,
+    expires_at = COALESCE($4, expires_at)
+  WHERE id = $5 RETURNING *`
+
+	img := new(domain.Image)
+	rowx := r.db.QueryRowxContext(ctx, q,
+		image.Title,
+		image.Description,
+		image.AccessLevel,
+		image.ExpiresAt,
+		id,
+	)
+
+	if err := rowx.StructScan(img); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repository.ErrNotFound
+		}
+		return nil, errors.Wrap(err, "imageRepository.Update.Scan")
+	}
+
+	return img, nil
+}
