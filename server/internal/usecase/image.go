@@ -20,6 +20,7 @@ type ImageRepository interface {
 	Delete(ctx context.Context, id int) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
+	AddView(ctx context.Context, view *domain.ImageView) error
 }
 
 type imageUseCase struct {
@@ -83,6 +84,10 @@ func (uc *imageUseCase) GetDetailed(ctx context.Context, id int) (*domain.Detail
 	}
 
 	return img, nil
+}
+
+func (uc *imageUseCase) AddView(ctx context.Context, view *domain.ImageView) error {
+	return uc.repo.AddView(ctx, view)
 }
 
 func (uc *imageUseCase) GetById(ctx context.Context, id int) (*domain.Image, error) {

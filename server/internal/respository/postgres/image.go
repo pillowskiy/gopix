@@ -4,19 +4,30 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
 	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pillowskiy/gopix/pkg/batch"
 	"github.com/pkg/errors"
 )
 
+var imageBatchConfig = batch.BatchConfig{Retries: 3, MaxSize: 10000}
+
 type imageRepository struct {
-	db *sqlx.DB
+	db          *sqlx.DB
+	viewBatcher batch.Batcher[domain.ImageView]
 }
 
 func NewImageRepository(db *sqlx.DB) *imageRepository {
-	return &imageRepository{db: db}
+	repo := &imageRepository{db: db}
+
+	repo.viewBatcher = batch.NewWithConfig(&imageBatchConfig, repo.batchViews)
+	go repo.viewBatcher.Ticker(time.Minute * 5)
+
+	return repo
 }
 
 func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*domain.Image, error) {
@@ -90,7 +101,7 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
     TO_JSON(COALESCE(
       ARRAY_AGG(
         json_build_object('id', t.id, 'name', t.name)
-      ) FILTER (WHERE t.id IS NOT NULL), 
+      ) FILTER (WHERE t.id IS NOT NULL),
       '{}'
     )) AS tags
     FROM
@@ -146,7 +157,7 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 }
 
 func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error) {
-	q := `UPDATE images SET 
+	q := `UPDATE images SET
     title = COALESCE(NULLIF($1, ''), title),
     description = COALESCE(NULLIF($2, ''), description),
     access_level = COALESCE(NULLIF($3, '')::access_level, access_level)::access_level,
@@ -170,4 +181,50 @@ func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Imag
 	}
 
 	return img, nil
+}
+
+func (r *imageRepository) AddView(ctx context.Context, view *domain.ImageView) error {
+	r.viewBatcher.Add(*view)
+	return nil
+}
+
+func (r *imageRepository) batchViews(views []domain.ImageView) error {
+	if len(views) == 0 {
+		return nil
+	}
+
+	const batchChunk = 20000
+	start := time.Now()
+	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
+	defer close()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.BeginTx")
+	}
+
+	p := []interface{}{}
+	placeholder := ""
+
+	for i, view := range views {
+		paramInd := i * 2
+		placeholder += fmt.Sprintf(`($%d, $%d),`, paramInd+1, paramInd+2)
+		p = append(p, view.ImageID, view.UserID)
+	}
+
+	q := fmt.Sprintf(
+		`INSERT INTO images_to_views (image_id, user_id) VALUES %s ON CONFLICT DO NOTHING`,
+		placeholder[:len(placeholder)-1],
+	)
+
+	if _, err := tx.ExecContext(ctx, q, p...); err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.ExecContext")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.Commit")
+	}
+
+	fmt.Printf("batchViews took: %s\n", time.Since(start))
+	return nil
 }
