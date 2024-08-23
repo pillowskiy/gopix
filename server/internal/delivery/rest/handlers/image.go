@@ -21,6 +21,7 @@ type imageUseCase interface {
 	Delete(ctx context.Context, id int) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
+	AddView(ctx context.Context, view *domain.ImageView) error
 }
 
 type ImageHandlers struct {
@@ -126,6 +127,15 @@ func (h *ImageHandlers) GetDetailed() echo.HandlerFunc {
 			return h.responseWithUseCaseErr(c, err, "GetDetailed")
 		}
 
+		view := &domain.ImageView{ImageID: img.ID}
+		if user, ok := c.Get("user").(*domain.User); ok {
+			view.UserID = &user.ID
+		}
+
+		if err := h.uc.AddView(ctx, view); err != nil {
+			h.logger.Errorf("imagesHandlers.UseCase.AddView: %v", err)
+		}
+
 		return c.JSON(http.StatusOK, img)
 	}
 }
@@ -166,7 +176,6 @@ func (h *ImageHandlers) Update() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, img)
-
 	}
 }
 

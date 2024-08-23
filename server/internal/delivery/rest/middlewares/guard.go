@@ -61,6 +61,22 @@ func (mw *GuardMiddlewares) OnlyAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func (mw *GuardMiddlewares) OptionalAuth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if cookie, err := c.Cookie(mw.cfg.Name); err == nil {
+			user, err := mw.authUC.Verify(rest.GetEchoRequestCtx(c), cookie.Value)
+			if err == nil {
+				c.Set("user", user)
+				ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, user)
+				c.SetRequest(c.Request().WithContext(ctx))
+				return next(c)
+			}
+		}
+
+		return next(c)
+	}
+}
+
 func (mw *GuardMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		restErr := rest.NewForbiddenError("Only owner or admin can access this resource")
