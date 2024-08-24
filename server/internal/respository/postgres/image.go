@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -96,8 +98,8 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
     u.id AS "author.id",
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url",
-    COALESCE(l.likes_count, 0) AS likes,
-    COALESCE(v.views_count, 0) AS views,
+    COALESCE(a.likes_count, 0) AS likes,
+    COALESCE(a.views_count, 0) AS views,
     TO_JSON(COALESCE(
       ARRAY_AGG(
         json_build_object('id', t.id, 'name', t.name)
@@ -105,22 +107,20 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
       '{}'
     )) AS tags
     FROM
-      images i
+        images i
     JOIN
       users u ON i.author_id = u.id
-    LEFT JOIN
-      (SELECT image_id, COUNT(*) AS likes_count FROM images_to_likes GROUP BY image_id) l ON i.id = l.image_id
-    LEFT JOIN
-      (SELECT image_id, COUNT(*) AS views_count FROM images_to_views GROUP BY image_id) v ON i.id = v.image_id
     LEFT JOIN
       images_to_tags it ON i.id = it.image_id
     LEFT JOIN
       tags t ON it.tag_id = t.id
+    LEFT JOIN
+      images_analytics a ON a.image_id = i.id
     WHERE
       i.id = $1
     GROUP BY
-      i.id, u.id, l.likes_count, v.views_count;
-    `
+      i.id, u.id, a.likes_count, a.views_count
+  `
 
 	err := r.db.QueryRowxContext(ctx, query, id).Scan(
 		&detailedImage.ID,
@@ -147,9 +147,7 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Scan")
 	}
 
-	// TEMP: We shouldn't depend on JSON, probably we can use annonymous struct
-	err = json.Unmarshal(tagsJSON, &detailedImage.Tags)
-	if err != nil {
+	if err := json.Unmarshal(tagsJSON, &detailedImage.Tags); err != nil {
 		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
 	}
 
@@ -193,38 +191,54 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 		return nil
 	}
 
-	const batchChunk = 20000
 	start := time.Now()
 	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
 	defer close()
 
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.BeginTx")
 	}
+	defer tx.Rollback()
 
-	p := []interface{}{}
-	placeholder := ""
-
-	for i, view := range views {
-		paramInd := i * 2
-		placeholder += fmt.Sprintf(`($%d, $%d),`, paramInd+1, paramInd+2)
-		p = append(p, view.ImageID, view.UserID)
+	query := `INSERT INTO images_to_views (image_id, user_id) VALUES (:image_id, :user_id) ON CONFLICT DO NOTHING`
+	if _, err := tx.NamedExecContext(ctx, query, views); err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.ExecContext")
 	}
 
-	q := fmt.Sprintf(
-		`INSERT INTO images_to_views (image_id, user_id) VALUES %s ON CONFLICT DO NOTHING`,
-		placeholder[:len(placeholder)-1],
-	)
-
-	if _, err := tx.ExecContext(ctx, q, p...); err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.ExecContext")
+	analyticsQuery, analyticsParams := r.namedAnalyticsQuery("views_count", views)
+	if _, err := tx.ExecContext(ctx, analyticsQuery, analyticsParams...); err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
 	}
 
 	if err := tx.Commit(); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.Commit")
 	}
 
-	fmt.Printf("batchViews took: %s\n", time.Since(start))
+	log.Println("imageRepository.batchViews", time.Since(start))
 	return nil
+}
+
+func (r *imageRepository) namedAnalyticsQuery(
+	column string,
+	items []domain.ImageView,
+) (string, []any) {
+	counter := make(map[int]int)
+	for _, item := range items {
+		counter[item.ImageID]++
+	}
+
+	p := make([]string, 0, len(items)*2)
+	var v []any
+	for imageID, count := range counter {
+		p = append(p, fmt.Sprintf("($%d::int, $%d::int)", len(p)+1, len(p)+2))
+		v = append(v, imageID, count)
+	}
+
+	q := fmt.Sprintf(`
+    UPDATE images_analytics AS ia SET views_count = ia.views_count + p.views_count
+    FROM (VALUES %s) AS p(image_id, views_count) WHERE ia.image_id = p.image_id
+  `, strings.Join(p, ","))
+
+	return q, v
 }

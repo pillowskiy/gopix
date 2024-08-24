@@ -36,6 +36,6 @@ type ImageTag struct {
 }
 
 type ImageView struct {
-	ImageID int
-	UserID  *int
+	ImageID int  `db:"image_id"`
+	UserID  *int `db:"user_id"`
 }
