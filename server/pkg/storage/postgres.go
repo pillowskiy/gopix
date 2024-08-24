@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/jackc/pgx/stdlib" // pgx driver
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/config"
 )
 
 const (
-	maxOpenConns    = 60
+	maxOpenConns    = 10
 	connMaxLifeTime = 120
 	maxIdleConns    = 30
 	connMaxIdleTime = 20
