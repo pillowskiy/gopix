@@ -18,8 +18,8 @@ type AuthRepository interface {
 }
 
 type AuthCache interface {
-	SetUser(ctx context.Context, id int, user *domain.User, ttl int) error
-	GetByID(ctx context.Context, id int) (*domain.User, error)
+	Set(ctx context.Context, id int, user *domain.User, ttl int) error
+	Get(ctx context.Context, id int) (*domain.User, error)
 }
 
 type AuthUseCase struct {
@@ -93,7 +93,7 @@ func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, 
 		return nil, err
 	}
 
-	cachedUser, err := uc.cache.GetByID(ctx, payload.ID)
+	cachedUser, err := uc.cache.Get(ctx, payload.ID)
 	if cachedUser != nil {
 		return cachedUser, nil
 	}
@@ -107,7 +107,7 @@ func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, 
 		return nil, err
 	}
 
-	if err := uc.cache.SetUser(ctx, payload.ID, user, userTTL); err != nil {
+	if err := uc.cache.Set(ctx, payload.ID, user, userTTL); err != nil {
 		uc.logger.Errorf("authUseCase.cache.SetUser: %v", err)
 	}
 

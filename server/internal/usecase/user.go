@@ -8,7 +8,7 @@ import (
 )
 
 type UserCache interface {
-	DeleteUser(ctx context.Context, id int) error
+	Del(ctx context.Context, id int) error
 }
 
 type UserRepository interface {
@@ -80,7 +80,7 @@ func (uc *UserUseCase) OverwritePermissions(
 }
 
 func (uc *UserUseCase) deleteCachedUser(ctx context.Context, id int) {
-	if err := uc.cache.DeleteUser(ctx, id); err != nil {
+	if err := uc.cache.Del(ctx, id); err != nil {
 		uc.logger.Errorf("UserUseCase.deleteCached: %v", err)
 	}
 }
