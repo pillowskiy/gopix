@@ -55,6 +55,7 @@ func (s *EchoServer) MapHandlers() error {
 	userCache := redis.NewUserCache(s.sh.Redis)
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
+	imageCache := redis.NewImageCache(s.sh.Redis)
 	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
 	imageStorage := s3.NewImageStorage(s.sh.S3, "gopix")
 
@@ -64,7 +65,7 @@ func (s *EchoServer) MapHandlers() error {
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
-	imageUC := usecase.NewImageUseCase(imageStorage, imageRepo, s.logger)
+	imageUC := usecase.NewImageUseCase(imageStorage, imageCache, imageRepo, s.logger)
 
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
