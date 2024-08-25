@@ -66,13 +66,17 @@ func (b *batcher[T]) Ticker(d time.Duration) {
 func (b *batcher[T]) Tick() {
 	retries := 0
 
+	var itemsCopy []T
 	process := func() error {
 		b.mut.Lock()
-		defer b.mut.Unlock()
+		itemsCopy = make([]T, len(b.items))
+		copy(itemsCopy, b.items)
+		b.items = []T{}
+		b.mut.Unlock()
+
 		if err := b.cb(b.items); err != nil {
 			return err
 		}
-		b.items = []T{}
 		return nil
 	}
 
