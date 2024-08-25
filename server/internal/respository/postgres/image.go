@@ -4,9 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"log"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -17,6 +14,7 @@ import (
 )
 
 var imageBatchConfig = batch.BatchConfig{Retries: 3, MaxSize: 10000}
+var batchingCtxTimeout = time.Second * 5
 
 type imageRepository struct {
 	db          *sqlx.DB
@@ -27,7 +25,7 @@ func NewImageRepository(db *sqlx.DB) *imageRepository {
 	repo := &imageRepository{db: db}
 
 	repo.viewBatcher = batch.NewWithConfig(&imageBatchConfig, repo.batchViews)
-	go repo.viewBatcher.Ticker(time.Minute * 5)
+	go repo.viewBatcher.Ticker(time.Second * 5)
 
 	return repo
 }
@@ -191,8 +189,7 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 		return nil
 	}
 
-	start := time.Now()
-	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, close := context.WithTimeout(context.Background(), batchingCtxTimeout)
 	defer close()
 
 	tx, err := r.db.BeginTxx(ctx, nil)
@@ -201,13 +198,16 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO images_to_views (image_id, user_id) VALUES (:image_id, :user_id) ON CONFLICT DO NOTHING`
+	query := ` INSERT INTO images_to_views (image_id, user_id) VALUES (:image_id, :user_id) ON CONFLICT DO NOTHING`
 	if _, err := tx.NamedExecContext(ctx, query, views); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.ExecContext")
 	}
 
-	analyticsQuery, analyticsParams := r.namedAnalyticsQuery("views_count", views)
-	if _, err := tx.ExecContext(ctx, analyticsQuery, analyticsParams...); err != nil {
+	aggQuery := `UPDATE images_analytics AS ia SET views_count = ia.views_count + p.count
+  FROM (VALUES (CAST(:image_id AS int), CAST(:count AS int))) AS p(image_id, count)
+  WHERE ia.image_id = p.image_id`
+	aggResult := r.aggregateImageCounts(views)
+	if _, err := tx.NamedExecContext(ctx, aggQuery, aggResult); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
 	}
 
@@ -215,30 +215,29 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 		return errors.Wrap(err, "imageRepository.batchViews.Commit")
 	}
 
-	log.Println("imageRepository.batchViews", time.Since(start))
 	return nil
 }
 
-func (r *imageRepository) namedAnalyticsQuery(
-	column string,
-	items []domain.ImageView,
-) (string, []any) {
-	counter := make(map[int]int)
-	for _, item := range items {
-		counter[item.ImageID]++
+// TEMP: This seems to be bad cuz SRP, but i cannot figure out the right way to do it
+// Returns a map array with image_id and count keys for use in a named query
+func (r *imageRepository) aggregateImageCounts(items []domain.ImageView) []map[string]interface{} {
+	imageIndexes := make(map[int]int)
+	var v []map[string]interface{}
+
+	for i, item := range items {
+		if accIndex, exists := imageIndexes[item.ImageID]; exists {
+			if val, ok := v[accIndex]["count"].(int); ok {
+				v[accIndex]["count"] = val + 1
+				continue
+			}
+		}
+
+		imageIndexes[item.ImageID] = i
+		v = append(v, map[string]interface{}{
+			"image_id": item.ImageID,
+			"count":    1,
+		})
 	}
 
-	p := make([]string, 0, len(items)*2)
-	var v []any
-	for imageID, count := range counter {
-		p = append(p, fmt.Sprintf("($%d::int, $%d::int)", len(p)+1, len(p)+2))
-		v = append(v, imageID, count)
-	}
-
-	q := fmt.Sprintf(`
-    UPDATE images_analytics AS ia SET views_count = ia.views_count + p.views_count
-    FROM (VALUES %s) AS p(image_id, views_count) WHERE ia.image_id = p.image_id
-  `, strings.Join(p, ","))
-
-	return q, v
+	return v
 }
