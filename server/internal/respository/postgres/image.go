@@ -13,6 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+type imageAnalyticsAgg struct {
+	ImageID int `db:"image_id"`
+	Count   int `db:"count"`
+}
+
 var imageBatchConfig = batch.BatchConfig{Retries: 3, MaxSize: 10000}
 var batchingCtxTimeout = time.Second * 5
 
@@ -25,7 +30,7 @@ func NewImageRepository(db *sqlx.DB) *imageRepository {
 	repo := &imageRepository{db: db}
 
 	repo.viewBatcher = batch.NewWithConfig(&imageBatchConfig, repo.batchViews)
-	go repo.viewBatcher.Ticker(time.Second * 5)
+	go repo.viewBatcher.Ticker(time.Minute * 5)
 
 	return repo
 }
@@ -198,15 +203,40 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 	}
 	defer tx.Rollback()
 
-	query := ` INSERT INTO images_to_views (image_id, user_id) VALUES (:image_id, :user_id) ON CONFLICT DO NOTHING`
-	if _, err := tx.NamedExecContext(ctx, query, views); err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.ExecContext")
+	// This additionally loads the database, but this way we get a correct result of batch
+	query := `
+    WITH inserted AS (
+      INSERT INTO images_to_views (image_id, user_id)
+      VALUES(:image_id, :user_id)
+      ON CONFLICT DO NOTHING
+      RETURNING image_id
+    )
+    SELECT image_id, COUNT(*) AS count
+    FROM inserted
+    GROUP BY image_id;
+  `
+
+	query, params, err := r.db.BindNamed(query, views)
+	if err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.Named")
 	}
 
-	aggQuery := `UPDATE images_analytics AS ia SET views_count = ia.views_count + p.count
-  FROM (VALUES (CAST(:image_id AS int), CAST(:count AS int))) AS p(image_id, count)
-  WHERE ia.image_id = p.image_id`
-	aggResult := r.aggregateImageCounts(views)
+	rows, err := tx.QueryxContext(ctx, query, params...)
+	if err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.QueryxContext")
+	}
+
+	aggResult, err := scanToStructSliceOf[imageAnalyticsAgg](rows)
+	if err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.SliceScan")
+	}
+
+	aggQuery := `
+    UPDATE images_analytics AS ia
+    SET views_count = ia.views_count + p.count
+    FROM (VALUES (CAST(:image_id AS int), CAST(:count AS int))) AS p(image_id, count)
+    WHERE ia.image_id = p.image_id
+  `
 	if _, err := tx.NamedExecContext(ctx, aggQuery, aggResult); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
 	}
@@ -216,28 +246,4 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 	}
 
 	return nil
-}
-
-// TEMP: This seems to be bad cuz SRP, but i cannot figure out the right way to do it
-// Returns a map array with image_id and count keys for use in a named query
-func (r *imageRepository) aggregateImageCounts(items []domain.ImageView) []map[string]interface{} {
-	imageIndexes := make(map[int]int)
-	var v []map[string]interface{}
-
-	for i, item := range items {
-		if accIndex, exists := imageIndexes[item.ImageID]; exists {
-			if val, ok := v[accIndex]["count"].(int); ok {
-				v[accIndex]["count"] = val + 1
-				continue
-			}
-		}
-
-		imageIndexes[item.ImageID] = i
-		v = append(v, map[string]interface{}{
-			"image_id": item.ImageID,
-			"count":    1,
-		})
-	}
-
-	return v
 }
