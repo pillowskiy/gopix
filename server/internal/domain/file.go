@@ -15,7 +15,8 @@ var Unstable_AllowedFilesExt = map[string]struct{}{
 }
 
 type FileNode struct {
-	Data []byte `json:"-"`
-	Name string `json:"-"`
-	Size int64  `json:"-"`
+	Data        []byte `json:"-"`
+	Name        string `json:"-"`
+	Size        int64  `json:"-"`
+	ContentType string `json:"content_type,omitempty"`
 }

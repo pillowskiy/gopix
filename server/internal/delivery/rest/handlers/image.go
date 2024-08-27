@@ -68,16 +68,18 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		}
 
 		imgBytes := binImage.Bytes()
-		ext, err := image.GetMimeImageExt(imgBytes)
+		contentType := image.DetectMimeFileType(imgBytes)
+		ext, err := image.GetExtByMime(contentType)
 		if err != nil {
 			h.logger.Errorf("Create.GetMimeFileExt: %v", err)
 			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
 		fileNode := &domain.FileNode{
-			Data: imgBytes,
-			Name: image.GenerateUniqueFilename(ext),
-			Size: fileHeader.Size,
+			Data:        imgBytes,
+			Name:        image.GenerateUniqueFilename(ext),
+			Size:        fileHeader.Size,
+			ContentType: contentType,
 		}
 
 		img := &domain.Image{AuthorID: user.ID}
