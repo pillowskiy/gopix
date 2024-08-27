@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -13,23 +15,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-type imageAnalyticsAgg struct {
-	ImageID int `db:"image_id"`
-	Count   int `db:"count"`
-}
-
-var imageBatchConfig = batch.BatchConfig{Retries: 3, MaxSize: 10000}
-var batchingCtxTimeout = time.Second * 5
-
 type imageRepository struct {
 	db          *sqlx.DB
-	viewBatcher batch.Batcher[domain.ImageView]
+	viewBatcher batch.Batcher[viewBatchItem]
 }
 
 func NewImageRepository(db *sqlx.DB) *imageRepository {
 	repo := &imageRepository{db: db}
 
-	repo.viewBatcher = batch.NewWithConfig(&imageBatchConfig, repo.batchViews)
+	repo.viewBatcher = batch.NewWithConfig(imageViewsBatchAgg, repo.batchViews, &imageBatchConfig)
 	go repo.viewBatcher.Ticker(time.Minute * 5)
 
 	return repo
@@ -154,6 +148,8 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
 	}
 
+	detailedImage.Views += r.viewBatcher.CountByGroup(strconv.Itoa(id))
+
 	return &detailedImage, nil
 }
 
@@ -185,17 +181,22 @@ func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Imag
 }
 
 func (r *imageRepository) AddView(ctx context.Context, view *domain.ImageView) error {
-	r.viewBatcher.Add(*view)
+	r.viewBatcher.Add(viewBatchItem{
+		ImageID: view.ImageID,
+		UserID:  view.UserID,
+	})
 	return nil
 }
 
-func (r *imageRepository) batchViews(views []domain.ImageView) error {
+func (r *imageRepository) batchViews(views []viewBatchItem) error {
 	if len(views) == 0 {
 		return nil
 	}
 
 	ctx, close := context.WithTimeout(context.Background(), batchingCtxTimeout)
 	defer close()
+
+	start := time.Now()
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -244,6 +245,8 @@ func (r *imageRepository) batchViews(views []domain.ImageView) error {
 	if err := tx.Commit(); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.Commit")
 	}
+
+	log.Printf("Batching views took %s", time.Since(start))
 
 	return nil
 }

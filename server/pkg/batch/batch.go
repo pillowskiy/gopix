@@ -12,37 +12,63 @@ type BatchConfig struct {
 }
 
 type batcher[T interface{}] struct {
-	cfg   *BatchConfig
-	items []T
-	cb    func([]T) error
-	mut   sync.Mutex
+	cfg *BatchConfig
+	agg Aggregator[T]
+	cb  func([]T) error
+	mut sync.RWMutex
+}
+
+type GroupItem interface {
+	Group() string
+}
+
+type Synchronizer[T interface{}] interface {
+	Search(key string, cb func(T) bool) *T
+	CountByGroup(group string) int
+}
+
+type Aggregator[T interface{}] interface {
+	Count() int
+	Add(item T)
+	Clear()
+	Aggregate() []T
+
+	Synchronizer[T]
 }
 
 type Batcher[T interface{}] interface {
 	Add(T)
 	Ticker(tick time.Duration)
 	Tick()
-}
 
-// Creates new batcher with default config (Max size = 100 and 3 retries)
-func New[T interface{}](cb func([]T) error) Batcher[T] {
-	return &batcher[T]{cfg: &BatchConfig{Retries: 3, MaxSize: 100}, cb: cb}
+	Synchronizer[T]
 }
 
 // Creates new batcher with input config
-func NewWithConfig[T interface{}](config *BatchConfig, cb func([]T) error) Batcher[T] {
-	return &batcher[T]{cfg: config, cb: cb}
+func NewWithConfig[T interface{}](agg Aggregator[T], cb func([]T) error, config *BatchConfig) Batcher[T] {
+	return &batcher[T]{agg: agg, cfg: config, cb: cb}
 }
 
 // Add item to batcher queue
 func (b *batcher[T]) Add(item T) {
 	b.mut.Lock()
-	b.items = append(b.items, item)
+	b.agg.Add(item)
 	b.mut.Unlock()
 
-	if len(b.items) >= b.cfg.MaxSize {
+	if b.agg.Count() >= b.cfg.MaxSize {
 		b.Tick()
 	}
+}
+
+func (b *batcher[T]) Search(group string, cb func(T) bool) *T {
+	return b.agg.Search(group, cb)
+}
+
+func (b *batcher[T]) CountByGroup(group string) int {
+	b.mut.RLock()
+	defer b.mut.RUnlock()
+
+	return b.agg.CountByGroup(group)
 }
 
 // Ticker for automatic batch processing
@@ -66,15 +92,13 @@ func (b *batcher[T]) Ticker(d time.Duration) {
 func (b *batcher[T]) Tick() {
 	retries := 0
 
-	var itemsCopy []T
-	process := func() error {
-		b.mut.Lock()
-		itemsCopy = make([]T, len(b.items))
-		copy(itemsCopy, b.items)
-		b.items = []T{}
-		b.mut.Unlock()
+	b.mut.Lock()
+	items := b.agg.Aggregate()
+	b.agg.Clear()
+	b.mut.Unlock()
 
-		if err := b.cb(b.items); err != nil {
+	process := func() error {
+		if err := b.cb(items); err != nil {
 			return err
 		}
 		return nil
