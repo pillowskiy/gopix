@@ -16,6 +16,11 @@ type Image struct {
 	UpdatedAt   time.Time  `json:"updatedAt" db:"updated_at"`
 }
 
+type ImageStates struct {
+	Viewed bool `json:"viewed" db:"viewed"`
+	Liked  bool `json:"liked" db:"liked"`
+}
+
 type DetailedImage struct {
 	Image
 	Author ImageAuthor `json:"author" db:"author"`
@@ -38,4 +43,9 @@ type ImageTag struct {
 type ImageView struct {
 	ImageID int  `db:"image_id"`
 	UserID  *int `db:"user_id"`
+}
+
+type ImageLike struct {
+	ImageID int
+	UserID  int
 }

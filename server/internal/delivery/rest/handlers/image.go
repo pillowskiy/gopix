@@ -22,6 +22,7 @@ type imageUseCase interface {
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
+	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 }
 
 type ImageHandlers struct {
@@ -99,7 +100,7 @@ func (h *ImageHandlers) Delete() echo.HandlerFunc {
 		user, ok := c.Get("user").(*domain.User)
 		if !ok || user == nil {
 			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
-			return c.JSON(rest.NewInternalServerError().Response())
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
 		id, err := rest.IntParam(c, "id")
@@ -178,6 +179,30 @@ func (h *ImageHandlers) Update() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, img)
+	}
+}
+
+func (h *ImageHandlers) GetStates() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		id, err := rest.IntParam(c, "id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
+		}
+
+		user, ok := c.Get("user").(*domain.User)
+		if !ok || user == nil {
+			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		states, err := h.uc.States(ctx, id, user.ID)
+		if err != nil {
+			return h.responseWithUseCaseErr(c, err, "GetStates")
+		}
+
+		return c.JSON(http.StatusOK, states)
 	}
 }
 

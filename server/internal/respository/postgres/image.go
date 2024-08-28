@@ -180,6 +180,34 @@ func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Imag
 	return img, nil
 }
 
+func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
+	q := `
+  WITH params AS (
+    SELECT $1::int AS image_id, $2::int AS user_id
+  )
+  SELECT 
+    EXISTS (
+      SELECT 1
+      FROM images_to_views v
+      JOIN params p ON v.image_id = p.image_id AND v.user_id = p.user_id
+    ) AS viewed,
+    EXISTS (
+      SELECT 1
+      FROM images_to_likes l
+      JOIN params p ON l.image_id = p.image_id AND l.user_id = p.user_id
+    ) AS liked;
+  `
+
+	rowx := r.db.QueryRowxContext(ctx, q, imageID, userID)
+
+	states := new(domain.ImageStates)
+	if err := rowx.StructScan(states); err != nil {
+		return nil, errors.Wrap(err, "imageRepository.States.StructScan")
+	}
+
+	return states, nil
+}
+
 func (r *imageRepository) AddView(ctx context.Context, view *domain.ImageView) error {
 	r.viewBatcher.Add(viewBatchItem{
 		ImageID: view.ImageID,
