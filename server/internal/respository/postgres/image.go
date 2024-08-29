@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"log"
-	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -16,8 +14,10 @@ import (
 )
 
 type imageRepository struct {
-	db          *sqlx.DB
-	viewBatcher batch.Batcher[viewBatchItem]
+	db             *sqlx.DB
+	viewBatcher    batch.Batcher[viewBatchItem]
+	likeBatcher    batch.Batcher[likeBatchItem]
+	dislikeBatcher batch.Batcher[likeBatchItem]
 }
 
 func NewImageRepository(db *sqlx.DB) *imageRepository {
@@ -25,6 +25,9 @@ func NewImageRepository(db *sqlx.DB) *imageRepository {
 
 	repo.viewBatcher = batch.NewWithConfig(imageViewsBatchAgg, repo.processViewsBatch, &imageBatchConfig)
 	go repo.viewBatcher.Ticker(time.Minute * 5)
+
+	repo.likeBatcher = batch.NewWithConfig(imageLikesBatchAgg, repo.processLikesBatch, &imageBatchConfig)
+	go repo.likeBatcher.Ticker(time.Minute * 5)
 
 	return repo
 }
@@ -148,7 +151,8 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
 	}
 
-	detailedImage.Views += r.viewBatcher.CountByGroup(strconv.Itoa(id))
+	detailedImage.Views += r.viewBatcher.CountByGroup(imageGroupKey(id))
+	detailedImage.Likes += r.likeBatcher.CountByGroup(imageGroupKey(id))
 
 	return &detailedImage, nil
 }
@@ -212,73 +216,28 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
 	return states, nil
 }
 
+func (r *imageRepository) AddLike(ctx context.Context, imageID int, userID int) error {
+	r.likeBatcher.Add(likeBatchItem{
+		ImageID: imageID,
+		UserID:  userID,
+		Liked:   true,
+	})
+	return nil
+}
+
+func (r *imageRepository) RemoveLike(ctx context.Context, imageID int, userID int) error {
+	r.likeBatcher.Add(likeBatchItem{
+		ImageID: imageID,
+		UserID:  userID,
+		Liked:   false,
+	})
+	return nil
+}
+
 func (r *imageRepository) AddView(ctx context.Context, view *domain.ImageView) error {
 	r.viewBatcher.Add(viewBatchItem{
 		ImageID: view.ImageID,
 		UserID:  view.UserID,
 	})
-	return nil
-}
-
-func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
-	if len(views) == 0 {
-		return nil
-	}
-
-	ctx, close := context.WithTimeout(context.Background(), batchingCtxTimeout)
-	defer close()
-
-	start := time.Now()
-
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.BeginTx")
-	}
-	defer tx.Rollback()
-
-	// This additionally loads the database, but this way we get a correct result of batch
-	query := `
-    WITH inserted AS (
-      INSERT INTO images_to_views (image_id, user_id)
-      VALUES(:image_id, :user_id)
-      ON CONFLICT DO NOTHING
-      RETURNING image_id
-    )
-    SELECT image_id, COUNT(*) AS count
-    FROM inserted
-    GROUP BY image_id;
-  `
-
-	query, params, err := r.db.BindNamed(query, views)
-	if err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.Named")
-	}
-
-	rows, err := tx.QueryxContext(ctx, query, params...)
-	if err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.QueryxContext")
-	}
-
-	aggResult, err := scanToStructSliceOf[imageAnalyticsAgg](rows)
-	if err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.SliceScan")
-	}
-
-	aggQuery := `
-    UPDATE images_analytics AS ia
-    SET views_count = ia.views_count + p.count
-    FROM (VALUES (CAST(:image_id AS int), CAST(:count AS int))) AS p(image_id, count)
-    WHERE ia.image_id = p.image_id
-  `
-	if _, err := tx.NamedExecContext(ctx, aggQuery, aggResult); err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.Commit")
-	}
-
-	log.Printf("Batching views took %s", time.Since(start))
-
 	return nil
 }

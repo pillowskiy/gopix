@@ -7,11 +7,15 @@ type KGItem interface {
 
 	// Key returns a unique key for the item.
 	Key() string
+
+	// Count returns the number of occurrences of the item in the group.
+	Count() int
 }
 
 type kgAggregator[T KGItem] struct {
-	items   map[string]T
-	counter map[string]int
+	items                  map[string]T
+	counter                map[string]int
+	shouldOverwriteCounter func(T) bool
 }
 
 // NewKGAggregator creates a new aggregator for items of type T.
@@ -29,8 +33,17 @@ func (a *kgAggregator[T]) Count() int {
 }
 
 func (a *kgAggregator[T]) Add(item T) {
-	if _, exists := a.items[item.Key()]; !exists {
-		a.counter[item.Group()] += 1
+	existedItem, exists := a.items[item.Key()]
+
+	// TEMP: should overwrite counter cfg var
+	if exists {
+		prevValue := existedItem.Count()
+		curValue := item.Count()
+		if prevValue != curValue {
+			a.counter[item.Group()] += curValue
+		}
+	} else {
+		a.counter[item.Group()] += item.Count()
 	}
 
 	a.items[item.Key()] = item
