@@ -34,6 +34,10 @@ func (a *inlineAggregator[T]) Add(item T) {
 }
 
 func (a *inlineAggregator[T]) Search(group string, cb func(T) bool) *T {
+	if cb == nil {
+		return nil
+	}
+
 	for _, v := range a.data {
 		if cb(v) {
 			return &v

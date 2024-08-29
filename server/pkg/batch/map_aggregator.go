@@ -25,6 +25,10 @@ func (a *mapAggregator[T]) Add(item T) {
 }
 
 func (a *mapAggregator[T]) Search(group string, cb func(T) bool) *T {
+	if cb == nil {
+		return nil
+	}
+
 	items, ok := a.data[group]
 	if ok {
 		for _, v := range items {

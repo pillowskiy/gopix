@@ -23,7 +23,7 @@ type GroupItem interface {
 }
 
 type Synchronizer[T interface{}] interface {
-	Search(key string, cb func(T) bool) *T
+	Search(group string, cb func(T) bool) *T
 	CountByGroup(group string) int
 }
 
