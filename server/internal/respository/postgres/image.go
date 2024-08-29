@@ -23,7 +23,7 @@ type imageRepository struct {
 func NewImageRepository(db *sqlx.DB) *imageRepository {
 	repo := &imageRepository{db: db}
 
-	repo.viewBatcher = batch.NewWithConfig(imageViewsBatchAgg, repo.batchViews, &imageBatchConfig)
+	repo.viewBatcher = batch.NewWithConfig(imageViewsBatchAgg, repo.processViewsBatch, &imageBatchConfig)
 	go repo.viewBatcher.Ticker(time.Minute * 5)
 
 	return repo
@@ -198,11 +198,15 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
     ) AS liked;
   `
 
-	rowx := r.db.QueryRowxContext(ctx, q, imageID, userID)
-
 	states := new(domain.ImageStates)
+	rowx := r.db.QueryRowxContext(ctx, q, imageID, userID)
 	if err := rowx.StructScan(states); err != nil {
 		return nil, errors.Wrap(err, "imageRepository.States.StructScan")
+	}
+
+	batchView := r.viewBatcher.Search(imageWithUserKey(imageID, userID), nil)
+	if batchView != nil {
+		states.Viewed = true
 	}
 
 	return states, nil
@@ -216,7 +220,7 @@ func (r *imageRepository) AddView(ctx context.Context, view *domain.ImageView) e
 	return nil
 }
 
-func (r *imageRepository) batchViews(views []viewBatchItem) error {
+func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
 	if len(views) == 0 {
 		return nil
 	}
