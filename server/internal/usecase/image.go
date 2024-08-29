@@ -30,6 +30,8 @@ type ImageRepository interface {
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
+	AddLike(ctx context.Context, imageID int, userID int) error
+	RemoveLike(ctx context.Context, imageID int, userID int) error
 }
 
 type imageUseCase struct {
@@ -104,6 +106,14 @@ func (uc *imageUseCase) GetDetailed(ctx context.Context, id int) (*domain.Detail
 
 func (uc *imageUseCase) AddView(ctx context.Context, view *domain.ImageView) error {
 	return uc.repo.AddView(ctx, view)
+}
+
+func (uc *imageUseCase) AddLike(ctx context.Context, imageID int, userID int) error {
+	return uc.repo.AddLike(ctx, imageID, userID)
+}
+
+func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int) error {
+	return uc.repo.RemoveLike(ctx, imageID, userID)
 }
 
 func (uc *imageUseCase) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {

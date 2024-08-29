@@ -23,6 +23,8 @@ type imageUseCase interface {
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
+	AddLike(ctx context.Context, imageID int, userID int) error
+	RemoveLike(ctx context.Context, imageID int, userID int) error
 }
 
 type ImageHandlers struct {
@@ -203,6 +205,52 @@ func (h *ImageHandlers) GetStates() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, states)
+	}
+}
+
+func (h *ImageHandlers) AddLike() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		id, err := rest.IntParam(c, "id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
+		}
+
+		user, ok := c.Get("user").(*domain.User)
+		if !ok || user == nil {
+			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		if err := h.uc.AddLike(ctx, id, user.ID); err != nil {
+			return h.responseWithUseCaseErr(c, err, "Like")
+		}
+
+		return c.JSON(http.StatusOK, true)
+	}
+}
+
+func (h *ImageHandlers) RemoveLike() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		id, err := rest.IntParam(c, "id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
+		}
+
+		user, ok := c.Get("user").(*domain.User)
+		if !ok || user == nil {
+			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		if err := h.uc.RemoveLike(ctx, id, user.ID); err != nil {
+			return h.responseWithUseCaseErr(c, err, "Dislike")
+		}
+
+		return c.JSON(http.StatusOK, true)
 	}
 }
 
