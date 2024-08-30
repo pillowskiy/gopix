@@ -28,9 +28,10 @@ func NewUserHandlers(uc userUseCase, logger logger.Logger) *UserHandlers {
 }
 
 func (h *UserHandlers) Update() echo.HandlerFunc {
+	// TODO: To form data & upload
 	type updateDTO struct {
 		Username  string `json:"username" validate:"gte=2,lte=60"`
-		AvatarURL string `json:"avatarURL" validate:"lte=256"`
+		AvatarURL string `json:"avatarURL" validate:"lte=256,http_url"`
 	}
 
 	return func(c echo.Context) error {
@@ -111,13 +112,15 @@ func (h *UserHandlers) OverwritePermissions() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, true)
 	}
 }
+
 func (h *UserHandlers) Me() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user, ok := c.Get("user").(*domain.User)
-		if !ok || user == nil {
-			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
-			return c.JSON(rest.NewInternalServerError().Response())
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("UserHandlers.Me: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
+
 		return c.JSON(http.StatusOK, user)
 	}
 }

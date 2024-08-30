@@ -41,9 +41,9 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		user, ok := c.Get("user").(*domain.User)
-		if !ok || user == nil {
-			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("Create.GetContextUser: %v", err)
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
@@ -99,9 +99,9 @@ func (h *ImageHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		user, ok := c.Get("user").(*domain.User)
-		if !ok || user == nil {
-			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+		_, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("Delete.GetContextUser: %v", err)
 			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
@@ -193,9 +193,9 @@ func (h *ImageHandlers) GetStates() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
 
-		user, ok := c.Get("user").(*domain.User)
-		if !ok || user == nil {
-			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("GetStates.GetContextUser: %v", err)
 			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
@@ -217,9 +217,9 @@ func (h *ImageHandlers) AddLike() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
 
-		user, ok := c.Get("user").(*domain.User)
-		if !ok || user == nil {
-			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("AddLike.GetContextUser: %v", err)
 			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
@@ -240,9 +240,9 @@ func (h *ImageHandlers) RemoveLike() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
 
-		user, ok := c.Get("user").(*domain.User)
-		if !ok || user == nil {
-			h.logger.Errorf("Cannot get user from context, make sure to use OnlyAuth middleware first")
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("RemoveLike.GetContextUser: %v", err)
 			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
