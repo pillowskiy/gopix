@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	goErrors "errors"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/pkg/batch"
 	"github.com/pkg/errors"
@@ -31,10 +29,6 @@ func imageGroupKey(imageID int) string {
 }
 
 func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
-	if len(views) == 0 {
-		return nil
-	}
-
 	ctx, close := context.WithTimeout(context.Background(), batchingCtxTimeout)
 	defer close()
 
@@ -98,72 +92,46 @@ func (r *imageRepository) processLikesBatch(likes []likeBatchItem) error {
 	ctx, close := context.WithTimeout(context.Background(), batchingCtxTimeout)
 	defer close()
 
-	var aggLikes, aggDislikes []likeBatchItem
-	for _, l := range likes {
-		if l.Liked {
-			aggLikes = append(aggLikes, l)
-		} else {
-			aggDislikes = append(aggDislikes, l)
-		}
-	}
-
-	writeLikes, writeErr := r.likesBulkWriteInTx(aggLikes)
-	delLikes, delErr := r.likesBulkDeleteInTx(aggDislikes)
-	if err := goErrors.Join(writeErr, delErr); err != nil {
-		return err
-	}
-
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(err, "imageRepository.processLikesBatch.BeginTx")
 	}
 	defer tx.Rollback()
 
-	writeLikesRowx, writeErr := writeLikes(ctx, tx)
-	delLikesRowx, delErr := delLikes(ctx, tx)
-	if err := goErrors.Join(writeErr, delErr); err != nil {
-		return errors.Wrap(err, "imageRepository.processLikesBatch.InTxQueryCall")
-	}
-
-	writeLikesRes, writeErr := scanToStructSliceOf[imageAnalyticsAgg](writeLikesRowx)
-	delLikesRes, delErr := scanToStructSliceOf[imageAnalyticsAgg](delLikesRowx)
-	if err := goErrors.Join(writeErr, delErr); err != nil {
-		return errors.Wrap(err, "imageRepository.processLikesBatch.SliceScan")
-	}
-
-	var likesAggRes []imageLikesAnalyticsAgg
-	likesAggIndexes := make(map[int]int)
-
-	for i, agg := range writeLikesRes {
-		likesAggRes = append(likesAggRes, imageLikesAnalyticsAgg{
-			ImageID:    agg.ImageID,
-			LikesCount: agg.Count,
-		})
-		likesAggIndexes[agg.ImageID] = i
-	}
-
-	for _, agg := range delLikesRes {
-		aggIndex, exists := likesAggIndexes[agg.ImageID]
-
-		if exists {
-			likesAggRes[aggIndex].DislikesCount = agg.Count
+	var insLikesBunch, delLikesBunch []likeBatchItem
+	for _, l := range likes {
+		if l.Liked {
+			insLikesBunch = append(insLikesBunch, l)
 		} else {
-			likesAggRes = append(likesAggRes, imageLikesAnalyticsAgg{
-				ImageID:       agg.ImageID,
-				DislikesCount: agg.Count,
-			})
+			delLikesBunch = append(delLikesBunch, l)
 		}
+	}
+
+	likesAnalytics := make([]imageLikesAnalytics, 0, len(likes))
+
+	insLikesAnalytics, err := r.queryBulkWriteLikes(ctx, tx, insLikesBunch)
+	if err != nil {
+		log.Printf("Error in queryBulkWriteLikes: %v", err)
+	} else {
+		likesAnalytics = append(likesAnalytics, insLikesAnalytics...)
+	}
+
+	delLikesAnalytics, err := r.queryBulkDeleteLikes(ctx, tx, delLikesBunch)
+	if err != nil {
+		log.Printf("Error in queryBulkWriteDislikes: %v", err)
+	} else {
+		likesAnalytics = append(likesAnalytics, delLikesAnalytics...)
 	}
 
 	aggQuery := `
     UPDATE images_analytics AS ia
-    SET views_count = ia.views_count + p.count
+    SET likes_count = ia.likes_count + p.inserted_count - p.removed_count
     FROM (
-      VALUES (CAST(:image_id AS int), CAST(:likes_count AS int), CAST(:dislikes_count AS int))
-    ) AS p(image_id, count)
+      VALUES (CAST(:image_id AS int), CAST(:inserted_count AS int), CAST(:removed_count AS int))
+    ) AS p(image_id, inserted_count, removed_count)
     WHERE ia.image_id = p.image_id
   `
-	if _, err := tx.NamedExecContext(ctx, aggQuery, likesAggRes); err != nil {
+	if _, err := tx.NamedExecContext(ctx, aggQuery, likesAnalytics); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
 	}
 
@@ -174,6 +142,58 @@ func (r *imageRepository) processLikesBatch(likes []likeBatchItem) error {
 	return nil
 }
 
+func (r *imageRepository) queryBulkWriteLikes(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	likes []likeBatchItem,
+) ([]imageLikesAnalytics, error) {
+	if len(likes) == 0 {
+		return nil, errors.New("empty batch")
+	}
+
+	call, error := r.likesBulkWriteInTx(likes)
+	if error != nil {
+		return nil, error
+	}
+
+	return r.queryBulkLikesCall(ctx, tx, call)
+}
+
+func (r *imageRepository) queryBulkDeleteLikes(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	likes []likeBatchItem,
+) ([]imageLikesAnalytics, error) {
+	if len(likes) == 0 {
+		return nil, errors.New("empty batch")
+	}
+
+	call, error := r.likesBulkDeleteInTx(likes)
+	if error != nil {
+		return nil, error
+	}
+
+	return r.queryBulkLikesCall(ctx, tx, call)
+}
+
+func (r *imageRepository) queryBulkLikesCall(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	call InTxQueryCallContext,
+) ([]imageLikesAnalytics, error) {
+	rowx, err := call(ctx, tx)
+	if err != nil {
+		return nil, errors.Wrap(err, "imageRepository.processLikesBatch.InTxQueryCall")
+	}
+
+	agg, err := scanToStructSliceOf[imageLikesAnalytics](rowx)
+	if err != nil {
+		return nil, errors.Wrap(err, "imageRepository.processLikesBatch.SliceScan")
+	}
+
+	return agg, nil
+}
+
 func (r *imageRepository) likesBulkWriteInTx(likes []likeBatchItem) (InTxQueryCallContext, error) {
 	query := `
     WITH inserted AS (
@@ -182,7 +202,7 @@ func (r *imageRepository) likesBulkWriteInTx(likes []likeBatchItem) (InTxQueryCa
       ON CONFLICT DO NOTHING
       RETURNING image_id
     )
-    SELECT image_id, COUNT(*) AS count
+    SELECT image_id, COUNT(*) AS inserted_count, 0 AS removed_count 
     FROM inserted
     GROUP BY image_id;
   `
@@ -204,7 +224,7 @@ func (r *imageRepository) likesBulkDeleteInTx(likes []likeBatchItem) (InTxQueryC
       WHERE image_id = :image_id AND user_id = :user_id
       RETURNING image_id
     )
-    SELECT image_id, COUNT(*) AS count
+    SELECT image_id, 0 AS inserted_count, COUNT(*) AS removed_count
     FROM inserted
     GROUP BY image_id;
   `

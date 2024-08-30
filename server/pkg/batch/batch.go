@@ -97,6 +97,10 @@ func (b *batcher[T]) Tick() {
 	b.agg.Clear()
 	b.mut.Unlock()
 
+	if len(items) == 0 {
+		return
+	}
+
 	process := func() error {
 		if err := b.cb(items); err != nil {
 			return err

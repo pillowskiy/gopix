@@ -4,10 +4,10 @@ import "github.com/pillowskiy/gopix/pkg/batch"
 
 var imageLikesBatchAgg = batch.NewKGAggregator[likeBatchItem]()
 
-type imageLikesAnalyticsAgg struct {
+type imageLikesAnalytics struct {
 	ImageID       int `db:"image_id"`
-	LikesCount    int `db:"likes_count"`
-	DislikesCount int `db:"dislikes_count"`
+	InsertedCount int `db:"inserted_count"`
+	RemovedCount  int `db:"removed_count"`
 }
 
 type likeBatchItem struct {
