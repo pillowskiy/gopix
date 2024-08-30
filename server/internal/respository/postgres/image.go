@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
@@ -24,10 +23,10 @@ func NewImageRepository(db *sqlx.DB) *imageRepository {
 	repo := &imageRepository{db: db}
 
 	repo.viewBatcher = batch.NewWithConfig(imageViewsBatchAgg, repo.processViewsBatch, &imageBatchConfig)
-	go repo.viewBatcher.Ticker(time.Minute * 5)
+	go repo.viewBatcher.Ticker(imageBatchTickDuration)
 
 	repo.likeBatcher = batch.NewWithConfig(imageLikesBatchAgg, repo.processLikesBatch, &imageBatchConfig)
-	go repo.likeBatcher.Ticker(time.Minute * 5)
+	go repo.likeBatcher.Ticker(imageBatchTickDuration)
 
 	return repo
 }
@@ -214,6 +213,22 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
 	}
 
 	return states, nil
+}
+
+func (r *imageRepository) HasLike(ctx context.Context, imageID int, userID int) (bool, error) {
+	q := `
+  SELECT EXISTS (
+    SELECT 1 FROM images_to_likes WHERE image_id = $1 AND user_id = $2
+  )
+  `
+
+	var hasLike bool
+	rowx := r.db.QueryRowxContext(ctx, q, imageID, userID)
+	if err := rowx.Scan(&hasLike); err != nil {
+		return false, errors.Wrap(err, "imageRepository.HasLike.Scan")
+	}
+
+	return hasLike, nil
 }
 
 func (r *imageRepository) AddLike(ctx context.Context, imageID int, userID int) error {

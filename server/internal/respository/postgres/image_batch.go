@@ -12,7 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var imageBatchConfig = batch.BatchConfig{Retries: 3, MaxSize: 10000}
+var imageBatchConfig = batch.BatchConfig{Retries: 3, MaxSize: 1000}
+var imageBatchTickDuration = time.Minute
 var batchingCtxTimeout = time.Second * 5
 
 type imageAnalyticsAgg struct {

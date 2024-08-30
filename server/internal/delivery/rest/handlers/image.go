@@ -258,7 +258,7 @@ func (h *ImageHandlers) responseWithUseCaseErr(c echo.Context, err error, trace 
 	var restErr *rest.Error
 	switch {
 	case errors.Is(err, usecase.ErrUnprocessableEntity):
-		restErr = rest.NewBadRequestError("Image body has incorrect type")
+		restErr = rest.NewBadRequestError("Image cannot be processed because it may conflict")
 		break
 	case errors.Is(err, usecase.ErrNotFound):
 		restErr = rest.NewNotFoundError("Image not found")

@@ -30,6 +30,7 @@ type ImageRepository interface {
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
+	HasLike(ctx context.Context, imageID int, userID int) (bool, error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
 }
@@ -113,11 +114,26 @@ func (uc *imageUseCase) AddLike(ctx context.Context, imageID int, userID int) er
 }
 
 func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int) error {
+	// We should check for like existence to make sure that we don't cause UX conflicts
+	// For example, when the number of likes on an image is negative
+	if hasLike := uc.HasLike(ctx, imageID, userID); hasLike {
+		return ErrUnprocessableEntity
+	}
+
 	return uc.repo.RemoveLike(ctx, imageID, userID)
 }
 
 func (uc *imageUseCase) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
 	return uc.repo.States(ctx, imageID, userID)
+}
+
+func (uc *imageUseCase) HasLike(ctx context.Context, imageID int, userID int) bool {
+	hasLike, err := uc.repo.HasLike(ctx, imageID, userID)
+	if err != nil {
+		uc.logger.Errorf("ImageUseCase.HasLike: %v", err)
+	}
+
+	return hasLike
 }
 
 func (uc *imageUseCase) GetById(ctx context.Context, id int) (*domain.Image, error) {
