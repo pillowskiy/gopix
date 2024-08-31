@@ -1,0 +1,25 @@
+# Python specific
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.db
+*.sqlite3
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Docker specific
+*.dockerfile
+docker-compose.override.yml
+
+# VS Code specific
+.vscode/
+
+# macOS specific
+.DS_Store
+
+# Windows specific
+Thumbs.db
