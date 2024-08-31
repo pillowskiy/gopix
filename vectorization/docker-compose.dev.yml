@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  gopix-vectorization:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "8000:8000"
+    mem_limit: 512m 
+    volumes:
+      - .:/app
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: development

@@ -1,0 +1,8 @@
+venv/
+images/
+models/hub
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.git
