@@ -57,7 +57,7 @@ func (s *EchoServer) MapHandlers() error {
 
 	imageCache := redis.NewImageCache(s.sh.Redis)
 	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
-	imageStorage := s3.NewImageStorage(s.sh.S3, "gopix")
+	imageStorage := s3.NewImageStorage(s.sh.S3, s.sh.S3.PublicBucket)
 
 	jwtTokenGen := token.NewJWTTokenGenerator(
 		s.cfg.Session.Secret,

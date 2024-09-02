@@ -14,7 +14,8 @@ import (
 
 type S3 struct {
 	*s3.S3
-	Uploader *s3manager.Uploader
+	Uploader     *s3manager.Uploader
+	PublicBucket string
 }
 
 func NewS3Storage(cfg *config.S3) (*S3, error) {
@@ -36,5 +37,9 @@ func NewS3Storage(cfg *config.S3) (*S3, error) {
 		u.PartSize = cfg.MultipartChunkSizeMB * 1024 * 1024
 	})
 
-	return &S3{s3.New(sess), uploader}, nil
+	return &S3{
+		S3:           s3.New(sess),
+		Uploader:     uploader,
+		PublicBucket: cfg.Bucket,
+	}, nil
 }
