@@ -88,6 +88,16 @@ func (h *UserHandlers) OverwritePermissions() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("ID has incorrect type").Response())
 		}
 
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("OverwritePermissions.GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		if user.ID == id {
+			return c.JSON(rest.NewBadRequestError("You can't overwrite your own permissions").Response())
+		}
+
 		ovr := new(overwriteDTO)
 		if err := rest.DecodeEchoBody(c, ovr); err != nil {
 			h.logger.Errorf("OverwritePermissions.DecodeBody: %v", err)
