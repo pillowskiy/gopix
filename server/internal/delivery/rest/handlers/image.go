@@ -23,6 +23,9 @@ type imageUseCase interface {
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
+	Discover(
+		ctx context.Context, page int, limit int, sort domain.ImageSortMethod,
+	) (*domain.Pagination[domain.Image], error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
 }
@@ -43,7 +46,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 
 		user, err := GetContextUser(c)
 		if err != nil {
-			h.logger.Errorf("Create.GetContextUser: %v", err)
+			h.logger.Errorf("Upload.GetContextUser: %v", err)
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
@@ -53,20 +56,20 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 				return c.JSON(restErr.Response())
 			}
 
-			h.logger.Errorf("Create.ReadEchoImage: %v", err)
+			h.logger.Errorf("Upload.ReadEchoImage: %v", err)
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
 		file, err := fileHeader.Open()
 		if err != nil {
-			h.logger.Errorf("Create.Open: %v", err)
+			h.logger.Errorf("Upload.Open: %v", err)
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 		defer file.Close()
 
 		binImage := bytes.NewBuffer(nil)
 		if _, err := io.Copy(binImage, file); err != nil {
-			h.logger.Errorf("Create.Copy: %v", err)
+			h.logger.Errorf("Upload.Copy: %v", err)
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
@@ -74,7 +77,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		contentType := image.DetectMimeFileType(imgBytes)
 		ext, err := image.GetExtByMime(contentType)
 		if err != nil {
-			h.logger.Errorf("Create.GetMimeFileExt: %v", err)
+			h.logger.Errorf("Upload.GetMimeFileExt: %v", err)
 			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
@@ -85,7 +88,12 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			ContentType: contentType,
 		}
 
-		img := &domain.Image{AuthorID: user.ID}
+		pHash, err := image.PHash(imgBytes)
+		if err != nil {
+			h.logger.Errorf("Upload.PHash: %v", err)
+		}
+
+		img := &domain.Image{AuthorID: user.ID, PHash: pHash}
 		createdImg, err := h.uc.Create(ctx, img, fileNode)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Create")
@@ -208,6 +216,42 @@ func (h *ImageHandlers) GetStates() echo.HandlerFunc {
 	}
 }
 
+func (h *ImageHandlers) GetDiscover() echo.HandlerFunc {
+	type discoverQuery struct {
+		Limit int    `query:"limit" validate:"gte=1,lte=100"`
+		Page  int    `query:"page" validate:"gte=1"`
+		Sort  string `query:"sort" validate:"oneof=popular newest oldest mostViewed"`
+	}
+
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		query := new(discoverQuery)
+		if err := rest.DecodeEchoBody(c, query); err != nil {
+			h.logger.Errorf("GetDiscover.DecodeQuery: %v", err)
+			return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
+		}
+
+		if err := validator.ValidateStruct(ctx, query); err != nil {
+			return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
+		}
+
+		if query.Sort == "" {
+			query.Sort = string(domain.ImagePopularSort)
+		}
+
+		images, err := h.uc.Discover(ctx, query.Page, query.Limit, domain.ImageSortMethod(query.Sort))
+		if err != nil {
+			if errors.Is(err, usecase.ErrUnprocessable) {
+				return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
+			}
+			return h.responseWithUseCaseErr(c, err, "GetDiscover")
+		}
+
+		return c.JSON(http.StatusOK, images)
+	}
+}
+
 func (h *ImageHandlers) AddLike() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
@@ -257,7 +301,7 @@ func (h *ImageHandlers) RemoveLike() echo.HandlerFunc {
 func (h *ImageHandlers) responseWithUseCaseErr(c echo.Context, err error, trace string) error {
 	var restErr *rest.Error
 	switch {
-	case errors.Is(err, usecase.ErrUnprocessableEntity):
+	case errors.Is(err, usecase.ErrUnprocessable):
 		restErr = rest.NewBadRequestError("Image cannot be processed because it may conflict")
 		break
 	case errors.Is(err, usecase.ErrNotFound):

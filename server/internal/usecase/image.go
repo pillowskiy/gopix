@@ -30,6 +30,9 @@ type ImageRepository interface {
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
+	Discover(
+		ctx context.Context, page int, limit int, sort domain.ImageSortMethod,
+	) (*domain.Pagination[domain.Image], error)
 	HasLike(ctx context.Context, imageID int, userID int) (bool, error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
@@ -117,7 +120,7 @@ func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int)
 	// We should check for like existence to make sure that we don't cause UX conflicts
 	// For example, when the number of likes on an image is negative
 	if hasLike := uc.HasLike(ctx, imageID, userID); hasLike {
-		return ErrUnprocessableEntity
+		return ErrUnprocessable
 	}
 
 	return uc.repo.RemoveLike(ctx, imageID, userID)
@@ -125,6 +128,20 @@ func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int)
 
 func (uc *imageUseCase) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
 	return uc.repo.States(ctx, imageID, userID)
+}
+
+func (uc *imageUseCase) Discover(
+	ctx context.Context,
+	page int,
+	limit int,
+	sort domain.ImageSortMethod,
+) (*domain.Pagination[domain.Image], error) {
+	pag, err := uc.repo.Discover(ctx, page, limit, sort)
+	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
+		return nil, ErrUnprocessable
+	}
+
+	return pag, err
 }
 
 func (uc *imageUseCase) HasLike(ctx context.Context, imageID int, userID int) bool {

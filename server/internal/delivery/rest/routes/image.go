@@ -10,6 +10,8 @@ import (
 )
 
 func MapImageRoutes(g *echo.Group, h *handlers.ImageHandlers, mw *middlewares.GuardMiddlewares) {
+	g.GET("/", h.GetDiscover())
+
 	g.POST("/",
 		h.Upload(),
 		mw.OnlyAuth,
