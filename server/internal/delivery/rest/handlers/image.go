@@ -18,9 +18,9 @@ import (
 
 type imageUseCase interface {
 	Create(ctx context.Context, image *domain.Image, file *domain.FileNode) (*domain.Image, error)
-	Delete(ctx context.Context, id int) error
+	Delete(ctx context.Context, id int, executor *domain.User) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
-	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
+	Update(ctx context.Context, id int, image *domain.Image, executor *domain.User) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	Discover(
@@ -118,7 +118,13 @@ func (h *ImageHandlers) Delete() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
 
-		if err := h.uc.Delete(ctx, id); err != nil {
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("Delete.GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		if err := h.uc.Delete(ctx, id, user); err != nil {
 			return h.responseWithUseCaseErr(c, err, "Delete")
 		}
 
@@ -177,13 +183,19 @@ func (h *ImageHandlers) Update() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Update body has incorrect type").Response())
 		}
 
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("Update.GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
 		image := &domain.Image{
 			Title:       dto.Title,
 			Description: dto.Description,
 			AccessLevel: dto.AccessLevel,
 		}
 
-		img, err := h.uc.Update(ctx, id, image)
+		img, err := h.uc.Update(ctx, id, image, user)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Update")
 		}
@@ -301,6 +313,9 @@ func (h *ImageHandlers) RemoveLike() echo.HandlerFunc {
 func (h *ImageHandlers) responseWithUseCaseErr(c echo.Context, err error, trace string) error {
 	var restErr *rest.Error
 	switch {
+	case errors.Is(err, usecase.ErrForbidden):
+		restErr = rest.NewForbiddenError("You don't have permissions to perform this action")
+		break
 	case errors.Is(err, usecase.ErrUnprocessable):
 		restErr = rest.NewBadRequestError("Image cannot be processed because it may conflict")
 		break

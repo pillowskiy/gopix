@@ -10,6 +10,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
+	"github.com/pillowskiy/gopix/internal/policy"
 	"github.com/pillowskiy/gopix/internal/respository/postgres"
 	"github.com/pillowskiy/gopix/internal/respository/redis"
 	"github.com/pillowskiy/gopix/internal/respository/s3"
@@ -65,7 +66,9 @@ func (s *EchoServer) MapHandlers() error {
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
-	imageUC := usecase.NewImageUseCase(imageStorage, imageCache, imageRepo, s.logger)
+
+	imageACL := policy.NewImageAccessPolicy()
+	imageUC := usecase.NewImageUseCase(imageStorage, imageCache, imageRepo, imageACL, s.logger)
 
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))

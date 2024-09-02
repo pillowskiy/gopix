@@ -38,20 +38,26 @@ type ImageRepository interface {
 	RemoveLike(ctx context.Context, imageID int, userID int) error
 }
 
+type ImageAccessPolicy interface {
+	CanModify(user *domain.User, image *domain.Image) bool
+}
+
 type imageUseCase struct {
 	storage ImageFileStorage
 	cache   ImageCache
 	repo    ImageRepository
 	logger  logger.Logger
+	acl     ImageAccessPolicy
 }
 
 func NewImageUseCase(
 	storage ImageFileStorage,
 	cache ImageCache,
 	repo ImageRepository,
+	acl ImageAccessPolicy,
 	logger logger.Logger,
 ) *imageUseCase {
-	return &imageUseCase{storage: storage, repo: repo, cache: cache, logger: logger}
+	return &imageUseCase{storage: storage, repo: repo, cache: cache, acl: acl, logger: logger}
 }
 
 func (uc *imageUseCase) Create(
@@ -77,10 +83,15 @@ func (uc *imageUseCase) Create(
 func (uc *imageUseCase) Delete(
 	ctx context.Context,
 	id int,
+	executor *domain.User,
 ) error {
 	img, err := uc.GetById(ctx, id)
 	if err != nil {
 		return err
+	}
+
+	if canEdit := uc.acl.CanModify(executor, img); !canEdit {
+		return ErrForbidden
 	}
 
 	if err := uc.repo.Delete(ctx, id); err != nil {
@@ -118,7 +129,7 @@ func (uc *imageUseCase) AddLike(ctx context.Context, imageID int, userID int) er
 
 func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int) error {
 	// We should check for like existence to make sure that we don't cause UX conflicts
-	// For example, when the number of likes on an image is negative
+	// For example, when the number of likes is negative
 	if hasLike := uc.HasLike(ctx, imageID, userID); hasLike {
 		return ErrUnprocessable
 	}
@@ -178,10 +189,15 @@ func (uc *imageUseCase) Update(
 	ctx context.Context,
 	id int,
 	image *domain.Image,
+	executor *domain.User,
 ) (*domain.Image, error) {
-	_, err := uc.GetById(ctx, id)
+	img, err := uc.GetById(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	if canEdit := uc.acl.CanModify(executor, img); !canEdit {
+		return nil, ErrForbidden
 	}
 
 	uc.deleteCachedImage(ctx, id)

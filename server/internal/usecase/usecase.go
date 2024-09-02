@@ -7,4 +7,5 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrNotFound           = errors.New("entity not found")
 	ErrUnprocessable      = errors.New("unprocessable")
+	ErrForbidden          = errors.New("forbidden")
 )
