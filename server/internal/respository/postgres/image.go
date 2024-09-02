@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
@@ -11,6 +12,12 @@ import (
 	"github.com/pillowskiy/gopix/pkg/batch"
 	"github.com/pkg/errors"
 )
+
+var imagesSortQuery = NewSortQueryBuilder("images").
+	AddField(string(domain.ImageNewestSort), SortField{Field: "uploaded_at", Order: sortOrderDESC}).
+	AddField(string(domain.ImageOldestSort), SortField{Field: "uploaded_at", Order: sortOrderASC}).
+	AddField(string(domain.ImagePopularSort), SortField{Field: "a.likes_count", Order: sortOrderDESC}).
+	AddField(string(domain.ImageMostViewedSort), SortField{Field: "a.views_count", Order: sortOrderDESC})
 
 type imageRepository struct {
 	db             *sqlx.DB
@@ -63,16 +70,6 @@ func (r *imageRepository) GetById(ctx context.Context, id int) (*domain.Image, e
 	}
 
 	return img, nil
-}
-
-func (r *imageRepository) Similar(ctx context.Context, id int) ([]domain.Image, error) {
-	_ = `
-  SELECT id FROM 
-    (SELECT id, filephash_1, BIT_COUNT(filephash_2 ^ CONV(SUBSTRING('813ed36913ec8639', 9,  8), 16, 10)) as BC1     FROM phashs WHERE BIT_COUNT(filephash_2 ^ CONV(SUBSTRING('813ed36913ec8639', 9,  8), 16, 10)) <= 3) BCQ1 
-    WHERE BIT_COUNT(filephash_1 ^ CONV(SUBSTRING('813ed36913ec8639', 1,  8), 16, 10)) + BC1
-  `
-
-	return nil, nil
 }
 
 func (r *imageRepository) Delete(ctx context.Context, id int) error {
@@ -142,6 +139,57 @@ func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Imag
 	}
 
 	return img, nil
+}
+
+func (r *imageRepository) Discover(
+	ctx context.Context,
+	page int,
+	limit int,
+	sort domain.ImageSortMethod,
+) (*domain.Pagination[domain.Image], error) {
+	sortQuery, ok := imagesSortQuery.SortQuery(string(sort))
+	if !ok {
+		return nil, repository.ErrIncorrectInput
+	}
+
+	q := fmt.Sprintf(`
+  SELECT
+    i.id,
+    i.author_id,
+    i.path,
+    i.title,
+    i.description,
+    i.access_level,
+    i.expires_at,
+    i.uploaded_at,
+    i.updated_at
+  FROM images i
+    LEFT JOIN images_analytics a ON a.image_id = i.id
+  WHERE access_level = 'public'::access_level
+  ORDER BY %s LIMIT $1 OFFSET $2
+  `, sortQuery)
+
+	rowx, err := r.db.QueryxContext(ctx, q, limit, (page-1)*limit)
+	if err != nil {
+		return nil, errors.Wrap(err, "imageRepository.Discover.Queryx")
+	}
+	defer rowx.Close()
+
+	images, err := scanToStructSliceOf[domain.Image](rowx)
+	if err != nil {
+		return nil, errors.Wrap(err, "imageRepository.Discover.Scan")
+	}
+
+	pagination := &domain.Pagination[domain.Image]{
+		Page:    page,
+		PerPage: limit,
+		Items:   images,
+	}
+
+	countQuery := `SELECT COUNT(1) FROM images`
+	_ = r.db.QueryRowxContext(ctx, countQuery).Scan(&pagination.Total)
+
+	return pagination, nil
 }
 
 func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {

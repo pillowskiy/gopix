@@ -4,6 +4,23 @@ import (
 	"time"
 )
 
+type ImageSortMethod string
+
+const (
+	ImageNewestSort     ImageSortMethod = "newest"
+	ImageOldestSort     ImageSortMethod = "oldest"
+	ImagePopularSort    ImageSortMethod = "popular"
+	ImageMostViewedSort ImageSortMethod = "mostViewed"
+)
+
+func (m ImageSortMethod) IsValid() bool {
+	switch m {
+	case ImageNewestSort, ImageOldestSort, ImagePopularSort:
+		return true
+	}
+	return false
+}
+
 type Image struct {
 	ID          int        `json:"id" db:"id"`
 	AuthorID    int        `json:"-" db:"author_id"`
@@ -12,6 +29,7 @@ type Image struct {
 	Description string     `json:"description,omitempty" db:"description"`
 	AccessLevel string     `json:"accessLevel" db:"access_level"`
 	ExpiresAt   *time.Time `json:"expiresAt,omitempty" db:"expires_at"`
+	PHash       string     `json:"-" db:"p_hash"`
 	CreatedAt   time.Time  `json:"createdAt" db:"uploaded_at"`
 	UpdatedAt   time.Time  `json:"updatedAt" db:"updated_at"`
 }
