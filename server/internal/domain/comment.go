@@ -8,7 +8,7 @@ type Comment struct {
 	ID        int       `json:"id" db:"id"`
 	AuthorID  int       `json:"-" db:"author_id"`
 	ImageID   int       `json:"-" db:"image_id"`
-	Comment   string    `json:"message" db:"comment"`
+	Text      string    `json:"text" db:"comment"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
