@@ -13,14 +13,6 @@ const (
 	ImageMostViewedSort ImageSortMethod = "mostViewed"
 )
 
-func (m ImageSortMethod) IsValid() bool {
-	switch m {
-	case ImageNewestSort, ImageOldestSort, ImagePopularSort:
-		return true
-	}
-	return false
-}
-
 type Image struct {
 	ID          int        `json:"id" db:"id"`
 	AuthorID    int        `json:"-" db:"author_id"`

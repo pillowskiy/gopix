@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var imagesSortQuery = NewSortQueryBuilder("images").
+var imagesSortQuery = NewSortQueryBuilder().
 	AddField(string(domain.ImageNewestSort), SortField{Field: "uploaded_at", Order: sortOrderDESC}).
 	AddField(string(domain.ImageOldestSort), SortField{Field: "uploaded_at", Order: sortOrderASC}).
 	AddField(string(domain.ImagePopularSort), SortField{Field: "a.likes_count", Order: sortOrderDESC}).
@@ -143,8 +143,7 @@ func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Imag
 
 func (r *imageRepository) Discover(
 	ctx context.Context,
-	page int,
-	limit int,
+	pagInput *domain.PaginationInput,
 	sort domain.ImageSortMethod,
 ) (*domain.Pagination[domain.Image], error) {
 	sortQuery, ok := imagesSortQuery.SortQuery(string(sort))
@@ -169,7 +168,8 @@ func (r *imageRepository) Discover(
   ORDER BY %s LIMIT $1 OFFSET $2
   `, sortQuery)
 
-	rowx, err := r.db.QueryxContext(ctx, q, limit, (page-1)*limit)
+	limit := pagInput.PerPage
+	rowx, err := r.db.QueryxContext(ctx, q, limit, (pagInput.Page-1)*limit)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Discover.Queryx")
 	}
@@ -181,9 +181,8 @@ func (r *imageRepository) Discover(
 	}
 
 	pagination := &domain.Pagination[domain.Image]{
-		Page:    page,
-		PerPage: limit,
-		Items:   images,
+		PaginationInput: *pagInput,
+		Items:           images,
 	}
 
 	countQuery := `SELECT COUNT(1) FROM images`

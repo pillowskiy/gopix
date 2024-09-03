@@ -23,13 +23,11 @@ type SortField struct {
 }
 
 type SortQueryBuilder struct {
-	tableName     string
 	allowedFields map[string]SortField
 }
 
-func NewSortQueryBuilder(tableName string) *SortQueryBuilder {
+func NewSortQueryBuilder() *SortQueryBuilder {
 	return &SortQueryBuilder{
-		tableName:     tableName,
 		allowedFields: make(map[string]SortField),
 	}
 }

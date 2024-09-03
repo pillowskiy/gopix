@@ -31,7 +31,7 @@ type ImageRepository interface {
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	Discover(
-		ctx context.Context, page int, limit int, sort domain.ImageSortMethod,
+		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.Image], error)
 	HasLike(ctx context.Context, imageID int, userID int) (bool, error)
 	AddLike(ctx context.Context, imageID int, userID int) error
@@ -143,11 +143,10 @@ func (uc *imageUseCase) States(ctx context.Context, imageID int, userID int) (*d
 
 func (uc *imageUseCase) Discover(
 	ctx context.Context,
-	page int,
-	limit int,
+	pagInput *domain.PaginationInput,
 	sort domain.ImageSortMethod,
 ) (*domain.Pagination[domain.Image], error) {
-	pag, err := uc.repo.Discover(ctx, page, limit, sort)
+	pag, err := uc.repo.Discover(ctx, pagInput, sort)
 	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
 		return nil, ErrUnprocessable
 	}

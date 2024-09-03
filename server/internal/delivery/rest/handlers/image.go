@@ -24,7 +24,7 @@ type imageUseCase interface {
 	AddView(ctx context.Context, view *domain.ImageView) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	Discover(
-		ctx context.Context, page int, limit int, sort domain.ImageSortMethod,
+		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.Image], error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
@@ -230,9 +230,9 @@ func (h *ImageHandlers) GetStates() echo.HandlerFunc {
 
 func (h *ImageHandlers) GetDiscover() echo.HandlerFunc {
 	type discoverQuery struct {
-		Limit int    `query:"limit" validate:"gte=1,lte=100"`
-		Page  int    `query:"page" validate:"gte=1"`
-		Sort  string `query:"sort" validate:"oneof=popular newest oldest mostViewed"`
+		Limit int    `query:"limit" validate:"required,gte=1,lte=100"`
+		Page  int    `query:"page" validate:"required,gte=1"`
+		Sort  string `query:"sort" validate:"oneof=newest oldest"`
 	}
 
 	return func(c echo.Context) error {
@@ -252,7 +252,8 @@ func (h *ImageHandlers) GetDiscover() echo.HandlerFunc {
 			query.Sort = string(domain.ImagePopularSort)
 		}
 
-		images, err := h.uc.Discover(ctx, query.Page, query.Limit, domain.ImageSortMethod(query.Sort))
+		pagInput := &domain.PaginationInput{Page: query.Page, PerPage: query.Limit}
+		images, err := h.uc.Discover(ctx, pagInput, domain.ImageSortMethod(query.Sort))
 		if err != nil {
 			if errors.Is(err, usecase.ErrUnprocessable) {
 				return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
