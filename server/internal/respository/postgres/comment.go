@@ -11,6 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var commentSortQuery = NewSortQueryBuilder().
+	AddField(string(domain.CommentNewestSort), SortField{Field: "created_at", Order: sortOrderDESC}).
+	AddField(string(domain.CommentOldestSort), SortField{Field: "created_at", Order: sortOrderASC})
+
 type commentRepository struct {
 	db *sqlx.DB
 }
@@ -23,9 +27,7 @@ func (repo *commentRepository) Create(
 	ctx context.Context,
 	comment *domain.Comment,
 ) (*domain.Comment, error) {
-	q := `
-  INSERT INTO comments (image_id, author_id, comment) VALUES($1, $2, $3) RETURNING *
-  `
+	q := `INSERT INTO comments (image_id, author_id, comment) VALUES($1, $2, $3) RETURNING *`
 
 	rowx := repo.db.QueryRowxContext(ctx, q, comment.ImageID, comment.AuthorID, comment.Text)
 
@@ -40,8 +42,15 @@ func (repo *commentRepository) Create(
 func (repo *commentRepository) GetByImageID(
 	ctx context.Context,
 	imageID int,
-) ([]domain.DetailedComment, error) {
-	q := `
+	pagInput *domain.PaginationInput,
+	sort domain.CommentSortMethod,
+) (*domain.Pagination[domain.DetailedComment], error) {
+	sortQuery, ok := commentSortQuery.SortQuery(string(sort))
+	if !ok {
+		return nil, repository.ErrIncorrectInput
+	}
+
+	q := fmt.Sprintf(`
   SELECT
     c.*,
     u.id AS "author.id",
@@ -49,20 +58,30 @@ func (repo *commentRepository) GetByImageID(
     u.avatar_url AS "author.avatar_url"
   FROM comments c
   JOIN users u ON c.author_id = u.id
-  WHERE image_id = $1 
-  `
+  WHERE image_id = $1 ORDER BY %s LIMIT $2 OFFSET $3
+  `, sortQuery)
 
-	rowx, err := repo.db.QueryxContext(ctx, q, imageID)
+	limit := pagInput.PerPage
+	rowx, err := repo.db.QueryxContext(ctx, q, imageID, limit, (pagInput.Page-1)*limit)
 	if err != nil {
 		return nil, fmt.Errorf("CommentRepository.GetByImageID.QueryContext: %v", err)
 	}
+	defer rowx.Close()
 
 	cmts, err := scanToStructSliceOf[domain.DetailedComment](rowx)
 	if err != nil {
 		return nil, fmt.Errorf("CommentRepository.GetByImageID.scanToStructSliceOf: %v", err)
 	}
 
-	return cmts, nil
+	pagination := &domain.Pagination[domain.DetailedComment]{
+		PaginationInput: *pagInput,
+		Items:           cmts,
+	}
+
+	countQuery := `SELECT COUNT(1) FROM comments WHERE image_id = $1`
+	_ = repo.db.QueryRowxContext(ctx, countQuery, imageID).Scan(&pagination.Total)
+
+	return pagination, nil
 }
 
 func (repo *commentRepository) GetByID(

@@ -11,7 +11,9 @@ import (
 
 type CommentRepository interface {
 	Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
-	GetByImageID(ctx context.Context, imageID int) ([]domain.DetailedComment, error)
+	GetByImageID(
+		ctx context.Context, imageID int, pagInput *domain.PaginationInput, sort domain.CommentSortMethod,
+	) (*domain.Pagination[domain.DetailedComment], error)
 	GetByID(ctx context.Context, imageID int) (*domain.Comment, error)
 	Delete(ctx context.Context, commentID int) error
 	Update(ctx context.Context, commentID int, comment *domain.Comment) (*domain.Comment, error)
@@ -51,8 +53,15 @@ func (uc *commentUseCase) Create(
 func (uc *commentUseCase) GetByImageID(
 	ctx context.Context,
 	imageID int,
-) ([]domain.DetailedComment, error) {
-	return uc.repo.GetByImageID(ctx, imageID)
+	pagInput *domain.PaginationInput,
+	sort domain.CommentSortMethod,
+) (*domain.Pagination[domain.DetailedComment], error) {
+	pag, err := uc.repo.GetByImageID(ctx, imageID, pagInput, sort)
+	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
+		return nil, ErrUnprocessable
+	}
+
+	return pag, err
 }
 
 func (uc *commentUseCase) GetByID(ctx context.Context, commentID int) (*domain.Comment, error) {

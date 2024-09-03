@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+type CommentSortMethod string
+
+const (
+	CommentNewestSort CommentSortMethod = "newest"
+	CommentOldestSort CommentSortMethod = "oldest"
+)
+
 type Comment struct {
 	ID        int       `json:"id" db:"id"`
 	AuthorID  int       `json:"-" db:"author_id"`
