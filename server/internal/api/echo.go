@@ -56,10 +56,6 @@ func (s *EchoServer) MapHandlers() error {
 	userCache := redis.NewUserCache(s.sh.Redis)
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
-	imageCache := redis.NewImageCache(s.sh.Redis)
-	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
-	imageStorage := s3.NewImageStorage(s.sh.S3, s.sh.S3.PublicBucket)
-
 	jwtTokenGen := token.NewJWTTokenGenerator(
 		s.cfg.Session.Secret,
 		s.cfg.Session.Expire*time.Second,
@@ -67,8 +63,15 @@ func (s *EchoServer) MapHandlers() error {
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
 
+	imageCache := redis.NewImageCache(s.sh.Redis)
+	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
+	imageStorage := s3.NewImageStorage(s.sh.S3, s.sh.S3.PublicBucket)
 	imageACL := policy.NewImageAccessPolicy()
 	imageUC := usecase.NewImageUseCase(imageStorage, imageCache, imageRepo, imageACL, s.logger)
+
+	commentRepo := postgres.NewCommentRepository(s.sh.Postgres)
+	commentACL := policy.NewCommentAccessPolicy()
+	commentUC := usecase.NewCommentUseCase(commentRepo, commentACL, s.logger)
 
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
@@ -87,6 +90,10 @@ func (s *EchoServer) MapHandlers() error {
 	imagesGroup := v1.Group("/images")
 	imagesHandlers := handlers.NewImageHandlers(imageUC, s.logger)
 	routes.MapImageRoutes(imagesGroup, imagesHandlers, guardMiddlewares)
+
+	commentsGroup := imagesGroup.Group("")
+	commentsHandlers := handlers.NewCommentHandlers(commentUC, s.logger)
+	routes.MapCommentRoutes(commentsGroup, commentsHandlers, guardMiddlewares)
 
 	return nil
 }
