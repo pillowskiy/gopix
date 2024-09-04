@@ -24,7 +24,7 @@ type ImageCache interface {
 
 type ImageRepository interface {
 	Create(ctx context.Context, image *domain.Image) (*domain.Image, error)
-	GetById(ctx context.Context, id int) (*domain.Image, error)
+	GetByID(ctx context.Context, id int) (*domain.Image, error)
 	Delete(ctx context.Context, id int) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
@@ -85,7 +85,7 @@ func (uc *imageUseCase) Delete(
 	id int,
 	executor *domain.User,
 ) error {
-	img, err := uc.GetById(ctx, id)
+	img, err := uc.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -163,13 +163,13 @@ func (uc *imageUseCase) HasLike(ctx context.Context, imageID int, userID int) bo
 	return hasLike
 }
 
-func (uc *imageUseCase) GetById(ctx context.Context, id int) (*domain.Image, error) {
+func (uc *imageUseCase) GetByID(ctx context.Context, id int) (*domain.Image, error) {
 	cachedImg, err := uc.cache.Get(ctx, id)
 	if cachedImg != nil {
 		return cachedImg, err
 	}
 
-	img, err := uc.repo.GetById(ctx, id)
+	img, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, ErrNotFound
@@ -190,7 +190,7 @@ func (uc *imageUseCase) Update(
 	image *domain.Image,
 	executor *domain.User,
 ) (*domain.Image, error) {
-	img, err := uc.GetById(ctx, id)
+	img, err := uc.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

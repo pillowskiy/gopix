@@ -58,7 +58,7 @@ func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*dom
 	return img, nil
 }
 
-func (r *imageRepository) GetById(ctx context.Context, id int) (*domain.Image, error) {
+func (r *imageRepository) GetByID(ctx context.Context, id int) (*domain.Image, error) {
 	img := new(domain.Image)
 	rowx := r.db.QueryRowxContext(ctx, getByIdImageQuery, id)
 
