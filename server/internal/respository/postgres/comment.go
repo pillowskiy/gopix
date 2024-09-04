@@ -120,7 +120,7 @@ func (repo *commentRepository) Update(
 	commnetID int,
 	comment *domain.Comment,
 ) (*domain.Comment, error) {
-	q := `UPDATE comments SET comment = $1 WHERE id = $2 RETURNING *`
+	q := `UPDATE comments SET comment = COALESCE(NULLIF($1, ''), comment) WHERE id = $2 RETURNING *`
 
 	rowx := repo.db.QueryRowxContext(ctx, q, comment.Text, commnetID)
 

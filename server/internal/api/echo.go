@@ -71,7 +71,7 @@ func (s *EchoServer) MapHandlers() error {
 
 	commentRepo := postgres.NewCommentRepository(s.sh.Postgres)
 	commentACL := policy.NewCommentAccessPolicy()
-	commentUC := usecase.NewCommentUseCase(commentRepo, commentACL, s.logger)
+	commentUC := usecase.NewCommentUseCase(commentRepo, commentACL, imageUC, s.logger)
 
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
@@ -94,6 +94,10 @@ func (s *EchoServer) MapHandlers() error {
 	commentsGroup := imagesGroup.Group("")
 	commentsHandlers := handlers.NewCommentHandlers(commentUC, s.logger)
 	routes.MapCommentRoutes(commentsGroup, commentsHandlers, guardMiddlewares)
+
+	albumsGroup := v1.Group("/albums")
+	albumsHandlers := handlers.NewAlbumHandlers(albumUC, s.logger)
+	routes.MapAlbumRoutes(albumsGroup, albumsHandlers, guardMiddlewares)
 
 	return nil
 }

@@ -24,20 +24,34 @@ type CommentAccessPolicy interface {
 	CanModify(user *domain.User, comment *domain.Comment) bool
 }
 
-type commentUseCase struct {
-	repo   CommentRepository
-	acl    CommentAccessPolicy
-	logger logger.Logger
+type CommentImageUseCase interface {
+	GetByID(ctx context.Context, imageID int) (*domain.Image, error)
 }
 
-func NewCommentUseCase(repo CommentRepository, acl CommentAccessPolicy, logger logger.Logger) *commentUseCase {
-	return &commentUseCase{repo: repo, acl: acl, logger: logger}
+type commentUseCase struct {
+	repo    CommentRepository
+	acl     CommentAccessPolicy
+	imageUC CommentImageUseCase
+	logger  logger.Logger
+}
+
+func NewCommentUseCase(
+	repo CommentRepository,
+	acl CommentAccessPolicy,
+	imageUC CommentImageUseCase,
+	logger logger.Logger,
+) *commentUseCase {
+	return &commentUseCase{repo: repo, acl: acl, imageUC: imageUC, logger: logger}
 }
 
 func (uc *commentUseCase) Create(
 	ctx context.Context,
 	comment *domain.Comment,
 ) (*domain.Comment, error) {
+	if _, err := uc.imageUC.GetByID(ctx, comment.ImageID); err != nil {
+		return nil, ErrIncorrectImageRef
+	}
+
 	commented, err := uc.repo.HasUserCommented(ctx, comment.ImageID, comment.AuthorID)
 	if err != nil {
 		return nil, errors.Wrap(err, "commentUseCase.Create.HasUserCommented")
@@ -56,6 +70,10 @@ func (uc *commentUseCase) GetByImageID(
 	pagInput *domain.PaginationInput,
 	sort domain.CommentSortMethod,
 ) (*domain.Pagination[domain.DetailedComment], error) {
+	if _, err := uc.imageUC.GetByID(ctx, imageID); err != nil {
+		return nil, ErrIncorrectImageRef
+	}
+
 	pag, err := uc.repo.GetByImageID(ctx, imageID, pagInput, sort)
 	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
 		return nil, ErrUnprocessable

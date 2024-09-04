@@ -187,6 +187,9 @@ func (h *CommentHandlers) Delete() echo.HandlerFunc {
 func (h *CommentHandlers) responseWithUseCaseErr(c echo.Context, err error, trace string) error {
 	var restErr *rest.Error
 	switch {
+	case errors.Is(err, usecase.ErrIncorrectImageRef):
+		restErr = rest.NewBadRequestError("Incorrect image reference provided")
+		break
 	case errors.Is(err, usecase.ErrForbidden):
 		restErr = rest.NewForbiddenError("You don't have permissions to perform this action")
 		break
