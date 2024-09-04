@@ -73,6 +73,10 @@ func (s *EchoServer) MapHandlers() error {
 	commentACL := policy.NewCommentAccessPolicy()
 	commentUC := usecase.NewCommentUseCase(commentRepo, commentACL, imageUC, s.logger)
 
+	albumRepo := postgres.NewAlbumRepository(s.sh.Postgres)
+	albumACL := policy.NewAlbumAccessPolicy()
+	albumUC := usecase.NewAlbumUseCase(albumRepo, albumACL, imageUC)
+
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
 
