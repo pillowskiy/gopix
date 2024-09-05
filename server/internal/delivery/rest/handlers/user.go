@@ -76,8 +76,8 @@ func (h *UserHandlers) Update() echo.HandlerFunc {
 
 func (h *UserHandlers) OverwritePermissions() echo.HandlerFunc {
 	type overwriteDTO struct {
-		Deny  domain.Permission `json:"deny" validate:"number"`
-		Allow domain.Permission `json:"allow" validate:"number"`
+		Deny  domain.Permission `json:"deny" validate:"min=1,number"`
+		Allow domain.Permission `json:"allow" validate:"min=1,number"`
 	}
 
 	return func(c echo.Context) error {
@@ -105,6 +105,10 @@ func (h *UserHandlers) OverwritePermissions() echo.HandlerFunc {
 		}
 
 		if err := validator.ValidateStruct(ctx, ovr); err != nil {
+			return c.JSON(rest.NewBadRequestError("OverwritePermissions body has incorrect type").Response())
+		}
+
+		if ovr.Deny <= 0 && ovr.Allow <= 0 {
 			return c.JSON(rest.NewBadRequestError("OverwritePermissions body has incorrect type").Response())
 		}
 
