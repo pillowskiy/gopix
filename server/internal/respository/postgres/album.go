@@ -47,6 +47,37 @@ func (repo *albumRepository) GetByID(ctx context.Context, albumID int) (*domain.
 	return album, nil
 }
 
+func (repo *albumRepository) GetAlbumImages(
+	ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+) (*domain.Pagination[domain.Image], error) {
+	q := `
+  SELECT i.* FROM images_to_albums ia 
+  JOIN images i ON i.id = ia.image_id
+  WHERE ia.album_id = $1
+  LIMIT $2 OFFSET $3
+  `
+
+	rowx, err := repo.db.QueryxContext(ctx, q, albumID, pagInput.PerPage, (pagInput.Page-1)*pagInput.PerPage)
+	if err != nil {
+		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.QueryxContext")
+	}
+
+	images, err := scanToStructSliceOf[domain.Image](rowx)
+	if err != nil {
+		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.scanToStructSliceOf")
+	}
+
+	pag := &domain.Pagination[domain.Image]{
+		PaginationInput: *pagInput,
+		Items:           images,
+	}
+
+	countQuery := `SELECT COUNT(1) FROM images_to_albums WHERE album_id = $1`
+	_ = repo.db.QueryRowxContext(ctx, countQuery, albumID).Scan(&pag.Total)
+
+	return pag, nil
+}
+
 func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error) {
 	q := `SELECT * FROM albums WHERE author_id = $1`
 

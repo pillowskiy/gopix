@@ -16,6 +16,9 @@ import (
 type albumUseCase interface {
 	Create(ctx context.Context, album *domain.Album) (*domain.Album, error)
 	GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error)
+	GetAlbumImages(
+		ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+	) (*domain.Pagination[domain.Image], error)
 	Delete(ctx context.Context, albumID int, executor *domain.User) error
 	Update(
 		ctx context.Context, albumID int, album *domain.Album, executor *domain.User,
@@ -89,6 +92,43 @@ func (h *AlbumHandlers) GetByAuthorID() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, albums)
+	}
+}
+
+func (h *AlbumHandlers) GetAlbumImages() echo.HandlerFunc {
+	type imageCommentsQuery struct {
+		Limit int `query:"limit" validate:"required,gte=1,lte=100"`
+		Page  int `query:"page" validate:"required,gte=1"`
+	}
+
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		albumID, err := rest.IntParam(c, "album_id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid album ID").Response())
+		}
+
+		pag := new(imageCommentsQuery)
+		if err := rest.DecodeEchoBody(c, pag); err != nil {
+			h.logger.Errorf("GetAlbumImages.DecodeBody: %v", err)
+			return c.JSON(rest.NewBadRequestError("GetAlbumImages body has incorrect type").Response())
+		}
+
+		if err := validator.ValidateStruct(ctx, pag); err != nil {
+			return c.JSON(rest.NewBadRequestError("GetAlbumImages body has incorrect type").Response())
+		}
+
+		pagInput := &domain.PaginationInput{
+			PerPage: pag.Limit,
+			Page:    pag.Page,
+		}
+		images, err := h.uc.GetAlbumImages(ctx, albumID, pagInput)
+		if err != nil {
+			return h.responseWithUseCaseErr(c, err, "GetAlbumImages")
+		}
+
+		return c.JSON(http.StatusOK, images)
 	}
 }
 

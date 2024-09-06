@@ -13,6 +13,9 @@ type AlbumRepository interface {
 	Create(ctx context.Context, album *domain.Album) (*domain.Album, error)
 	GetByID(ctx context.Context, albumID int) (*domain.Album, error)
 	GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error)
+	GetAlbumImages(
+		ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+	) (*domain.Pagination[domain.Image], error)
 	Delete(ctx context.Context, albumID int) error
 	Update(ctx context.Context, albumID int, album *domain.Album) (*domain.Album, error)
 
@@ -74,6 +77,16 @@ func (uc *albumUseCase) GetByID(ctx context.Context, albumID int) (*domain.Album
 	return album, nil
 }
 
+func (uc *albumUseCase) GetAlbumImages(
+	ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+) (*domain.Pagination[domain.Image], error) {
+	if _, err := uc.GetByID(ctx, albumID); err != nil {
+		return nil, err
+	}
+
+	return uc.repo.GetAlbumImages(ctx, albumID, pagInput)
+}
+
 func (uc *albumUseCase) Delete(ctx context.Context, albumID int, executor *domain.User) error {
 	if err := uc.existsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
@@ -102,8 +115,8 @@ func (uc *albumUseCase) PutImage(
 		return err
 	}
 
-	if _, err := uc.imageUC.GetByID(ctx, imageID); err != nil {
-		return ErrIncorrectImageRef
+	if err := uc.correctImageRef(ctx, imageID); err != nil {
+		return err
 	}
 
 	return uc.repo.PutImage(ctx, albumID, imageID)
@@ -116,8 +129,8 @@ func (uc *albumUseCase) DeleteImage(
 		return err
 	}
 
-	if _, err := uc.imageUC.GetByID(ctx, imageID); err != nil {
-		return ErrIncorrectImageRef
+	if err := uc.correctImageRef(ctx, imageID); err != nil {
+		return err
 	}
 
 	return uc.repo.DeleteImage(ctx, albumID, imageID)
@@ -134,6 +147,17 @@ func (uc *albumUseCase) existsAndModifiable(
 
 	if canModify := uc.acl.CanModify(user, album); !canModify {
 		return ErrForbidden
+	}
+
+	return nil
+}
+
+func (uc *albumUseCase) correctImageRef(ctx context.Context, imageID int) error {
+	img, err := uc.imageUC.GetByID(ctx, imageID)
+
+	isValidImage := img != nil && img.AccessLevel == domain.ImageAccessPublic
+	if err != nil || !isValidImage {
+		return ErrIncorrectImageRef
 	}
 
 	return nil

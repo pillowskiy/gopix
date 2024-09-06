@@ -14,4 +14,5 @@ func MapAlbumRoutes(g *echo.Group, h *handlers.AlbumHandlers, mw *middlewares.Gu
 
 	g.POST("/:album_id/images/:image_id", h.PutImage(), mw.OnlyAuth)
 	g.DELETE("/:album_id/images/:image_id", h.DeleteImage(), mw.OnlyAuth)
+	g.GET("/:album_id/images", h.GetAlbumImages())
 }
