@@ -192,7 +192,7 @@ func (h *ImageHandlers) Update() echo.HandlerFunc {
 		image := &domain.Image{
 			Title:       dto.Title,
 			Description: dto.Description,
-			AccessLevel: dto.AccessLevel,
+			AccessLevel: domain.ImageAccessLevel(dto.AccessLevel),
 		}
 
 		img, err := h.uc.Update(ctx, id, image, user)
