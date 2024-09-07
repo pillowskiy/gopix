@@ -6,6 +6,21 @@ dev:
 	@echo "Starting docker development enviroment"
 	docker-compose -f docker-compose.dev.yml up --build
 
+# Tests
+
+test:
+	@echo "Running Tests.."
+	go test -cover ./...
+
+test_pretty:
+	@echo "Running Tests.."
+	go run gotest.tools/gotestsum@latest --format testname
+
+test_cover:
+	go test -v -coverprofile ./tmp/tests/cover.out ./...
+	go tool cover -html ./tmp/tests/cover.out -o ./tmp/tests/cover.html
+	open ./tmp/tests/cover.html
+
 # Migrations
 
 driver = "postgres"
