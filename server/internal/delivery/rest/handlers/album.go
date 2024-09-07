@@ -169,12 +169,6 @@ func (h *AlbumHandlers) Update() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid album ID").Response())
 		}
 
-		user, err := GetContextUser(c)
-		if err != nil {
-			h.logger.Errorf("AlbumHandlers.Update.GetContextUser: %v", err)
-			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
-		}
-
 		up := new(updateDTO)
 		if err := rest.DecodeEchoBody(c, up); err != nil {
 			h.logger.Errorf("AlbumHandlers.Update.DecodeBody: %v", err)
@@ -183,6 +177,12 @@ func (h *AlbumHandlers) Update() echo.HandlerFunc {
 
 		if err := validator.ValidateStruct(ctx, up); err != nil {
 			return c.JSON(rest.NewBadRequestError("Update body has incorrect type").Response())
+		}
+
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("AlbumHandlers.Update.GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
 		album := &domain.Album{
