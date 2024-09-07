@@ -31,7 +31,6 @@ func NewAuthHandlers(uc authUseCase, logger logger.Logger, cfg *config.Cookie) *
 }
 
 func (h *AuthHandlers) Register() echo.HandlerFunc {
-
 	type registerDTO struct {
 		Username string `json:"username" validate:"required,gte=6,lte=60"`
 		Email    string `json:"email" validate:"required,lte=60,email"`
@@ -66,7 +65,7 @@ func (h *AuthHandlers) Register() echo.HandlerFunc {
 		}
 
 		h.storeToken(c, authUser.Token)
-		return c.JSON(http.StatusCreated, authUser)
+		return c.JSON(http.StatusCreated, authUser.User)
 	}
 }
 
@@ -103,19 +102,19 @@ func (h *AuthHandlers) Login() echo.HandlerFunc {
 		}
 
 		h.storeToken(c, authUser.Token)
-		return c.JSON(http.StatusOK, authUser)
+		return c.JSON(http.StatusOK, authUser.User)
 	}
 }
 
 func (h *AuthHandlers) Logout() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.SetCookie(&http.Cookie{
-			Name:     "token",
+			Name:     h.cfg.Name,
 			Value:    "",
 			Path:     "/",
 			HttpOnly: h.cfg.HttpOnly,
 			MaxAge:   -1,
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 		})
 		return c.JSON(http.StatusOK, true)
 	}
@@ -125,10 +124,9 @@ func (h *AuthHandlers) storeToken(c echo.Context, token string) {
 	c.SetCookie(&http.Cookie{
 		Name:     h.cfg.Name,
 		Value:    token,
-		Path:     "/",
 		HttpOnly: h.cfg.HttpOnly,
+		Path:     "/",
 		MaxAge:   int((h.cfg.Expire * time.Second).Seconds()),
-
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 }
