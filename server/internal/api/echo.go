@@ -77,6 +77,10 @@ func (s *EchoServer) MapHandlers() error {
 	albumACL := policy.NewAlbumAccessPolicy()
 	albumUC := usecase.NewAlbumUseCase(albumRepo, albumACL, imageUC)
 
+	tagRepo := postgres.NewTagRepository(s.sh.Postgres)
+	tagACL := policy.NewTagAccessPolicy()
+	tagUC := usecase.NewTagUseCase(tagRepo, tagACL, imageUC)
+
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
 
@@ -98,6 +102,10 @@ func (s *EchoServer) MapHandlers() error {
 	commentsGroup := imagesGroup.Group("")
 	commentsHandlers := handlers.NewCommentHandlers(commentUC, s.logger)
 	routes.MapCommentRoutes(commentsGroup, commentsHandlers, guardMiddlewares)
+
+	tagsGroup := imagesGroup.Group("")
+	tagsHandlers := handlers.NewTagHandlers(tagUC, s.logger)
+	routes.MapTagRoutes(tagsGroup, tagsHandlers, guardMiddlewares)
 
 	albumsGroup := v1.Group("/albums")
 	albumsHandlers := handlers.NewAlbumHandlers(albumUC, s.logger)
