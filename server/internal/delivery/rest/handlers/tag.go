@@ -37,6 +37,11 @@ func (h *TagHandlers) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
+		if _, err := GetContextUser(c); err != nil {
+			h.logger.Errorf("TagHandlers.Create: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
 		tagInput := new(createDTO)
 		if err := rest.DecodeEchoBody(c, tagInput); err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid Request Body").Response())
@@ -52,7 +57,7 @@ func (h *TagHandlers) Create() echo.HandlerFunc {
 			return h.responseWithUseCaseErr(c, err, "Create")
 		}
 
-		return c.JSON(http.StatusOK, createdTag)
+		return c.JSON(http.StatusCreated, createdTag)
 	}
 }
 
@@ -80,8 +85,8 @@ func (h *TagHandlers) UpsertImageTag() echo.HandlerFunc {
 
 		user, err := GetContextUser(c)
 		if err != nil {
-			h.logger.Infof("TagHandlers.UpsertImageTag: %v", err)
-			return c.JSON(rest.NewForbiddenError("Invalid user").Response())
+			h.logger.Errorf("TagHandlers.UpsertImageTag: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
 		tag := &domain.Tag{Name: tagInput.Name}
@@ -128,6 +133,11 @@ func (h *TagHandlers) Delete() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid tag ID").Response())
 		}
 
+		if _, err := GetContextUser(c); err != nil {
+			h.logger.Errorf("TagHandlers.Create: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
 		if err := h.uc.Delete(ctx, tagID); err != nil {
 			return h.responseWithUseCaseErr(c, err, "Delete")
 		}
@@ -141,6 +151,9 @@ func (h *TagHandlers) responseWithUseCaseErr(c echo.Context, err error, trace st
 	switch {
 	case errors.Is(err, usecase.ErrIncorrectImageRef):
 		restErr = rest.NewBadRequestError("Incorrect image reference provided")
+		break
+	case errors.Is(err, usecase.ErrForbidden):
+		restErr = rest.NewForbiddenError("You don't have permission to perform this action")
 		break
 	case errors.Is(err, usecase.ErrAlreadyExists):
 		restErr = rest.NewConflictError("Tag with this name already exists")
