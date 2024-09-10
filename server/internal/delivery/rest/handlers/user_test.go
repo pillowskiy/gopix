@@ -2,10 +2,8 @@ package handlers_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -37,16 +35,11 @@ func TestUserHanlers_Update(t *testing.T) {
 	userID := 1
 	itoaUserID := strconv.Itoa(userID)
 
-	updatePath := func(id string) string {
-		return fmt.Sprintf("/api/v1/users/%s", id)
-	}
-
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPut, updatePath(id), body)
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/:id", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("users/:id")
 		c.SetParamNames("id")
 		c.SetParamValues(id)
 		return c, rec
@@ -87,12 +80,16 @@ func TestUserHanlers_Update(t *testing.T) {
 		body, _ := json.Marshal(validUpdateInput)
 		c, rec := prepareUpdateQuery("abc", bytes.NewBuffer(body))
 
+		mockUserUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
 	t.Run("InvalidInput", func(t *testing.T) {
 		c, rec := prepareUpdateQuery(itoaUserID, nil)
+
+		mockUserUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -107,6 +104,8 @@ func TestUserHanlers_Update(t *testing.T) {
 		body, _ := json.Marshal(invalidInput)
 		c, rec := prepareUpdateQuery(itoaUserID, bytes.NewBuffer(body))
 
+		mockUserUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -119,6 +118,8 @@ func TestUserHanlers_Update(t *testing.T) {
 
 		body, _ := json.Marshal(invalidInput)
 		c, rec := prepareUpdateQuery(itoaUserID, bytes.NewBuffer(body))
+
+		mockUserUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -167,34 +168,18 @@ func TestUserHanlers_Me(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	mockUserUC := handlersMock.NewMockuserUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
-	h := handlers.NewUserHandlers(mockUserUC, mockLog)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
 
+	h := handlers.NewUserHandlers(mockUserUC, mockLog)
 	e := echo.New()
 
-	mePath := "/api/v1/users/@me"
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
-	}
-
 	prepareMeQuery := func() (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodGet, mePath, nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/@me", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("users/@me")
 
 		return c, rec
 	}
@@ -236,40 +221,23 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 		Allow: 1024,
 	}
 
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
 	targetUserID := 2
 	targetItoaUserID := strconv.Itoa(targetUserID)
 
 	mockUserUC := handlersMock.NewMockuserUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
+
 	h := handlers.NewUserHandlers(mockUserUC, mockLog)
-
 	e := echo.New()
-
-	overwritePermissionsPath := func(id string) string {
-		return fmt.Sprintf("/api/v1/users/%s/permissions", id)
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
-	}
 
 	prepareOverwritePermissionQuery := func(
 		id string, body io.Reader,
 	) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPut, overwritePermissionsPath(id), body)
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/:id/permissions", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("users/:id/permissions")
 		c.SetParamNames("id")
 		c.SetParamValues(id)
 		return c, rec
@@ -293,6 +261,9 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 		body, _ := json.Marshal(validOPInput)
 		c, rec := prepareOverwritePermissionQuery(targetItoaUserID, bytes.NewBuffer(body))
 
+		mockUserUC.EXPECT().OverwritePermissions(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Times(0)
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		assert.NoError(t, h.OverwritePermissions()(c))
@@ -303,6 +274,10 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 		c, rec := prepareOverwritePermissionQuery(targetItoaUserID, nil)
 		mockCtxUser(c)
 
+		mockUserUC.EXPECT().OverwritePermissions(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Times(0)
+
 		assert.NoError(t, h.OverwritePermissions()(c))
 		assert.Equal(t, rec.Code, http.StatusBadRequest)
 	})
@@ -310,6 +285,10 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 	t.Run("IncorrectUserID", func(t *testing.T) {
 		body, _ := json.Marshal(validOPInput)
 		c, rec := prepareOverwritePermissionQuery("abc", bytes.NewBuffer(body))
+
+		mockUserUC.EXPECT().OverwritePermissions(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Times(0)
 
 		assert.NoError(t, h.OverwritePermissions()(c))
 		assert.Equal(t, rec.Code, http.StatusBadRequest)
@@ -319,6 +298,10 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 		body, _ := json.Marshal(validOPInput)
 		c, rec := prepareOverwritePermissionQuery(strconv.Itoa(ctxUser.ID), bytes.NewBuffer(body))
 		mockCtxUser(c)
+
+		mockUserUC.EXPECT().OverwritePermissions(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Times(0)
 
 		assert.NoError(t, h.OverwritePermissions()(c))
 		assert.Equal(t, rec.Code, http.StatusBadRequest)

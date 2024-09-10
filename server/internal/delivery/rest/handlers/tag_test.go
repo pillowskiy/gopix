@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -33,31 +32,18 @@ func TestTagHandlers_Create(t *testing.T) {
 
 	mockTagUC := handlersMock.NewMockTagUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
+	_, mockCtxUser := handlersMock.NewMockCtxUser()
+
 	h := handlers.NewTagHandlers(mockTagUC, mockLog)
 
 	e := echo.New()
 
 	prepareCreateQuery := func(body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPost, "/", body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/tags", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/tags")
 		return c, rec
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	type CreateInput struct {
@@ -147,6 +133,8 @@ func TestTagHandlers_UpsertImageTag(t *testing.T) {
 
 	mockTagUC := handlersMock.NewMockTagUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
+
 	h := handlers.NewTagHandlers(mockTagUC, mockLog)
 
 	e := echo.New()
@@ -155,28 +143,13 @@ func TestTagHandlers_UpsertImageTag(t *testing.T) {
 	itoaImageID := strconv.Itoa(imageID)
 
 	prepareUpsertImageTagQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPut, "/", body)
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/images/:image_id/tags", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/:image_id/tags")
 		c.SetParamNames("image_id")
 		c.SetParamValues(id)
 		return c, rec
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	type UpsertInput struct {
@@ -292,7 +265,7 @@ func TestTagHandlers_Seacrh(t *testing.T) {
 	}
 
 	prepareSearchQuery := func(query *SearchInput) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/images/tags", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		if query != nil {
@@ -303,7 +276,6 @@ func TestTagHandlers_Seacrh(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/tags")
 		return c, rec
 	}
 
@@ -350,36 +322,22 @@ func TestTagHandlers_Delete(t *testing.T) {
 
 	mockTagUC := handlersMock.NewMockTagUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
-	h := handlers.NewTagHandlers(mockTagUC, mockLog)
+	_, mockCtxUser := handlersMock.NewMockCtxUser()
 
+	h := handlers.NewTagHandlers(mockTagUC, mockLog)
 	e := echo.New()
 
 	tagID := 1
 	itoaTagID := strconv.Itoa(tagID)
 
 	prepareDeleteQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodDelete, "/", nil)
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/images/tags/:tag_id", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/tags/:tag_id")
 		c.SetParamNames("tag_id")
 		c.SetParamValues(id)
 		return c, rec
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	t.Run("SuccessDelete", func(t *testing.T) {

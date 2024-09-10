@@ -2,10 +2,8 @@ package handlers_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -32,6 +30,7 @@ func TestAlbumHandlers_Create(t *testing.T) {
 
 	mockLog := loggerMock.NewMockLogger(ctrl)
 	mockAlbumUC := handlersMock.NewMockalbumUseCase(ctrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
 
 	h := handlers.NewAlbumHandlers(mockAlbumUC, mockLog)
 
@@ -42,22 +41,7 @@ func TestAlbumHandlers_Create(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("/api/v1/albums")
 		return c, rec
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	type CreateInput struct {
@@ -154,16 +138,11 @@ func TestAlbumHandlers_GetByAuthorID(t *testing.T) {
 	authorID := 1
 	itoaAuthorID := strconv.Itoa(authorID)
 
-	getByAuthorIDPath := func(id string) string {
-		return fmt.Sprintf("/api/v1/albums/users/%s", id)
-	}
-
 	prepareGetByAuthorIDQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodGet, getByAuthorIDPath(id), nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/albums/users/:user_id", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("/api/v1/albums/users/:user_id")
 		c.SetParamNames("user_id")
 		c.SetParamValues(id)
 		return c, rec
@@ -224,12 +203,8 @@ func TestAlbumHandlers_GetAlbumImages(t *testing.T) {
 		Page:  1,
 	}
 
-	getAlbumImagesPath := func(id string) string {
-		return fmt.Sprintf("/api/v1/albums/%s/images", id)
-	}
-
 	prepareGetAlbumImagesQuery := func(id string, query *AlbumImagesQuery) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodGet, getAlbumImagesPath(id), nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/albums/:album_id/images", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		if query != nil {
@@ -241,7 +216,6 @@ func TestAlbumHandlers_GetAlbumImages(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("/api/v1/albums/:album_id/images")
 		c.SetParamNames("album_id")
 		c.SetParamValues(id)
 		return c, rec
@@ -326,6 +300,7 @@ func TestAlbumHandlers_Delete(t *testing.T) {
 
 	mockLog := loggerMock.NewMockLogger(ctrl)
 	mockAlbumUC := handlersMock.NewMockalbumUseCase(ctrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
 
 	h := handlers.NewAlbumHandlers(mockAlbumUC, mockLog)
 
@@ -335,30 +310,15 @@ func TestAlbumHandlers_Delete(t *testing.T) {
 	itoaAlbumID := strconv.Itoa(albumID)
 
 	prepareDeleteAlbumQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodDelete, "/", nil)
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/albums/:album_id", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("/api/v1/albums/:album_id")
 		c.SetParamNames("album_id")
 		c.SetParamValues(id)
 
 		return c, rec
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	t.Run("SuccessDeleteAlbum", func(t *testing.T) {
@@ -424,6 +384,7 @@ func TestAlbumHandlers_Update(t *testing.T) {
 
 	mockAlbumUC := handlersMock.NewMockalbumUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
 	h := handlers.NewAlbumHandlers(mockAlbumUC, mockLog)
 
 	e := echo.New()
@@ -431,29 +392,14 @@ func TestAlbumHandlers_Update(t *testing.T) {
 	albumID := 1
 	itoaAlbumID := strconv.Itoa(albumID)
 
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPost, "/", body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/albums/:album_id", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/albums/:album_id")
 		c.SetParamNames("album_id")
 		c.SetParamValues(id)
 		return c, rec
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	type UpdateInput struct {
@@ -559,6 +505,7 @@ func TestAlbumHandlers_PutImage(t *testing.T) {
 
 	mockAlbumUC := handlersMock.NewMockalbumUseCase(mockCtrl)
 	mockLog := loggerMock.NewMockLogger(mockCtrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
 
 	h := handlers.NewAlbumHandlers(mockAlbumUC, mockLog)
 
@@ -570,14 +517,6 @@ func TestAlbumHandlers_PutImage(t *testing.T) {
 	imageID := 1
 	itoaImageID := strconv.Itoa(imageID)
 
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	preparePutImageQuery := func(albumID string, imageID string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -587,12 +526,6 @@ func TestAlbumHandlers_PutImage(t *testing.T) {
 		c.SetParamNames("album_id", "image_id")
 		c.SetParamValues(albumID, imageID)
 		return c, rec
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	t.Run("SuccessPutImage", func(t *testing.T) {
@@ -682,6 +615,7 @@ func TestAlbumHandlers_DeleteImage(t *testing.T) {
 
 	mockAlbumUC := handlersMock.NewMockalbumUseCase(mockCtrl)
 	mockLog := loggerMock.NewMockLogger(mockCtrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
 
 	h := handlers.NewAlbumHandlers(mockAlbumUC, mockLog)
 
@@ -693,14 +627,6 @@ func TestAlbumHandlers_DeleteImage(t *testing.T) {
 	imageID := 1
 	itoaImageID := strconv.Itoa(imageID)
 
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	prepareDeleteImageQuery := func(albumID string, imageID string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -710,12 +636,6 @@ func TestAlbumHandlers_DeleteImage(t *testing.T) {
 		c.SetParamNames("album_id", "image_id")
 		c.SetParamValues(albumID, imageID)
 		return c, rec
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	t.Run("SuccessDeleteImage", func(t *testing.T) {

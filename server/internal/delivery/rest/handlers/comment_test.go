@@ -2,10 +2,8 @@ package handlers_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -34,6 +32,7 @@ func TestCommentHandlers_Create(t *testing.T) {
 
 	mockCommentUC := handlersMock.NewMockCommentUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
+	_, mockCtxUser := handlersMock.NewMockCtxUser()
 	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
 
 	e := echo.New()
@@ -41,33 +40,14 @@ func TestCommentHandlers_Create(t *testing.T) {
 	imageID := 1
 	itoaImageID := strconv.Itoa(imageID)
 
-	createPath := func(id string) string {
-		return fmt.Sprintf("/api/v1/images/%s/comments", id)
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	prepareCreateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPost, createPath(id), body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/:image_id/commnets", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/:image_id/comments")
 		c.SetParamNames("image_id")
 		c.SetParamValues(id)
 		return c, rec
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	type CreateInput struct {
@@ -104,6 +84,7 @@ func TestCommentHandlers_Create(t *testing.T) {
 		body, _ := json.Marshal(validCreateInput)
 		c, rec := prepareCreateQuery(itoaImageID, bytes.NewBuffer(body))
 
+		mockCommentUC.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		assert.NoError(t, h.Create()(c))
@@ -114,12 +95,16 @@ func TestCommentHandlers_Create(t *testing.T) {
 		body, _ := json.Marshal(validCreateInput)
 		c, rec := prepareCreateQuery("abc", bytes.NewBuffer(body))
 
+		mockCommentUC.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
+
 		assert.NoError(t, h.Create()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
 	t.Run("InvalidInput", func(t *testing.T) {
 		c, rec := prepareCreateQuery(itoaImageID, nil)
+
+		mockCommentUC.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Create()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -132,6 +117,8 @@ func TestCommentHandlers_Create(t *testing.T) {
 
 		body, _ := json.Marshal(invalidInput)
 		c, rec := prepareCreateQuery(itoaImageID, bytes.NewBuffer(body))
+
+		mockCommentUC.EXPECT().Create(gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Create()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -180,10 +167,6 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 	imageID := 1
 	itoaImageID := strconv.Itoa(imageID)
 
-	getByImageIDPath := func(id string) string {
-		return fmt.Sprintf("/api/v1/images/%s/comments", id)
-	}
-
 	type ImageCommentsQuery struct {
 		Limit int    `query:"limit"`
 		Page  int    `query:"page"`
@@ -199,7 +182,7 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 	prepareGetByImageIDQuery := func(
 		id string, query *ImageCommentsQuery,
 	) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodGet, getByImageIDPath(id), nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/images/:image_id/comments", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		if query != nil {
@@ -212,7 +195,6 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/:image_id/comments")
 		c.SetParamNames("image_id")
 		c.SetParamValues(id)
 
@@ -252,6 +234,8 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 	t.Run("InvalidQuery", func(t *testing.T) {
 		c, rec := prepareGetByImageIDQuery(itoaImageID, nil)
 
+		mockCommentUC.EXPECT().GetByImageID(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
 		assert.NoError(t, h.GetByImageID()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -262,6 +246,8 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 			Page:  0,
 			Sort:  "",
 		})
+
+		mockCommentUC.EXPECT().GetByImageID(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.GetByImageID()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -301,40 +287,22 @@ func TestCommentHandlers_Update(t *testing.T) {
 
 	mockCommentUC := handlersMock.NewMockCommentUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
-	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
+	_, mockCtxUser := handlersMock.NewMockCtxUser()
 
+	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
 	e := echo.New()
 
 	commentID := 1
 	itoaCommentID := strconv.Itoa(commentID)
 
-	updatePath := func(id string) string {
-		return fmt.Sprintf("/api/v1/images/comments/%s", id)
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPost, updatePath(id), body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/comments/:comment_id", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("images/comments/:comment_id")
 		c.SetParamNames("comment_id")
 		c.SetParamValues(id)
 		return c, rec
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	type UpdateInput struct {
@@ -371,6 +339,7 @@ func TestCommentHandlers_Update(t *testing.T) {
 		body, _ := json.Marshal(validUpdateInput)
 		c, rec := prepareUpdateQuery(itoaCommentID, bytes.NewBuffer(body))
 
+		mockCommentUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		assert.NoError(t, h.Delete()(c))
@@ -382,6 +351,8 @@ func TestCommentHandlers_Update(t *testing.T) {
 		c, rec := prepareUpdateQuery("abc", bytes.NewBuffer(body))
 		mockCtxUser(c)
 
+		mockCommentUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -389,6 +360,8 @@ func TestCommentHandlers_Update(t *testing.T) {
 	t.Run("InvalidInput", func(t *testing.T) {
 		c, rec := prepareUpdateQuery(itoaCommentID, nil)
 		mockCtxUser(c)
+
+		mockCommentUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -401,6 +374,8 @@ func TestCommentHandlers_Update(t *testing.T) {
 
 		body, _ := json.Marshal(invalidInput)
 		c, rec := prepareUpdateQuery(itoaCommentID, bytes.NewBuffer(body))
+
+		mockCommentUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -447,6 +422,7 @@ func TestCommentHandlers_Delete(t *testing.T) {
 
 	mockCommentUC := handlersMock.NewMockCommentUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
+	_, mockCtxUser := handlersMock.NewMockCtxUser()
 	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
 
 	e := echo.New()
@@ -454,33 +430,14 @@ func TestCommentHandlers_Delete(t *testing.T) {
 	commentID := 1
 	itoaCommentID := strconv.Itoa(commentID)
 
-	deletePath := func(id string) string {
-		return fmt.Sprintf("/api/v1/images/comments/%s", id)
-	}
-
-	ctxUser := &domain.User{
-		ID:          1,
-		Username:    "username",
-		Email:       "username@gmail.com",
-		Permissions: 1,
-		AvatarURL:   "https://example.com/username.png",
-	}
-
 	prepareDeleteQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodDelete, deletePath(id), nil)
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/comments/:comment_id", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath("comments/:comment_id")
 		c.SetParamNames("comment_id")
 		c.SetParamValues(id)
 		return c, rec
-	}
-
-	mockCtxUser := func(c echo.Context) {
-		c.Set("user", ctxUser)
-		ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, ctxUser)
-		c.SetRequest(c.Request().WithContext(ctx))
 	}
 
 	t.Run("SuccessDelete", func(t *testing.T) {
@@ -499,6 +456,7 @@ func TestCommentHandlers_Delete(t *testing.T) {
 	t.Run("IncorrectUserContext", func(t *testing.T) {
 		c, rec := prepareDeleteQuery(itoaCommentID)
 
+		mockCommentUC.EXPECT().Delete(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		assert.NoError(t, h.Delete()(c))
@@ -508,6 +466,8 @@ func TestCommentHandlers_Delete(t *testing.T) {
 	t.Run("InvalidCommentID", func(t *testing.T) {
 		c, rec := prepareDeleteQuery("abc")
 		mockCtxUser(c)
+
+		mockCommentUC.EXPECT().Delete(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 		assert.NoError(t, h.Delete()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

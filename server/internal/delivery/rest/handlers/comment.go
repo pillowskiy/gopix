@@ -103,10 +103,6 @@ func (h *CommentHandlers) GetByImageID() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Query has incorrect type").Response())
 		}
 
-		if q.Sort == "" {
-			q.Sort = string(domain.CommentNewestSort)
-		}
-
 		pagInput := &domain.PaginationInput{Page: q.Page, PerPage: q.Limit}
 		comments, err := h.uc.GetByImageID(ctx, imageID, pagInput, domain.CommentSortMethod(q.Sort))
 		if err != nil {

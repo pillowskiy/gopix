@@ -42,16 +42,14 @@ func TestAuthHandlers_Register(t *testing.T) {
 	mockLog := loggerMock.NewMockLogger(ctrl)
 	mockAuthUC := handlersMock.NewMockauthUseCase(ctrl)
 	mockCfg := NewMockCookieConfig()
+
 	h := handlers.NewAuthHandlers(mockAuthUC, mockLog, mockCfg)
 
-	registerPath := "/api/v1/auth/register"
-
 	prepareRegisterQuery := func(body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPost, registerPath, body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath(registerPath)
 		return c, rec
 	}
 
@@ -115,6 +113,7 @@ func TestAuthHandlers_Register(t *testing.T) {
 		ctx := rest.GetEchoRequestCtx(c)
 
 		mockAuthUC.EXPECT().Register(ctx, gomock.Any()).Times(0)
+
 		assert.NoError(t, h.Register()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -157,14 +156,11 @@ func TestAuthHandlers_Login(t *testing.T) {
 	mockCfg := NewMockCookieConfig()
 	h := handlers.NewAuthHandlers(mockAuthUC, mockLog, mockCfg)
 
-	loginPath := "/api/v1/auth/login"
-
 	prepareLoginQuery := func(body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodPost, loginPath, body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", body)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath(loginPath)
 		return c, rec
 	}
 
@@ -226,6 +222,7 @@ func TestAuthHandlers_Login(t *testing.T) {
 		ctx := rest.GetEchoRequestCtx(c)
 
 		mockAuthUC.EXPECT().Login(ctx, gomock.Any()).Times(0)
+
 		assert.NoError(t, h.Login()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -268,14 +265,11 @@ func TestAuthHandlers_Logout(t *testing.T) {
 	mockCfg := NewMockCookieConfig()
 	h := handlers.NewAuthHandlers(mockAuthUC, mockLog, mockCfg)
 
-	logoutPath := "/api/v1/auth/logout"
-
 	prepareLogoutQuery := func() (echo.Context, *httptest.ResponseRecorder) {
-		req := httptest.NewRequest(http.MethodDelete, logoutPath, nil)
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/auth/logout", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.SetPath(logoutPath)
 		return c, rec
 	}
 
