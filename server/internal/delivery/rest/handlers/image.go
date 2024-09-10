@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -22,10 +23,11 @@ type imageUseCase interface {
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image, executor *domain.User) (*domain.Image, error)
 	AddView(ctx context.Context, view *domain.ImageView) error
-	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.Image], error)
+
+	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
 }
@@ -47,7 +49,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		user, err := GetContextUser(c)
 		if err != nil {
 			h.logger.Errorf("Upload.GetContextUser: %v", err)
-			return c.JSON(rest.NewInternalServerError().Response())
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
 		fileHeader, err := rest.ReadEchoImage(c, "file")
@@ -73,6 +75,8 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
+		fmt.Println("3")
+
 		imgBytes := binImage.Bytes()
 		contentType := image.DetectMimeFileType(imgBytes)
 		ext, err := image.GetExtByMime(contentType)
@@ -86,6 +90,10 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			Name:        image.GenerateUniqueFilename(ext),
 			Size:        fileHeader.Size,
 			ContentType: contentType,
+		}
+
+		if !fileNode.HasAllowedContentType() {
+			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
 		pHash, err := image.PHash(imgBytes)
@@ -106,12 +114,6 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 func (h *ImageHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
-
-		_, err := GetContextUser(c)
-		if err != nil {
-			h.logger.Errorf("Delete.GetContextUser: %v", err)
-			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
-		}
 
 		id, err := rest.IntParam(c, "id")
 		if err != nil {
@@ -232,7 +234,7 @@ func (h *ImageHandlers) GetDiscover() echo.HandlerFunc {
 	type discoverQuery struct {
 		Limit int    `query:"limit" validate:"required,gte=1,lte=100"`
 		Page  int    `query:"page" validate:"required,gte=1"`
-		Sort  string `query:"sort" validate:"oneof=newest oldest"`
+		Sort  string `query:"sort" validate:"oneof=newest oldest popular mostViewed"`
 	}
 
 	return func(c echo.Context) error {
@@ -246,10 +248,6 @@ func (h *ImageHandlers) GetDiscover() echo.HandlerFunc {
 
 		if err := validator.ValidateStruct(ctx, query); err != nil {
 			return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
-		}
-
-		if query.Sort == "" {
-			query.Sort = string(domain.ImagePopularSort)
 		}
 
 		pagInput := &domain.PaginationInput{Page: query.Page, PerPage: query.Limit}
