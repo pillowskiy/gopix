@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -75,8 +74,6 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
-		fmt.Println("3")
-
 		imgBytes := binImage.Bytes()
 		contentType := image.DetectMimeFileType(imgBytes)
 		ext, err := image.GetExtByMime(contentType)
@@ -96,10 +93,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
-		pHash, err := image.PHash(imgBytes)
-		if err != nil {
-			h.logger.Errorf("Upload.PHash: %v", err)
-		}
+		pHash, _ := image.PHash(imgBytes)
 
 		img := &domain.Image{AuthorID: user.ID, PHash: pHash}
 		createdImg, err := h.uc.Create(ctx, img, fileNode)

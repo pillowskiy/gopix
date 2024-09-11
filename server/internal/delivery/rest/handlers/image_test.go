@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
 	"strconv"
 	"testing"
 
@@ -22,6 +25,160 @@ import (
 
 	"go.uber.org/mock/gomock"
 )
+
+func TestImageHandlers_Upload(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockImageUC := handlersMock.NewMockimageUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+
+	type mockImage struct {
+		Name string
+		Data []byte
+	}
+
+	mockImages := map[string]mockImage{
+		"image/jpeg": {
+			Name: "test.jpg",
+			Data: []byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01},
+		},
+		"image/png": {
+			Name: "test.png",
+			Data: []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A},
+		},
+		"image/gif": {
+			Name: "test.gif",
+			Data: []byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61},
+		},
+		"image/webp": {
+			Name: "test.webp",
+			Data: []byte{0x52, 0x49, 0x46, 0x46, 0x20, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20},
+		},
+		"image/x-icon": {
+			Name: "test.ico",
+			Data: []byte{0x00, 0x00, 0x01, 0x00, 0x01, 0x00},
+		},
+		"image/bmp": {
+			Name: "test.bmp",
+			Data: []byte{0x42, 0x4D},
+		},
+	}
+
+	_, mockCtxUser := handlersMock.NewMockCtxUser()
+
+	h := handlers.NewImageHandlers(mockImageUC, mockLog)
+	e := echo.New()
+
+	prepareUploadQuery := func(
+		file mockImage, mime string, field string,
+	) (echo.Context, *httptest.ResponseRecorder) {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+
+		imageHeader := make(textproto.MIMEHeader)
+
+		dataHeader := fmt.Sprintf(`form-data; name="%s"; filename="%s"`, field, file.Name)
+		imageHeader.Set("Content-Disposition", dataHeader)
+		imageHeader.Set("Content-Type", mime)
+
+		part, _ := writer.CreatePart(imageHeader)
+		part.Write(file.Data)
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/images", body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		return c, rec
+	}
+
+	for contentType, file := range mockImages {
+		t.Run(fmt.Sprintf("SuccessUpload_%s", contentType), func(t *testing.T) {
+			c, rec := prepareUploadQuery(file, contentType, "file")
+			mockCtxUser(c)
+
+			img := &domain.Image{Path: "anypath.png"}
+			ctx := rest.GetEchoRequestCtx(c)
+			mockImageUC.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(img, nil)
+
+			assert.NoError(t, h.Upload()(c))
+			assert.Equal(t, http.StatusCreated, rec.Code)
+
+			actual := new(domain.Image)
+			assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
+			assert.Equal(t, img, actual)
+		})
+	}
+
+	t.Run("IncorrectUserContext", func(t *testing.T) {
+		c, rec := prepareUploadQuery(mockImages["image/jpeg"], "image/jpeg", "file")
+
+		mockImageUC.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.Upload()(c))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("IncorrectInput", func(t *testing.T) {
+		invalidInput := mockImage{
+			Name: "test.txt",
+			Data: []byte{0x00, 0x00, 0x01, 0x00, 0x01, 0x00},
+		}
+		c, rec := prepareUploadQuery(invalidInput, "text/plain", "file")
+		mockCtxUser(c)
+
+		mockImageUC.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.Upload()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("IncorrectFormField", func(t *testing.T) {
+		ct := "image/jpeg"
+		c, rec := prepareUploadQuery(mockImages[ct], ct, "wrong")
+		mockCtxUser(c)
+
+		mockImageUC.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.Upload()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("IncorrectContentType", func(t *testing.T) {
+		invalidInput := mockImage{
+			Name: "test.svg",
+			Data: []byte{
+				0x3C, 0x3F, 0x78, 0x6D, 0x6C, 0x20, 0x76, 0x65, 0x72,
+				0x73, 0x69, 0x6F, 0x6E, 0x3D, 0x22, 0x31, 0x2E, 0x30,
+				0x22, 0x3F, 0x3E, 0x3C, 0x73, 0x76, 0x67, 0x20,
+			},
+		}
+		ct := "image/svg+xml"
+		c, rec := prepareUploadQuery(invalidInput, ct, "file")
+		mockCtxUser(c)
+
+		mockImageUC.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.Upload()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareUploadQuery(mockImages["image/jpeg"], "image/jpeg", "file")
+		mockCtxUser(c)
+
+		mockImageUC.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("internal error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.Upload()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
 
 func TestImageHandlers_Delete(t *testing.T) {
 	t.Parallel()
