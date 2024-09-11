@@ -49,7 +49,6 @@ func (h *CommentHandlers) Create() echo.HandlerFunc {
 
 		cmt := new(createDTO)
 		if err := rest.DecodeEchoBody(c, cmt); err != nil {
-			h.logger.Errorf("Create.DecodeBody: %v", err)
 			return c.JSON(rest.NewBadRequestError("Comment body has incorrect type").Response())
 		}
 
@@ -95,7 +94,6 @@ func (h *CommentHandlers) GetByImageID() echo.HandlerFunc {
 
 		q := new(imageCommentsQuery)
 		if err := rest.DecodeEchoBody(c, q); err != nil {
-			h.logger.Errorf("GetByImageID.DecodeQuery: %v", err)
 			return c.JSON(rest.NewBadRequestError("Query has incorrect type").Response())
 		}
 
@@ -126,20 +124,19 @@ func (h *CommentHandlers) Update() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
 		}
 
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
 		cmt := new(updateDTO)
 		if err := rest.DecodeEchoBody(c, cmt); err != nil {
-			h.logger.Errorf("Update.DecodeBody: %v", err)
 			return c.JSON(rest.NewBadRequestError("Comment body has incorrect type").Response())
 		}
 
 		if err := validator.ValidateStruct(ctx, cmt); err != nil {
 			return c.JSON(rest.NewBadRequestError("Comment body has incorrect type").Response())
-		}
-
-		user, err := GetContextUser(c)
-		if err != nil {
-			h.logger.Errorf("GetContextUser: %v", err)
-			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
 		}
 
 		comment := &domain.Comment{
@@ -188,6 +185,9 @@ func (h *CommentHandlers) responseWithUseCaseErr(c echo.Context, err error, trac
 		break
 	case errors.Is(err, usecase.ErrForbidden):
 		restErr = rest.NewForbiddenError("You don't have permissions to perform this action")
+		break
+	case errors.Is(err, usecase.ErrUnprocessable):
+		restErr = rest.NewBadRequestError("Incorrect data provided")
 		break
 	case errors.Is(err, usecase.ErrAlreadyExists):
 		restErr = rest.NewConflictError("You've already commented this image")

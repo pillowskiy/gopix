@@ -150,6 +150,19 @@ func TestCommentHandlers_Create(t *testing.T) {
 		assert.NoError(t, h.Create()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
+
+	t.Run("AlreadyExists", func(t *testing.T) {
+		body, _ := json.Marshal(validCreateInput)
+
+		c, rec := prepareCreateQuery(itoaImageID, bytes.NewBuffer(body))
+		mockCtxUser(c)
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockCommentUC.EXPECT().Create(ctx, gomock.Any()).Return(nil, usecase.ErrAlreadyExists)
+
+		assert.NoError(t, h.Create()(c))
+		assert.Equal(t, http.StatusConflict, rec.Code)
+	})
 }
 
 func TestCommentHandlers_GetByImageID(t *testing.T) {
@@ -173,7 +186,7 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 		Sort  string `query:"sort"`
 	}
 
-	validImageCommentsQuery := ImageCommentsQuery{
+	validImageCommentsQuery := &ImageCommentsQuery{
 		Limit: 10,
 		Page:  1,
 		Sort:  "newest",
@@ -202,7 +215,7 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 	}
 
 	t.Run("SuccessByImageID", func(t *testing.T) {
-		c, rec := prepareGetByImageIDQuery(itoaImageID, &validImageCommentsQuery)
+		c, rec := prepareGetByImageIDQuery(itoaImageID, validImageCommentsQuery)
 
 		pag := &domain.Pagination[domain.DetailedComment]{
 			Items: []domain.DetailedComment{
@@ -240,6 +253,15 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
+	t.Run("IncorrectImageID", func(t *testing.T) {
+		c, rec := prepareGetByImageIDQuery("abs", validImageCommentsQuery)
+
+		mockCommentUC.EXPECT().GetByImageID(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.GetByImageID()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
 	t.Run("EmptyQuery", func(t *testing.T) {
 		c, rec := prepareGetByImageIDQuery(itoaImageID, &ImageCommentsQuery{
 			Limit: 0,
@@ -254,7 +276,7 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		c, rec := prepareGetByImageIDQuery(itoaImageID, &validImageCommentsQuery)
+		c, rec := prepareGetByImageIDQuery(itoaImageID, validImageCommentsQuery)
 
 		ctx := rest.GetEchoRequestCtx(c)
 		mockCommentUC.EXPECT().GetByImageID(
@@ -267,12 +289,24 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 	})
 
 	t.Run("IncorrectImageRef", func(t *testing.T) {
-		c, rec := prepareGetByImageIDQuery(itoaImageID, &validImageCommentsQuery)
+		c, rec := prepareGetByImageIDQuery(itoaImageID, validImageCommentsQuery)
 
 		ctx := rest.GetEchoRequestCtx(c)
 		mockCommentUC.EXPECT().GetByImageID(
 			ctx, imageID, gomock.Any(), gomock.Any(),
 		).Return(nil, usecase.ErrIncorrectImageRef)
+
+		assert.NoError(t, h.GetByImageID()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("Unprocessable", func(t *testing.T) {
+		c, rec := prepareGetByImageIDQuery(itoaImageID, validImageCommentsQuery)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().GetByImageID(
+			ctx, imageID, gomock.Any(), gomock.Any(),
+		).Return(nil, usecase.ErrUnprocessable)
 
 		assert.NoError(t, h.GetByImageID()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -342,7 +376,7 @@ func TestCommentHandlers_Update(t *testing.T) {
 		mockCommentUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
-		assert.NoError(t, h.Delete()(c))
+		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
 
@@ -374,6 +408,7 @@ func TestCommentHandlers_Update(t *testing.T) {
 
 		body, _ := json.Marshal(invalidInput)
 		c, rec := prepareUpdateQuery(itoaCommentID, bytes.NewBuffer(body))
+		mockCtxUser(c)
 
 		mockCommentUC.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
@@ -411,6 +446,30 @@ func TestCommentHandlers_Update(t *testing.T) {
 
 		assert.NoError(t, h.Update()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		body, _ := json.Marshal(validUpdateInput)
+		c, rec := prepareUpdateQuery(itoaCommentID, bytes.NewBuffer(body))
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().Update(ctx, commentID, gomock.Any(), gomock.Any()).Return(nil, usecase.ErrNotFound)
+
+		assert.NoError(t, h.Update()(c))
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		body, _ := json.Marshal(validUpdateInput)
+		c, rec := prepareUpdateQuery(itoaCommentID, bytes.NewBuffer(body))
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().Update(ctx, commentID, gomock.Any(), gomock.Any()).Return(nil, usecase.ErrForbidden)
+
+		assert.NoError(t, h.Update()(c))
+		assert.Equal(t, http.StatusForbidden, rec.Code)
 	})
 }
 
@@ -498,5 +557,31 @@ func TestCommentHandlers_Delete(t *testing.T) {
 
 		assert.NoError(t, h.Delete()(c))
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		c, rec := prepareDeleteQuery(itoaCommentID)
+		mockCtxUser(c)
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockCommentUC.EXPECT().Delete(
+			ctx, gomock.Any(), gomock.Any(),
+		).Return(usecase.ErrNotFound)
+
+		assert.NoError(t, h.Delete()(c))
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		c, rec := prepareDeleteQuery(itoaCommentID)
+		mockCtxUser(c)
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockCommentUC.EXPECT().Delete(
+			ctx, gomock.Any(), gomock.Any(),
+		).Return(usecase.ErrForbidden)
+
+		assert.NoError(t, h.Delete()(c))
+		assert.Equal(t, http.StatusForbidden, rec.Code)
 	})
 }
