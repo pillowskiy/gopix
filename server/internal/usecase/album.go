@@ -88,7 +88,7 @@ func (uc *albumUseCase) GetAlbumImages(
 }
 
 func (uc *albumUseCase) Delete(ctx context.Context, albumID int, executor *domain.User) error {
-	if err := uc.existsAndModifiable(ctx, executor, albumID); err != nil {
+	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (uc *albumUseCase) Update(
 	album *domain.Album,
 	executor *domain.User,
 ) (*domain.Album, error) {
-	if err := uc.existsAndModifiable(ctx, executor, albumID); err != nil {
+	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return nil, err
 	}
 
@@ -111,7 +111,7 @@ func (uc *albumUseCase) Update(
 func (uc *albumUseCase) PutImage(
 	ctx context.Context, albumID int, imageID int, executor *domain.User,
 ) error {
-	if err := uc.existsAndModifiable(ctx, executor, albumID); err != nil {
+	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
 	}
 
@@ -125,7 +125,7 @@ func (uc *albumUseCase) PutImage(
 func (uc *albumUseCase) DeleteImage(
 	ctx context.Context, albumID int, imageID int, executor *domain.User,
 ) error {
-	if err := uc.existsAndModifiable(ctx, executor, albumID); err != nil {
+	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
 	}
 
@@ -137,7 +137,7 @@ func (uc *albumUseCase) DeleteImage(
 
 }
 
-func (uc *albumUseCase) existsAndModifiable(
+func (uc *albumUseCase) ExistsAndModifiable(
 	ctx context.Context, user *domain.User, albumID int,
 ) error {
 	album, err := uc.GetByID(ctx, albumID)
