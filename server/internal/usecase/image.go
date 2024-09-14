@@ -137,6 +137,8 @@ func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int)
 	return uc.repo.RemoveLike(ctx, imageID, userID)
 }
 
+// Since you don't need to provide the data that exists for the existence check,
+// we don't check the existence of the related data, because it may affect performance
 func (uc *imageUseCase) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
 	return uc.repo.States(ctx, imageID, userID)
 }
@@ -199,8 +201,13 @@ func (uc *imageUseCase) Update(
 		return nil, ErrForbidden
 	}
 
+	updated, err := uc.repo.Update(ctx, id, image)
+	if err != nil {
+		return nil, err
+	}
+
 	uc.deleteCachedImage(ctx, id)
-	return uc.repo.Update(ctx, id, image)
+	return updated, nil
 }
 
 func (uc *imageUseCase) deleteCachedImage(ctx context.Context, id int) {
