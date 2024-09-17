@@ -58,6 +58,7 @@ WHERE id = $5 RETURNING *`
 const statesImageQuery = `
 WITH params AS (SELECT $1::int AS image_id, $2::int AS user_id)
 SELECT 
+  $1::int as image_id,
   EXISTS (
     SELECT 1
     FROM images_to_views v

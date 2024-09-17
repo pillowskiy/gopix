@@ -35,8 +35,9 @@ type Image struct {
 }
 
 type ImageStates struct {
-	Viewed bool `json:"viewed" db:"viewed"`
-	Liked  bool `json:"liked" db:"liked"`
+	ImageID int  `json:"imageID" db:"image_id"`
+	Viewed  bool `json:"viewed" db:"viewed"`
+	Liked   bool `json:"liked" db:"liked"`
 }
 
 type DetailedImage struct {
