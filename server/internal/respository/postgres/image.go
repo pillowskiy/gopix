@@ -20,14 +20,16 @@ var imagesSortQuery = NewSortQueryBuilder().
 	AddField(string(domain.ImageMostViewedSort), SortField{Field: "a.views_count", Order: sortOrderDESC})
 
 type imageRepository struct {
-	db             *sqlx.DB
+	PostgresRepository
 	viewBatcher    batch.Batcher[viewBatchItem]
 	likeBatcher    batch.Batcher[likeBatchItem]
 	dislikeBatcher batch.Batcher[likeBatchItem]
 }
 
 func NewImageRepository(db *sqlx.DB) *imageRepository {
-	repo := &imageRepository{db: db}
+	repo := &imageRepository{
+		PostgresRepository: PostgresRepository{db},
+	}
 
 	repo.viewBatcher = batch.NewWithConfig(imageViewsBatchAgg, repo.processViewsBatch, &imageBatchConfig)
 	go repo.viewBatcher.Ticker(imageBatchTickDuration)
@@ -40,7 +42,7 @@ func NewImageRepository(db *sqlx.DB) *imageRepository {
 
 func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*domain.Image, error) {
 	img := new(domain.Image)
-	rowx := r.db.QueryRowxContext(
+	rowx := r.ext(ctx).QueryRowxContext(
 		ctx,
 		createImageQuery,
 		image.AuthorID,
@@ -60,7 +62,7 @@ func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*dom
 
 func (r *imageRepository) GetByID(ctx context.Context, id int) (*domain.Image, error) {
 	img := new(domain.Image)
-	rowx := r.db.QueryRowxContext(ctx, getByIdImageQuery, id)
+	rowx := r.ext(ctx).QueryRowxContext(ctx, getByIdImageQuery, id)
 
 	if err := rowx.StructScan(img); err != nil {
 		if err == sql.ErrNoRows {
@@ -73,7 +75,7 @@ func (r *imageRepository) GetByID(ctx context.Context, id int) (*domain.Image, e
 }
 
 func (r *imageRepository) Delete(ctx context.Context, id int) error {
-	if _, err := r.db.ExecContext(ctx, deleteImageQuery, id); err != nil {
+	if _, err := r.ext(ctx).ExecContext(ctx, deleteImageQuery, id); err != nil {
 		return err
 	}
 
@@ -84,7 +86,7 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 	var detailedImage domain.DetailedImage
 	var tagsJSON []byte
 
-	err := r.db.QueryRowxContext(ctx, getDetailedImageQuery, id).Scan(
+	err := r.ext(ctx).QueryRowxContext(ctx, getDetailedImageQuery, id).Scan(
 		&detailedImage.ID,
 		&detailedImage.AuthorID,
 		&detailedImage.Path,
@@ -121,7 +123,7 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 
 func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error) {
 	img := new(domain.Image)
-	rowx := r.db.QueryRowxContext(
+	rowx := r.ext(ctx).QueryRowxContext(
 		ctx,
 		updateImageQuery,
 		image.Title,
@@ -169,7 +171,7 @@ func (r *imageRepository) Discover(
   `, sortQuery)
 
 	limit := pagInput.PerPage
-	rowx, err := r.db.QueryxContext(ctx, q, limit, (pagInput.Page-1)*limit)
+	rowx, err := r.ext(ctx).QueryxContext(ctx, q, limit, (pagInput.Page-1)*limit)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Discover.Queryx")
 	}
@@ -186,14 +188,14 @@ func (r *imageRepository) Discover(
 	}
 
 	countQuery := `SELECT COUNT(1) FROM images`
-	_ = r.db.QueryRowxContext(ctx, countQuery).Scan(&pagination.Total)
+	_ = r.ext(ctx).QueryRowxContext(ctx, countQuery).Scan(&pagination.Total)
 
 	return pagination, nil
 }
 
 func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
 	states := new(domain.ImageStates)
-	rowx := r.db.QueryRowxContext(ctx, statesImageQuery, imageID, userID)
+	rowx := r.ext(ctx).QueryRowxContext(ctx, statesImageQuery, imageID, userID)
 	if err := rowx.StructScan(states); err != nil {
 		return nil, errors.Wrap(err, "imageRepository.States.StructScan")
 	}
@@ -208,7 +210,7 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
 
 func (r *imageRepository) HasLike(ctx context.Context, imageID int, userID int) (bool, error) {
 	var hasLike bool
-	rowx := r.db.QueryRowxContext(ctx, hasLikeImageQuery, imageID, userID)
+	rowx := r.ext(ctx).QueryRowxContext(ctx, hasLikeImageQuery, imageID, userID)
 	if err := rowx.Scan(&hasLike); err != nil {
 		return false, errors.Wrap(err, "imageRepository.HasLike.Scan")
 	}

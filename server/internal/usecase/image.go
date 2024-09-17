@@ -36,6 +36,8 @@ type ImageRepository interface {
 	HasLike(ctx context.Context, imageID int, userID int) (bool, error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
+
+	repository.Transactional
 }
 
 type ImageAccessPolicy interface {
@@ -64,20 +66,28 @@ func (uc *imageUseCase) Create(
 	ctx context.Context,
 	image *domain.Image,
 	file *domain.FileNode,
-) (*domain.Image, error) {
+) (img *domain.Image, err error) {
 	image.Path = file.Name
-	img, err := uc.repo.Create(ctx, image)
+
+	err = uc.repo.DoInTransaction(ctx, func(ctx context.Context) error {
+		createdImg, err := uc.repo.Create(ctx, image)
+		if err != nil {
+			return err
+		}
+
+		if err := uc.storage.Put(ctx, file); err != nil {
+			return err
+		}
+
+		img = createdImg
+		return nil
+	})
+
 	if err != nil {
-		return nil, err
+		uc.logger.Error(err)
 	}
 
-	if err := uc.storage.Put(ctx, file); err != nil {
-		uc.logger.Errorf("ImageUseCase.Create.Put: %v", err)
-		uc.repo.Delete(ctx, img.ID)
-		return nil, err
-	}
-
-	return img, nil
+	return
 }
 
 func (uc *imageUseCase) Delete(
@@ -94,12 +104,20 @@ func (uc *imageUseCase) Delete(
 		return ErrForbidden
 	}
 
-	if err := uc.repo.Delete(ctx, id); err != nil {
-		return err
-	}
+	err = uc.repo.DoInTransaction(ctx, func(ctx context.Context) error {
+		if err := uc.repo.Delete(ctx, id); err != nil {
+			return err
+		}
 
-	if err := uc.storage.Delete(ctx, img.Path); err != nil {
-		uc.repo.Create(ctx, img)
+		if err := uc.storage.Delete(ctx, img.Path); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		uc.logger.Error(err)
 		return err
 	}
 

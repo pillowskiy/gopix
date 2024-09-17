@@ -42,9 +42,19 @@ func TestImageUseCase_Create(t *testing.T) {
 		Data: []byte{1, 2, 3},
 	}
 
+	expectedTxCall := func(ctx context.Context) {
+		mockRepo.EXPECT().
+			DoInTransaction(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+				return fn(ctx)
+			})
+	}
+
 	t.Run("SuccessCreate", func(t *testing.T) {
-		mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(mockImage, nil)
-		mockStorage.EXPECT().Put(gomock.Any(), mockFile).Return(nil)
+		ctx := context.Background()
+		expectedTxCall(ctx)
+		mockRepo.EXPECT().Create(ctx, gomock.Any()).Return(mockImage, nil)
+		mockStorage.EXPECT().Put(ctx, mockFile).Return(nil)
 
 		createdImage, err := imageUC.Create(context.Background(), mockImage, mockFile)
 		if assert.NoError(t, err) {
@@ -55,8 +65,10 @@ func TestImageUseCase_Create(t *testing.T) {
 	})
 
 	t.Run("RepoError", func(t *testing.T) {
+		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, errors.New("repo error"))
 		mockStorage.EXPECT().Put(gomock.Any(), mockFile).Times(0)
+		mockLog.EXPECT().Error(gomock.Any())
 
 		createdImage, err := imageUC.Create(context.Background(), mockImage, mockFile)
 		assert.Error(t, err)
@@ -64,10 +76,10 @@ func TestImageUseCase_Create(t *testing.T) {
 	})
 
 	t.Run("StorageError", func(t *testing.T) {
+		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(mockImage, nil)
 		mockStorage.EXPECT().Put(gomock.Any(), mockFile).Return(errors.New("storage error"))
-		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
-		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+		mockLog.EXPECT().Error(gomock.Any())
 
 		createdImage, err := imageUC.Create(context.Background(), mockImage, mockFile)
 		assert.Error(t, err)
@@ -106,12 +118,24 @@ func TestImageUseCase_Delete(t *testing.T) {
 		mockCache.EXPECT().Set(gomock.Any(), mockImage.ID, mockImage, gomock.Any()).Times(0)
 	}
 
+	expectedTxCall := func(ctx context.Context) {
+		mockRepo.EXPECT().
+			DoInTransaction(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+				return fn(ctx)
+			})
+	}
+
 	t.Run("SuccessDelete_Repo", func(t *testing.T) {
 		expectGetByIDCall_Repo()
+		ctx := context.Background()
 
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(true)
-		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
-		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(nil)
+
+		expectedTxCall(ctx)
+		mockRepo.EXPECT().Delete(ctx, mockImage.ID).Return(nil)
+		mockStorage.EXPECT().Delete(ctx, mockImage.Path).Return(nil)
+
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID).Return(nil)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
@@ -121,10 +145,14 @@ func TestImageUseCase_Delete(t *testing.T) {
 
 	t.Run("SuccessDelete_Cached", func(t *testing.T) {
 		expectGetByIDCall_Cached()
+		ctx := context.Background()
 
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(true)
-		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
-		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(nil)
+
+		expectedTxCall(ctx)
+		mockRepo.EXPECT().Delete(ctx, mockImage.ID).Return(nil)
+		mockStorage.EXPECT().Delete(ctx, mockImage.Path).Return(nil)
+
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID).Return(nil)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
@@ -160,10 +188,15 @@ func TestImageUseCase_Delete(t *testing.T) {
 
 	t.Run("RepoError", func(t *testing.T) {
 		expectGetByIDCall_Cached()
+		repoError := errors.New("repo error")
 
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(true)
-		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(errors.New("repo error"))
+
+		expectedTxCall(context.Background())
+		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(repoError)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Times(0)
+		mockLog.EXPECT().Error(gomock.Any())
+
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID).Times(0)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
@@ -174,8 +207,11 @@ func TestImageUseCase_Delete(t *testing.T) {
 		expectGetByIDCall_Cached()
 
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(true)
+
+		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(nil)
+
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID).Return(errors.New("cache error"))
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
@@ -185,11 +221,15 @@ func TestImageUseCase_Delete(t *testing.T) {
 
 	t.Run("StorageError", func(t *testing.T) {
 		expectGetByIDCall_Cached()
+		storageError := errors.New("storage error")
 
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(true)
+
+		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
-		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(errors.New("storage error"))
-		mockRepo.EXPECT().Create(gomock.Any(), mockImage)
+		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(storageError)
+		mockLog.EXPECT().Error(gomock.Any())
+
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID).Times(0)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
