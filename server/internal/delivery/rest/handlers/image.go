@@ -21,7 +21,7 @@ type imageUseCase interface {
 	Delete(ctx context.Context, id int, executor *domain.User) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image, executor *domain.User) (*domain.Image, error)
-	AddView(ctx context.Context, view *domain.ImageView) error
+	AddView(ctx context.Context, imageID int, userID *int) error
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.Image], error)
@@ -132,22 +132,22 @@ func (h *ImageHandlers) GetDetailed() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := rest.IntParam(c, "id")
+		imageID, err := rest.IntParam(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
 
-		img, err := h.uc.GetDetailed(ctx, id)
+		img, err := h.uc.GetDetailed(ctx, imageID)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "GetDetailed")
 		}
 
-		view := &domain.ImageView{ImageID: img.ID}
+		var userID *int
 		if user, ok := c.Get("user").(*domain.User); ok {
-			view.UserID = &user.ID
+			userID = &user.ID
 		}
 
-		if err := h.uc.AddView(ctx, view); err != nil {
+		if err := h.uc.AddView(ctx, imageID, userID); err != nil {
 			h.logger.Errorf("imagesHandlers.UseCase.AddView: %v", err)
 		}
 

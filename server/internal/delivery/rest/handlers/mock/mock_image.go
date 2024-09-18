@@ -55,17 +55,17 @@ func (mr *MockimageUseCaseMockRecorder) AddLike(ctx, imageID, userID any) *gomoc
 }
 
 // AddView mocks base method.
-func (m *MockimageUseCase) AddView(ctx context.Context, view *domain.ImageView) error {
+func (m *MockimageUseCase) AddView(ctx context.Context, imageID int, userID *int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddView", ctx, view)
+	ret := m.ctrl.Call(m, "AddView", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddView indicates an expected call of AddView.
-func (mr *MockimageUseCaseMockRecorder) AddView(ctx, view any) *gomock.Call {
+func (mr *MockimageUseCaseMockRecorder) AddView(ctx, imageID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddView", reflect.TypeOf((*MockimageUseCase)(nil).AddView), ctx, view)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddView", reflect.TypeOf((*MockimageUseCase)(nil).AddView), ctx, imageID, userID)
 }
 
 // Create mocks base method.

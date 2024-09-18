@@ -173,17 +173,17 @@ func (mr *MockImageRepositoryMockRecorder) AddLike(ctx, imageID, userID any) *go
 }
 
 // AddView mocks base method.
-func (m *MockImageRepository) AddView(ctx context.Context, view *domain.ImageView) error {
+func (m *MockImageRepository) AddView(ctx context.Context, imageID int, userID *int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddView", ctx, view)
+	ret := m.ctrl.Call(m, "AddView", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddView indicates an expected call of AddView.
-func (mr *MockImageRepositoryMockRecorder) AddView(ctx, view any) *gomock.Call {
+func (mr *MockImageRepositoryMockRecorder) AddView(ctx, imageID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddView", reflect.TypeOf((*MockImageRepository)(nil).AddView), ctx, view)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddView", reflect.TypeOf((*MockImageRepository)(nil).AddView), ctx, imageID, userID)
 }
 
 // Create mocks base method.

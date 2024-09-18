@@ -59,11 +59,6 @@ type ImageTag struct {
 	Name string `json:"name" db:"name"`
 }
 
-type ImageView struct {
-	ImageID int  `db:"image_id"`
-	UserID  *int `db:"user_id"`
-}
-
 type ImageLike struct {
 	ImageID int
 	UserID  int

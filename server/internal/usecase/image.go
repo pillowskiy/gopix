@@ -28,7 +28,7 @@ type ImageRepository interface {
 	Delete(ctx context.Context, id int) error
 	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
-	AddView(ctx context.Context, view *domain.ImageView) error
+	AddView(ctx context.Context, imageID int, userID *int) error
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
@@ -137,8 +137,8 @@ func (uc *imageUseCase) GetDetailed(ctx context.Context, id int) (*domain.Detail
 	return img, nil
 }
 
-func (uc *imageUseCase) AddView(ctx context.Context, view *domain.ImageView) error {
-	return uc.repo.AddView(ctx, view)
+func (uc *imageUseCase) AddView(ctx context.Context, imageID int, userID *int) error {
+	return uc.repo.AddView(ctx, imageID, userID)
 }
 
 func (uc *imageUseCase) AddLike(ctx context.Context, imageID int, userID int) error {

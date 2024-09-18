@@ -236,10 +236,10 @@ func (r *imageRepository) RemoveLike(ctx context.Context, imageID int, userID in
 	return nil
 }
 
-func (r *imageRepository) AddView(ctx context.Context, view *domain.ImageView) error {
+func (r *imageRepository) AddView(ctx context.Context, imageID int, userID *int) error {
 	r.viewBatcher.Add(viewBatchItem{
-		ImageID: view.ImageID,
-		UserID:  view.UserID,
+		ImageID: imageID,
+		UserID:  userID,
 	})
 	return nil
 }

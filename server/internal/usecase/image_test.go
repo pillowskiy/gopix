@@ -297,23 +297,20 @@ func TestImageUseCase_AddView(t *testing.T) {
 
 	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
 
+	imageID := 1
 	userID := 1
-	mockView := &domain.ImageView{
-		ImageID: 1,
-		UserID:  &userID,
-	}
 
 	t.Run("SuccessAdd", func(t *testing.T) {
-		mockRepo.EXPECT().AddView(gomock.Any(), mockView).Return(nil)
+		mockRepo.EXPECT().AddView(gomock.Any(), imageID, &userID).Return(nil)
 
-		err := imageUC.AddView(context.Background(), mockView)
+		err := imageUC.AddView(context.Background(), imageID, &userID)
 		assert.NoError(t, err)
 	})
 
 	t.Run("RepoError", func(t *testing.T) {
-		mockRepo.EXPECT().AddView(gomock.Any(), mockView).Return(errors.New("repo error"))
+		mockRepo.EXPECT().AddView(gomock.Any(), imageID, &userID).Return(errors.New("repo error"))
 
-		err := imageUC.AddView(context.Background(), mockView)
+		err := imageUC.AddView(context.Background(), imageID, &userID)
 		assert.Error(t, err)
 	})
 }

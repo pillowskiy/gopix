@@ -305,7 +305,7 @@ func TestImageHandlers_GetDetailed(t *testing.T) {
 		ctx := rest.GetEchoRequestCtx(c)
 
 		mockImageUC.EXPECT().GetDetailed(ctx, imageID).Return(img, nil)
-		mockImageUC.EXPECT().AddView(ctx, gomock.Any())
+		mockImageUC.EXPECT().AddView(ctx, gomock.Any(), gomock.Any())
 
 		assert.NoError(t, h.GetDetailed()(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -322,8 +322,7 @@ func TestImageHandlers_GetDetailed(t *testing.T) {
 		ctx := rest.GetEchoRequestCtx(c)
 		mockImageUC.EXPECT().GetDetailed(ctx, imageID).Return(img, nil)
 
-		view := &domain.ImageView{ImageID: imageID, UserID: &ctxUser.ID}
-		mockImageUC.EXPECT().AddView(ctx, view)
+		mockImageUC.EXPECT().AddView(ctx, imageID, &ctxUser.ID)
 
 		assert.NoError(t, h.GetDetailed()(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -335,8 +334,7 @@ func TestImageHandlers_GetDetailed(t *testing.T) {
 		ctx := rest.GetEchoRequestCtx(c)
 		mockImageUC.EXPECT().GetDetailed(ctx, imageID).Return(img, nil)
 
-		view := &domain.ImageView{ImageID: imageID}
-		mockImageUC.EXPECT().AddView(ctx, view)
+		mockImageUC.EXPECT().AddView(ctx, imageID, nil)
 
 		assert.NoError(t, h.GetDetailed()(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -348,7 +346,7 @@ func TestImageHandlers_GetDetailed(t *testing.T) {
 		ctx := rest.GetEchoRequestCtx(c)
 		mockImageUC.EXPECT().GetDetailed(ctx, imageID).Return(img, nil)
 
-		mockImageUC.EXPECT().AddView(ctx, gomock.Any()).Return(errors.New("any error"))
+		mockImageUC.EXPECT().AddView(ctx, gomock.Any(), gomock.Any()).Return(errors.New("any error"))
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		assert.NoError(t, h.GetDetailed()(c))
