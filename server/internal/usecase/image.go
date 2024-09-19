@@ -32,7 +32,7 @@ type ImageRepository interface {
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
-	) (*domain.Pagination[domain.Image], error)
+	) (*domain.Pagination[domain.ImageWithAuthor], error)
 	HasLike(ctx context.Context, imageID int, userID int) (bool, error)
 	AddLike(ctx context.Context, imageID int, userID int) error
 	RemoveLike(ctx context.Context, imageID int, userID int) error
@@ -165,7 +165,7 @@ func (uc *imageUseCase) Discover(
 	ctx context.Context,
 	pagInput *domain.PaginationInput,
 	sort domain.ImageSortMethod,
-) (*domain.Pagination[domain.Image], error) {
+) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	pag, err := uc.repo.Discover(ctx, pagInput, sort)
 	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
 		return nil, ErrUnprocessable

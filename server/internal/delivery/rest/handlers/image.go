@@ -24,7 +24,7 @@ type imageUseCase interface {
 	AddView(ctx context.Context, imageID int, userID *int) error
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
-	) (*domain.Pagination[domain.Image], error)
+	) (*domain.Pagination[domain.ImageWithAuthor], error)
 
 	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
 	AddLike(ctx context.Context, imageID int, userID int) error

@@ -298,7 +298,11 @@ func TestImageHandlers_GetDetailed(t *testing.T) {
 		return c, rec
 	}
 
-	img := &domain.DetailedImage{Image: domain.Image{ID: 1, Path: "path.png"}}
+	img := &domain.DetailedImage{
+		ImageWithAuthor: domain.ImageWithAuthor{
+			Image: domain.Image{ID: 1, Path: "path.png"},
+		},
+	}
 
 	t.Run("SuccessGetDetailed", func(t *testing.T) {
 		c, rec := prepareGetDetailedQuery(itoaImageID)
@@ -624,15 +628,17 @@ func TestImageHandlers_GetDiscover(t *testing.T) {
 		Sort:    domain.ImagePopularSort,
 	}
 
-	pag := &domain.Pagination[domain.Image]{
+	pag := &domain.Pagination[domain.ImageWithAuthor]{
 		PaginationInput: domain.PaginationInput{
 			Page:    1,
 			PerPage: 10,
 		},
-		Items: []domain.Image{
+		Items: []domain.ImageWithAuthor{
 			{
-				ID:   1,
-				Path: "path.png",
+				Image: domain.Image{
+					ID:   1,
+					Path: "path.png",
+				},
 			},
 		},
 		Total: 100,
@@ -647,7 +653,7 @@ func TestImageHandlers_GetDiscover(t *testing.T) {
 		assert.NoError(t, h.GetDiscover()(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		actual := new(domain.Pagination[domain.Image])
+		actual := new(domain.Pagination[domain.ImageWithAuthor])
 		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
 		assert.Equal(t, pag, actual)
 	})

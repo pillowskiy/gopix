@@ -39,12 +39,16 @@ type ImageStates struct {
 	Liked   bool `json:"liked" db:"liked"`
 }
 
-type DetailedImage struct {
+type ImageWithAuthor struct {
 	Image
 	Author ImageAuthor `json:"author" db:"author"`
-	Likes  int         `json:"likes" db:"likes"`
-	Views  int         `json:"views" db:"views"`
-	Tags   []ImageTag  `json:"tags" db:"tags"`
+}
+
+type DetailedImage struct {
+	ImageWithAuthor
+	Likes int        `json:"likes" db:"likes"`
+	Views int        `json:"views" db:"views"`
+	Tags  []ImageTag `json:"tags" db:"tags"`
 }
 
 type ImageAuthor struct {

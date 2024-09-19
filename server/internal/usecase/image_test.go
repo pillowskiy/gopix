@@ -252,8 +252,10 @@ func TestImageUseCase_GetDetailed(t *testing.T) {
 	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
 
 	mockDetailedImage := &domain.DetailedImage{
-		Image: domain.Image{
-			ID: 1,
+		ImageWithAuthor: domain.ImageWithAuthor{
+			Image: domain.Image{
+				ID: 1,
+			},
 		},
 	}
 
@@ -455,10 +457,12 @@ func TestImageUseCase_Discover(t *testing.T) {
 		PerPage: 10,
 	}
 
-	pag := &domain.Pagination[domain.Image]{
+	pag := &domain.Pagination[domain.ImageWithAuthor]{
 		PaginationInput: *pagInput,
-		Items: []domain.Image{
-			*mockImage,
+		Items: []domain.ImageWithAuthor{
+			{
+				Image: *mockImage,
+			},
 		},
 		Total: 1,
 	}

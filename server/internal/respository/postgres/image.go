@@ -145,7 +145,7 @@ func (r *imageRepository) Discover(
 	ctx context.Context,
 	pagInput *domain.PaginationInput,
 	sort domain.ImageSortMethod,
-) (*domain.Pagination[domain.Image], error) {
+) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	sortQuery, ok := imagesSortQuery.SortQuery(string(sort))
 	if !ok {
 		return nil, repository.ErrIncorrectInput
@@ -153,17 +153,13 @@ func (r *imageRepository) Discover(
 
 	q := fmt.Sprintf(`
   SELECT
-    i.id,
-    i.author_id,
-    i.path,
-    i.title,
-    i.description,
-    i.access_level,
-    i.expires_at,
-    i.uploaded_at,
-    i.updated_at
+    i.*,
+    u.id AS "author.id",
+    u.username AS "author.username",
+    u.avatar_url AS "author.avatar_url"
   FROM images i
-    LEFT JOIN images_analytics a ON a.image_id = i.id
+  LEFT JOIN users u ON i.author_id = u.id
+  JOIN images_analytics a ON a.image_id = i.id
   WHERE access_level = 'public'::access_level
   ORDER BY %s LIMIT $1 OFFSET $2
   `, sortQuery)
@@ -175,12 +171,12 @@ func (r *imageRepository) Discover(
 	}
 	defer rowx.Close()
 
-	images, err := scanToStructSliceOf[domain.Image](rowx)
+	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Discover.Scan")
 	}
 
-	pagination := &domain.Pagination[domain.Image]{
+	pagination := &domain.Pagination[domain.ImageWithAuthor]{
 		PaginationInput: *pagInput,
 		Items:           images,
 	}

@@ -98,10 +98,10 @@ func (mr *MockimageUseCaseMockRecorder) Delete(ctx, id, executor any) *gomock.Ca
 }
 
 // Discover mocks base method.
-func (m *MockimageUseCase) Discover(ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod) (*domain.Pagination[domain.Image], error) {
+func (m *MockimageUseCase) Discover(ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Discover", ctx, pagInput, sort)
-	ret0, _ := ret[0].(*domain.Pagination[domain.Image])
+	ret0, _ := ret[0].(*domain.Pagination[domain.ImageWithAuthor])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
