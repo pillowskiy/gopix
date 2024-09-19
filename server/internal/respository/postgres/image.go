@@ -21,9 +21,8 @@ var imagesSortQuery = NewSortQueryBuilder().
 
 type imageRepository struct {
 	PostgresRepository
-	viewBatcher    batch.Batcher[viewBatchItem]
-	likeBatcher    batch.Batcher[likeBatchItem]
-	dislikeBatcher batch.Batcher[likeBatchItem]
+	viewBatcher batch.Batcher[viewBatchItem]
+	likeBatcher batch.Batcher[likeBatchItem]
 }
 
 func NewImageRepository(db *sqlx.DB) *imageRepository {
@@ -49,7 +48,6 @@ func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*dom
 		image.Path,
 		image.Title,
 		image.Description,
-		image.PHash,
 		image.AccessLevel,
 		image.ExpiresAt,
 	)

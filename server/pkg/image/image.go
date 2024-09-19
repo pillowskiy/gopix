@@ -1,12 +1,8 @@
 package image
 
 import (
-	"bytes"
 	"fmt"
-	"image"
 	"net/http"
-
-	"github.com/corona10/goimagehash"
 
 	_ "image/gif"
 	_ "image/jpeg"
@@ -39,8 +35,10 @@ var imagesMimeTypeExt = map[string]string{
 	"video/x-ms-wmv":   "wmv",
 }
 
+const uniqueFilenameLength = 8
+
 func GenerateUniqueFilename(ext string) string {
-	str, err := nanoid.New(8)
+	str, err := nanoid.New(uniqueFilenameLength)
 	if err != nil {
 		panic(err)
 	}
@@ -67,18 +65,4 @@ func GetExtByMime(mime string) (string, error) {
 		return "", fmt.Errorf("unknown mime type: %s", mime)
 	}
 	return ext, nil
-}
-
-func PHash(data []byte) (string, error) {
-	img, _, err := image.Decode(bytes.NewReader(data))
-	if err != nil {
-		return "", fmt.Errorf("image.Decode: %w", err)
-	}
-
-	pHash, err := goimagehash.PerceptionHash(img)
-	if err != nil {
-		return "", fmt.Errorf("goimagehash.PerceptionHash: %w", err)
-	}
-
-	return fmt.Sprintf("%016x", pHash.GetHash()), nil
 }

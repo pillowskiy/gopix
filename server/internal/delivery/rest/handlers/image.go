@@ -93,9 +93,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
-		pHash, _ := image.PHash(imgBytes)
-
-		img := &domain.Image{AuthorID: user.ID, PHash: pHash}
+		img := &domain.Image{AuthorID: user.ID}
 		createdImg, err := h.uc.Create(ctx, img, fileNode)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Create")
