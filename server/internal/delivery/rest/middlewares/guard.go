@@ -69,7 +69,6 @@ func (mw *GuardMiddlewares) OptionalAuth(next echo.HandlerFunc) echo.HandlerFunc
 				c.Set("user", user)
 				ctx := context.WithValue(c.Request().Context(), rest.UserCtxKey{}, user)
 				c.SetRequest(c.Request().WithContext(ctx))
-				return next(c)
 			}
 		}
 

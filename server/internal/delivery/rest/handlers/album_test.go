@@ -229,13 +229,12 @@ func TestAlbumHandlers_GetAlbumImages(t *testing.T) {
 			Page:    validAlbumImagesQuery.Page,
 		}
 
-		pag := &domain.Pagination[domain.Image]{
-			Items: []domain.Image{
+		pag := &domain.Pagination[domain.ImageWithAuthor]{
+			Items: []domain.ImageWithAuthor{
 				{
-					ID:          1,
-					Title:       "title",
-					Description: "description",
-					Path:        "path",
+					Image: domain.Image{
+						ID: 1,
+					},
 				},
 			},
 			PaginationInput: *pagInput,
@@ -248,7 +247,7 @@ func TestAlbumHandlers_GetAlbumImages(t *testing.T) {
 		assert.NoError(t, h.GetAlbumImages()(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		actual := new(domain.Pagination[domain.Image])
+		actual := new(domain.Pagination[domain.ImageWithAuthor])
 		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
 		assert.Equal(t, pag, actual)
 	})

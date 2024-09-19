@@ -15,7 +15,7 @@ type AlbumRepository interface {
 	GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error)
 	GetAlbumImages(
 		ctx context.Context, albumID int, pagInput *domain.PaginationInput,
-	) (*domain.Pagination[domain.Image], error)
+	) (*domain.Pagination[domain.ImageWithAuthor], error)
 	Delete(ctx context.Context, albumID int) error
 	Update(ctx context.Context, albumID int, album *domain.Album) (*domain.Album, error)
 
@@ -79,7 +79,7 @@ func (uc *albumUseCase) GetByID(ctx context.Context, albumID int) (*domain.Album
 
 func (uc *albumUseCase) GetAlbumImages(
 	ctx context.Context, albumID int, pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.Image], error) {
+) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	if _, err := uc.GetByID(ctx, albumID); err != nil {
 		return nil, err
 	}

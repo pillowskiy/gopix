@@ -170,12 +170,16 @@ func TestAlbumUseCase_GetAlbumImages(t *testing.T) {
 		Page:    1,
 	}
 
-	mockPag := &domain.Pagination[domain.Image]{
+	mockPag := &domain.Pagination[domain.ImageWithAuthor]{
 		PaginationInput: *pagInput,
 		Total:           10,
-		Items: []domain.Image{
-			{ID: 1},
-			{ID: 2},
+		Items: []domain.ImageWithAuthor{
+			{
+				Image: domain.Image{
+					ID:   1,
+					Path: "test.png",
+				},
+			},
 		},
 	}
 

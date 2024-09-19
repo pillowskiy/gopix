@@ -84,10 +84,10 @@ func (mr *MockAlbumRepositoryMockRecorder) DeleteImage(ctx, albumID, imageID any
 }
 
 // GetAlbumImages mocks base method.
-func (m *MockAlbumRepository) GetAlbumImages(ctx context.Context, albumID int, pagInput *domain.PaginationInput) (*domain.Pagination[domain.Image], error) {
+func (m *MockAlbumRepository) GetAlbumImages(ctx context.Context, albumID int, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAlbumImages", ctx, albumID, pagInput)
-	ret0, _ := ret[0].(*domain.Pagination[domain.Image])
+	ret0, _ := ret[0].(*domain.Pagination[domain.ImageWithAuthor])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

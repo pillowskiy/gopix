@@ -18,7 +18,7 @@ type albumUseCase interface {
 	GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error)
 	GetAlbumImages(
 		ctx context.Context, albumID int, pagInput *domain.PaginationInput,
-	) (*domain.Pagination[domain.Image], error)
+	) (*domain.Pagination[domain.ImageWithAuthor], error)
 	Delete(ctx context.Context, albumID int, executor *domain.User) error
 	Update(
 		ctx context.Context, albumID int, album *domain.Album, executor *domain.User,

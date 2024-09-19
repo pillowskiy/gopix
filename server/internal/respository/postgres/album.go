@@ -49,10 +49,16 @@ func (repo *albumRepository) GetByID(ctx context.Context, albumID int) (*domain.
 
 func (repo *albumRepository) GetAlbumImages(
 	ctx context.Context, albumID int, pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.Image], error) {
+) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	q := `
-  SELECT i.* FROM images_to_albums ia 
+  SELECT
+    i.*,
+    u.id AS "author.id",
+    u.username AS "author.username",
+    u.avatar_url AS "author.avatar_url"
+  FROM images_to_albums ia
   JOIN images i ON i.id = ia.image_id
+  JOIN users u ON u.id = i.author_id
   WHERE ia.album_id = $1
   LIMIT $2 OFFSET $3
   `
@@ -62,12 +68,12 @@ func (repo *albumRepository) GetAlbumImages(
 		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.QueryxContext")
 	}
 
-	images, err := scanToStructSliceOf[domain.Image](rowx)
+	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.scanToStructSliceOf")
 	}
 
-	pag := &domain.Pagination[domain.Image]{
+	pag := &domain.Pagination[domain.ImageWithAuthor]{
 		PaginationInput: *pagInput,
 		Items:           images,
 	}
