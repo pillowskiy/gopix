@@ -365,7 +365,7 @@ func TestImageUseCase_RemoveLike(t *testing.T) {
 	userID := 1
 
 	t.Run("SuccessRemove", func(t *testing.T) {
-		mockRepo.EXPECT().HasLike(gomock.Any(), imageID, userID).Return(false, nil)
+		mockRepo.EXPECT().HasLike(gomock.Any(), imageID, userID).Return(true, nil)
 		mockRepo.EXPECT().RemoveLike(gomock.Any(), imageID, userID).Return(nil)
 
 		err := imageUC.RemoveLike(context.Background(), imageID, userID)
@@ -373,7 +373,7 @@ func TestImageUseCase_RemoveLike(t *testing.T) {
 	})
 
 	t.Run("AlreadyLiked", func(t *testing.T) {
-		mockRepo.EXPECT().HasLike(gomock.Any(), imageID, userID).Return(true, nil)
+		mockRepo.EXPECT().HasLike(gomock.Any(), imageID, userID).Return(false, nil)
 		mockRepo.EXPECT().RemoveLike(gomock.Any(), imageID, userID).Times(0)
 
 		err := imageUC.RemoveLike(context.Background(), imageID, userID)
@@ -382,7 +382,7 @@ func TestImageUseCase_RemoveLike(t *testing.T) {
 	})
 
 	t.Run("RepoError", func(t *testing.T) {
-		mockRepo.EXPECT().HasLike(gomock.Any(), imageID, userID).Return(false, nil)
+		mockRepo.EXPECT().HasLike(gomock.Any(), imageID, userID).Return(true, nil)
 		mockRepo.EXPECT().RemoveLike(gomock.Any(), imageID, userID).Return(errors.New("repo error"))
 
 		err := imageUC.RemoveLike(context.Background(), imageID, userID)

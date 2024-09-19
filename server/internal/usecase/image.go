@@ -148,7 +148,7 @@ func (uc *imageUseCase) AddLike(ctx context.Context, imageID int, userID int) er
 func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int) error {
 	// We should check for like existence to make sure that we don't cause UX conflicts
 	// For example, when the number of likes is negative
-	if hasLike := uc.HasLike(ctx, imageID, userID); hasLike {
+	if hasLike := uc.HasLike(ctx, imageID, userID); !hasLike {
 		return ErrUnprocessable
 	}
 

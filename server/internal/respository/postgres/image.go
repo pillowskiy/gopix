@@ -198,9 +198,14 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
 		return nil, errors.Wrap(err, "imageRepository.States.StructScan")
 	}
 
-	batchView := r.viewBatcher.Search(imageWithUserKey(imageID, userID), nil)
+	batchView := r.getBatchView(imageID, userID)
 	if batchView != nil {
 		states.Viewed = true
+	}
+
+	batchLike := r.getBatchLike(imageID, userID)
+	if batchLike != nil {
+		states.Liked = batchLike.Liked
 	}
 
 	return states, nil
@@ -208,12 +213,26 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
 
 func (r *imageRepository) HasLike(ctx context.Context, imageID int, userID int) (bool, error) {
 	var hasLike bool
+
+	batchLike := r.getBatchLike(imageID, userID)
+	if batchLike != nil {
+		return batchLike.Liked, nil
+	}
+
 	rowx := r.ext(ctx).QueryRowxContext(ctx, hasLikeImageQuery, imageID, userID)
 	if err := rowx.Scan(&hasLike); err != nil {
 		return false, errors.Wrap(err, "imageRepository.HasLike.Scan")
 	}
 
 	return hasLike, nil
+}
+
+func (r *imageRepository) getBatchView(imageID int, userID int) *viewBatchItem {
+	return r.viewBatcher.Search(imageWithUserKey(imageID, userID), nil)
+}
+
+func (r *imageRepository) getBatchLike(imageID int, userID int) *likeBatchItem {
+	return r.likeBatcher.Search(imageWithUserKey(imageID, userID), nil)
 }
 
 func (r *imageRepository) AddLike(ctx context.Context, imageID int, userID int) error {
