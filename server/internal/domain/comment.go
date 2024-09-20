@@ -12,9 +12,9 @@ const (
 )
 
 type Comment struct {
-	ID        int       `json:"id" db:"id"`
-	AuthorID  int       `json:"-" db:"author_id"`
-	ImageID   int       `json:"-" db:"image_id"`
+	ID        ID        `json:"id" db:"id"`
+	AuthorID  ID        `json:"-" db:"author_id"`
+	ImageID   ID        `json:"-" db:"image_id"`
 	Text      string    `json:"text" db:"comment"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
@@ -26,7 +26,7 @@ type DetailedComment struct {
 }
 
 type CommentAuthor struct {
-	ID        int    `json:"id" db:"id"`
+	ID        ID     `json:"id" db:"id"`
 	Username  string `json:"username" db:"username"`
 	AvatarURL string `json:"avatarURL" db:"avatar_url"`
 }

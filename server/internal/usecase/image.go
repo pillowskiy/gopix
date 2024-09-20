@@ -17,25 +17,25 @@ type ImageFileStorage interface {
 }
 
 type ImageCache interface {
-	Get(ctx context.Context, id int) (*domain.Image, error)
-	Set(ctx context.Context, id int, image *domain.Image, ttl int) error
-	Del(ctx context.Context, id int) error
+	Get(ctx context.Context, id string) (*domain.Image, error)
+	Set(ctx context.Context, id string, image *domain.Image, ttl int) error
+	Del(ctx context.Context, id string) error
 }
 
 type ImageRepository interface {
 	Create(ctx context.Context, image *domain.Image) (*domain.Image, error)
-	GetByID(ctx context.Context, id int) (*domain.Image, error)
-	Delete(ctx context.Context, id int) error
-	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
-	Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error)
-	AddView(ctx context.Context, imageID int, userID *int) error
-	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
+	GetByID(ctx context.Context, id domain.ID) (*domain.Image, error)
+	Delete(ctx context.Context, id domain.ID) error
+	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
+	Update(ctx context.Context, id domain.ID, image *domain.Image) (*domain.Image, error)
+	AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error
+	States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error)
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)
-	HasLike(ctx context.Context, imageID int, userID int) (bool, error)
-	AddLike(ctx context.Context, imageID int, userID int) error
-	RemoveLike(ctx context.Context, imageID int, userID int) error
+	HasLike(ctx context.Context, imageID domain.ID, userID domain.ID) (bool, error)
+	AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
+	RemoveLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
 
 	repository.Transactional
 }
@@ -92,7 +92,7 @@ func (uc *imageUseCase) Create(
 
 func (uc *imageUseCase) Delete(
 	ctx context.Context,
-	id int,
+	id domain.ID,
 	executor *domain.User,
 ) error {
 	img, err := uc.GetByID(ctx, id)
@@ -125,7 +125,7 @@ func (uc *imageUseCase) Delete(
 	return nil
 }
 
-func (uc *imageUseCase) GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error) {
+func (uc *imageUseCase) GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error) {
 	img, err := uc.repo.GetDetailed(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
@@ -137,15 +137,15 @@ func (uc *imageUseCase) GetDetailed(ctx context.Context, id int) (*domain.Detail
 	return img, nil
 }
 
-func (uc *imageUseCase) AddView(ctx context.Context, imageID int, userID *int) error {
+func (uc *imageUseCase) AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error {
 	return uc.repo.AddView(ctx, imageID, userID)
 }
 
-func (uc *imageUseCase) AddLike(ctx context.Context, imageID int, userID int) error {
+func (uc *imageUseCase) AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error {
 	return uc.repo.AddLike(ctx, imageID, userID)
 }
 
-func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int) error {
+func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID domain.ID, userID domain.ID) error {
 	// We should check for like existence to make sure that we don't cause UX conflicts
 	// For example, when the number of likes is negative
 	if hasLike := uc.HasLike(ctx, imageID, userID); !hasLike {
@@ -157,7 +157,9 @@ func (uc *imageUseCase) RemoveLike(ctx context.Context, imageID int, userID int)
 
 // Since you don't need to provide the data that exists for the existence check,
 // we don't check the existence of the related data, because it may affect performance
-func (uc *imageUseCase) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
+func (uc *imageUseCase) States(
+	ctx context.Context, imageID domain.ID, userID domain.ID,
+) (*domain.ImageStates, error) {
 	return uc.repo.States(ctx, imageID, userID)
 }
 
@@ -174,7 +176,7 @@ func (uc *imageUseCase) Discover(
 	return pag, err
 }
 
-func (uc *imageUseCase) HasLike(ctx context.Context, imageID int, userID int) bool {
+func (uc *imageUseCase) HasLike(ctx context.Context, imageID domain.ID, userID domain.ID) bool {
 	hasLike, err := uc.repo.HasLike(ctx, imageID, userID)
 	if err != nil {
 		uc.logger.Errorf("ImageUseCase.HasLike: %v", err)
@@ -183,8 +185,8 @@ func (uc *imageUseCase) HasLike(ctx context.Context, imageID int, userID int) bo
 	return hasLike
 }
 
-func (uc *imageUseCase) GetByID(ctx context.Context, id int) (*domain.Image, error) {
-	cachedImg, err := uc.cache.Get(ctx, id)
+func (uc *imageUseCase) GetByID(ctx context.Context, id domain.ID) (*domain.Image, error) {
+	cachedImg, err := uc.cache.Get(ctx, id.String())
 	if cachedImg != nil {
 		return cachedImg, err
 	}
@@ -197,7 +199,7 @@ func (uc *imageUseCase) GetByID(ctx context.Context, id int) (*domain.Image, err
 		return nil, err
 	}
 
-	if err := uc.cache.Set(ctx, id, img, imageTTL); err != nil {
+	if err := uc.cache.Set(ctx, id.String(), img, imageTTL); err != nil {
 		uc.logger.Errorf("ImageUseCase.GetById.Set: %v", err)
 	}
 
@@ -206,7 +208,7 @@ func (uc *imageUseCase) GetByID(ctx context.Context, id int) (*domain.Image, err
 
 func (uc *imageUseCase) Update(
 	ctx context.Context,
-	id int,
+	id domain.ID,
 	image *domain.Image,
 	executor *domain.User,
 ) (*domain.Image, error) {
@@ -228,8 +230,8 @@ func (uc *imageUseCase) Update(
 	return updated, nil
 }
 
-func (uc *imageUseCase) deleteCachedImage(ctx context.Context, id int) {
-	if err := uc.cache.Del(ctx, id); err != nil {
+func (uc *imageUseCase) deleteCachedImage(ctx context.Context, id domain.ID) {
+	if err := uc.cache.Del(ctx, id.String()); err != nil {
 		uc.logger.Errorf("ImageUseCase.deleteCached: %v", err)
 	}
 }

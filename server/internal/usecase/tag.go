@@ -10,15 +10,15 @@ import (
 
 type TagRepository interface {
 	Upsert(ctx context.Context, tag *domain.Tag) (*domain.Tag, error)
-	UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID int) error
-	GetByID(ctx context.Context, id int) (*domain.Tag, error)
+	UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error
+	GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error)
 	GetByName(ctx context.Context, name string) (*domain.Tag, error)
 	Search(ctx context.Context, name string) ([]domain.Tag, error)
-	Delete(ctx context.Context, id int) error
+	Delete(ctx context.Context, id domain.ID) error
 }
 
 type TagImageUseCase interface {
-	GetByID(ctx context.Context, id int) (*domain.Image, error)
+	GetByID(ctx context.Context, id domain.ID) (*domain.Image, error)
 }
 
 type TagAccessPolicy interface {
@@ -44,7 +44,9 @@ func (uc *tagUseCase) Create(ctx context.Context, tag *domain.Tag) (*domain.Tag,
 	return uc.repo.Upsert(ctx, tag)
 }
 
-func (uc *tagUseCase) UpsertImageTag(ctx context.Context, tag *domain.Tag, imageID int, executor *domain.User) error {
+func (uc *tagUseCase) UpsertImageTag(
+	ctx context.Context, tag *domain.Tag, imageID domain.ID, executor *domain.User,
+) error {
 	image, err := uc.imageUC.GetByID(ctx, imageID)
 	if err != nil {
 		return ErrIncorrectImageRef
@@ -61,7 +63,7 @@ func (uc *tagUseCase) Search(ctx context.Context, query string) ([]domain.Tag, e
 	return uc.repo.Search(ctx, query)
 }
 
-func (uc *tagUseCase) Delete(ctx context.Context, tagID int) error {
+func (uc *tagUseCase) Delete(ctx context.Context, tagID domain.ID) error {
 	tag, err := uc.GetByID(ctx, tagID)
 	if err != nil {
 		return err
@@ -70,7 +72,7 @@ func (uc *tagUseCase) Delete(ctx context.Context, tagID int) error {
 	return uc.repo.Delete(ctx, tag.ID)
 }
 
-func (uc *tagUseCase) GetByID(ctx context.Context, tagID int) (*domain.Tag, error) {
+func (uc *tagUseCase) GetByID(ctx context.Context, tagID domain.ID) (*domain.Tag, error) {
 	tag, err := uc.repo.GetByID(ctx, tagID)
 	if tag == nil || err != nil {
 		if errors.Is(err, repository.ErrNotFound) {

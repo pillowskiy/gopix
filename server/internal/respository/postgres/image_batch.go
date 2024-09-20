@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/pkg/batch"
 	"github.com/pkg/errors"
 )
@@ -21,12 +21,12 @@ type imageAnalyticsAgg struct {
 	Count   int `db:"count"`
 }
 
-func imageWithUserKey(imageID int, userID int) string {
+func imageWithUserKey(imageID domain.ID, userID domain.ID) string {
 	return fmt.Sprintf("%v:%v", imageID, userID)
 }
 
-func imageGroupKey(imageID int) string {
-	return strconv.Itoa(imageID)
+func imageGroupKey(imageID domain.ID) string {
+	return imageID.String()
 }
 
 func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
@@ -73,7 +73,7 @@ func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
 	aggQuery := `
     UPDATE images_analytics AS ia
     SET views_count = ia.views_count + p.count
-    FROM (VALUES (CAST(:image_id AS int), CAST(:count AS int))) AS p(image_id, count)
+    FROM (VALUES (CAST(:image_id AS bigint), CAST(:count AS bigint))) AS p(image_id, count)
     WHERE ia.image_id = p.image_id
   `
 	if _, err := tx.NamedExecContext(ctx, aggQuery, aggResult); err != nil {
@@ -128,7 +128,7 @@ func (r *imageRepository) processLikesBatch(likes []likeBatchItem) error {
     UPDATE images_analytics AS ia
     SET likes_count = ia.likes_count + p.inserted_count - p.removed_count
     FROM (
-      VALUES (CAST(:image_id AS int), CAST(:inserted_count AS int), CAST(:removed_count AS int))
+      VALUES (CAST(:image_id AS bigint), CAST(:inserted_count AS bigint), CAST(:removed_count AS bigint))
     ) AS p(image_id, inserted_count, removed_count)
     WHERE ia.image_id = p.image_id
   `

@@ -12,12 +12,12 @@ import (
 type CommentRepository interface {
 	Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
 	GetByImageID(
-		ctx context.Context, imageID int, pagInput *domain.PaginationInput, sort domain.CommentSortMethod,
+		ctx context.Context, imageID domain.ID, pagInput *domain.PaginationInput, sort domain.CommentSortMethod,
 	) (*domain.Pagination[domain.DetailedComment], error)
-	GetByID(ctx context.Context, imageID int) (*domain.Comment, error)
-	Delete(ctx context.Context, commentID int) error
-	Update(ctx context.Context, commentID int, comment *domain.Comment) (*domain.Comment, error)
-	HasUserCommented(ctx context.Context, commentID int, userID int) (bool, error)
+	GetByID(ctx context.Context, imageID domain.ID) (*domain.Comment, error)
+	Delete(ctx context.Context, commentID domain.ID) error
+	Update(ctx context.Context, commentID domain.ID, comment *domain.Comment) (*domain.Comment, error)
+	HasUserCommented(ctx context.Context, commentID domain.ID, userID domain.ID) (bool, error)
 }
 
 type CommentAccessPolicy interface {
@@ -25,7 +25,7 @@ type CommentAccessPolicy interface {
 }
 
 type CommentImageUseCase interface {
-	GetByID(ctx context.Context, imageID int) (*domain.Image, error)
+	GetByID(ctx context.Context, imageID domain.ID) (*domain.Image, error)
 }
 
 type commentUseCase struct {
@@ -66,7 +66,7 @@ func (uc *commentUseCase) Create(
 
 func (uc *commentUseCase) GetByImageID(
 	ctx context.Context,
-	imageID int,
+	imageID domain.ID,
 	pagInput *domain.PaginationInput,
 	sort domain.CommentSortMethod,
 ) (*domain.Pagination[domain.DetailedComment], error) {
@@ -82,7 +82,7 @@ func (uc *commentUseCase) GetByImageID(
 	return pag, err
 }
 
-func (uc *commentUseCase) GetByID(ctx context.Context, commentID int) (*domain.Comment, error) {
+func (uc *commentUseCase) GetByID(ctx context.Context, commentID domain.ID) (*domain.Comment, error) {
 	cmt, err := uc.repo.GetByID(ctx, commentID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
@@ -94,7 +94,7 @@ func (uc *commentUseCase) GetByID(ctx context.Context, commentID int) (*domain.C
 	return cmt, nil
 }
 
-func (uc *commentUseCase) Delete(ctx context.Context, commentID int, executor *domain.User) error {
+func (uc *commentUseCase) Delete(ctx context.Context, commentID domain.ID, executor *domain.User) error {
 	cmt, err := uc.GetByID(ctx, commentID)
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (uc *commentUseCase) Delete(ctx context.Context, commentID int, executor *d
 
 func (uc *commentUseCase) Update(
 	ctx context.Context,
-	commentID int,
+	commentID domain.ID,
 	comment *domain.Comment,
 	executor *domain.User,
 ) (*domain.Comment, error) {

@@ -1,18 +1,21 @@
 package postgres
 
-import "github.com/pillowskiy/gopix/pkg/batch"
+import (
+	"github.com/pillowskiy/gopix/internal/domain"
+	"github.com/pillowskiy/gopix/pkg/batch"
+)
 
 var imageLikesBatchAgg = batch.NewKGAggregator[likeBatchItem]()
 
 type imageLikesAnalytics struct {
-	ImageID       int `db:"image_id"`
-	InsertedCount int `db:"inserted_count"`
-	RemovedCount  int `db:"removed_count"`
+	ImageID       domain.ID `db:"image_id"`
+	InsertedCount int       `db:"inserted_count"`
+	RemovedCount  int       `db:"removed_count"`
 }
 
 type likeBatchItem struct {
-	ImageID int `db:"image_id"`
-	UserID  int `db:"user_id"`
+	ImageID domain.ID `db:"image_id"`
+	UserID  domain.ID `db:"user_id"`
 	Liked   bool
 }
 

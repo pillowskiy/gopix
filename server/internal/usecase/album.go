@@ -11,16 +11,16 @@ import (
 
 type AlbumRepository interface {
 	Create(ctx context.Context, album *domain.Album) (*domain.Album, error)
-	GetByID(ctx context.Context, albumID int) (*domain.Album, error)
-	GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error)
+	GetByID(ctx context.Context, albumID domain.ID) (*domain.Album, error)
+	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error)
 	GetAlbumImages(
-		ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+		ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)
-	Delete(ctx context.Context, albumID int) error
-	Update(ctx context.Context, albumID int, album *domain.Album) (*domain.Album, error)
+	Delete(ctx context.Context, albumID domain.ID) error
+	Update(ctx context.Context, albumID domain.ID, album *domain.Album) (*domain.Album, error)
 
-	PutImage(ctx context.Context, albumID int, imageID int) error
-	DeleteImage(ctx context.Context, albumID int, imageID int) error
+	PutImage(ctx context.Context, albumID domain.ID, imageID domain.ID) error
+	DeleteImage(ctx context.Context, albumID domain.ID, imageID domain.ID) error
 }
 
 type AlbumAccessPolicy interface {
@@ -28,7 +28,7 @@ type AlbumAccessPolicy interface {
 }
 
 type AlbumImageUseCase interface {
-	GetByID(ctx context.Context, imageID int) (*domain.Image, error)
+	GetByID(ctx context.Context, imageID domain.ID) (*domain.Image, error)
 }
 
 type albumUseCase struct {
@@ -49,7 +49,7 @@ func (uc *albumUseCase) Create(ctx context.Context, album *domain.Album) (*domai
 	return uc.repo.Create(ctx, album)
 }
 
-func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error) {
+func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
 	album, err := uc.repo.GetByAuthorID(ctx, authorID)
 
 	if err != nil {
@@ -63,7 +63,7 @@ func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID int) ([]doma
 	return album, nil
 }
 
-func (uc *albumUseCase) GetByID(ctx context.Context, albumID int) (*domain.Album, error) {
+func (uc *albumUseCase) GetByID(ctx context.Context, albumID domain.ID) (*domain.Album, error) {
 	album, err := uc.repo.GetByID(ctx, albumID)
 
 	if err != nil {
@@ -78,7 +78,7 @@ func (uc *albumUseCase) GetByID(ctx context.Context, albumID int) (*domain.Album
 }
 
 func (uc *albumUseCase) GetAlbumImages(
-	ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+	ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
 ) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	if _, err := uc.GetByID(ctx, albumID); err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (uc *albumUseCase) GetAlbumImages(
 	return uc.repo.GetAlbumImages(ctx, albumID, pagInput)
 }
 
-func (uc *albumUseCase) Delete(ctx context.Context, albumID int, executor *domain.User) error {
+func (uc *albumUseCase) Delete(ctx context.Context, albumID domain.ID, executor *domain.User) error {
 	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (uc *albumUseCase) Delete(ctx context.Context, albumID int, executor *domai
 
 func (uc *albumUseCase) Update(
 	ctx context.Context,
-	albumID int,
+	albumID domain.ID,
 	album *domain.Album,
 	executor *domain.User,
 ) (*domain.Album, error) {
@@ -109,7 +109,7 @@ func (uc *albumUseCase) Update(
 }
 
 func (uc *albumUseCase) PutImage(
-	ctx context.Context, albumID int, imageID int, executor *domain.User,
+	ctx context.Context, albumID domain.ID, imageID domain.ID, executor *domain.User,
 ) error {
 	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
@@ -123,7 +123,7 @@ func (uc *albumUseCase) PutImage(
 }
 
 func (uc *albumUseCase) DeleteImage(
-	ctx context.Context, albumID int, imageID int, executor *domain.User,
+	ctx context.Context, albumID domain.ID, imageID domain.ID, executor *domain.User,
 ) error {
 	if err := uc.ExistsAndModifiable(ctx, executor, albumID); err != nil {
 		return err
@@ -138,7 +138,7 @@ func (uc *albumUseCase) DeleteImage(
 }
 
 func (uc *albumUseCase) ExistsAndModifiable(
-	ctx context.Context, user *domain.User, albumID int,
+	ctx context.Context, user *domain.User, albumID domain.ID,
 ) error {
 	album, err := uc.GetByID(ctx, albumID)
 	if err != nil {
@@ -152,7 +152,7 @@ func (uc *albumUseCase) ExistsAndModifiable(
 	return nil
 }
 
-func (uc *albumUseCase) correctImageRef(ctx context.Context, imageID int) error {
+func (uc *albumUseCase) correctImageRef(ctx context.Context, imageID domain.ID) error {
 	img, err := uc.imageUC.GetByID(ctx, imageID)
 
 	isValidImage := img != nil && img.AccessLevel == domain.ImageAccessPublic

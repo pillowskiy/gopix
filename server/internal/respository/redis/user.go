@@ -5,6 +5,6 @@ import (
 	redisClient "github.com/redis/go-redis/v9"
 )
 
-func NewUserCache(client *redisClient.Client) *ItoaCache[domain.User] {
-	return NewItoaCache[domain.User](client)
+func NewUserCache(client *redisClient.Client) *Cache[domain.User] {
+	return NewCache[domain.User](client)
 }

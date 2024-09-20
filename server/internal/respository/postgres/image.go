@@ -50,7 +50,10 @@ func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*dom
 		image.Description,
 		image.AccessLevel,
 		image.ExpiresAt,
+		image.Mime,
+		image.Ext,
 	)
+
 	if err := rowx.StructScan(img); err != nil {
 		return nil, errors.Wrap(err, "ImageRepository.Create.StructScan")
 	}
@@ -58,7 +61,7 @@ func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*dom
 	return img, nil
 }
 
-func (r *imageRepository) GetByID(ctx context.Context, id int) (*domain.Image, error) {
+func (r *imageRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Image, error) {
 	img := new(domain.Image)
 	rowx := r.ext(ctx).QueryRowxContext(ctx, getByIdImageQuery, id)
 
@@ -72,7 +75,7 @@ func (r *imageRepository) GetByID(ctx context.Context, id int) (*domain.Image, e
 	return img, nil
 }
 
-func (r *imageRepository) Delete(ctx context.Context, id int) error {
+func (r *imageRepository) Delete(ctx context.Context, id domain.ID) error {
 	if _, err := r.ext(ctx).ExecContext(ctx, deleteImageQuery, id); err != nil {
 		return err
 	}
@@ -80,7 +83,7 @@ func (r *imageRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error) {
+func (r *imageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error) {
 	var detailedImage domain.DetailedImage
 	var tagsJSON []byte
 
@@ -91,6 +94,8 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 		&detailedImage.Title,
 		&detailedImage.Description,
 		&detailedImage.AccessLevel,
+		&detailedImage.Ext,
+		&detailedImage.Mime,
 		&detailedImage.ExpiresAt,
 		&detailedImage.CreatedAt,
 		&detailedImage.UpdatedAt,
@@ -119,7 +124,7 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id int) (*domain.Deta
 	return &detailedImage, nil
 }
 
-func (r *imageRepository) Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error) {
+func (r *imageRepository) Update(ctx context.Context, id domain.ID, image *domain.Image) (*domain.Image, error) {
 	img := new(domain.Image)
 	rowx := r.ext(ctx).QueryRowxContext(
 		ctx,
@@ -187,7 +192,7 @@ func (r *imageRepository) Discover(
 	return pagination, nil
 }
 
-func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error) {
+func (r *imageRepository) States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error) {
 	states := new(domain.ImageStates)
 	rowx := r.ext(ctx).QueryRowxContext(ctx, statesImageQuery, imageID, userID)
 	if err := rowx.StructScan(states); err != nil {
@@ -207,7 +212,7 @@ func (r *imageRepository) States(ctx context.Context, imageID int, userID int) (
 	return states, nil
 }
 
-func (r *imageRepository) HasLike(ctx context.Context, imageID int, userID int) (bool, error) {
+func (r *imageRepository) HasLike(ctx context.Context, imageID domain.ID, userID domain.ID) (bool, error) {
 	var hasLike bool
 
 	batchLike := r.getBatchLike(imageID, userID)
@@ -223,15 +228,15 @@ func (r *imageRepository) HasLike(ctx context.Context, imageID int, userID int) 
 	return hasLike, nil
 }
 
-func (r *imageRepository) getBatchView(imageID int, userID int) *viewBatchItem {
+func (r *imageRepository) getBatchView(imageID domain.ID, userID domain.ID) *viewBatchItem {
 	return r.viewBatcher.Search(imageWithUserKey(imageID, userID), nil)
 }
 
-func (r *imageRepository) getBatchLike(imageID int, userID int) *likeBatchItem {
+func (r *imageRepository) getBatchLike(imageID domain.ID, userID domain.ID) *likeBatchItem {
 	return r.likeBatcher.Search(imageWithUserKey(imageID, userID), nil)
 }
 
-func (r *imageRepository) AddLike(ctx context.Context, imageID int, userID int) error {
+func (r *imageRepository) AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error {
 	r.likeBatcher.Add(likeBatchItem{
 		ImageID: imageID,
 		UserID:  userID,
@@ -240,7 +245,7 @@ func (r *imageRepository) AddLike(ctx context.Context, imageID int, userID int) 
 	return nil
 }
 
-func (r *imageRepository) RemoveLike(ctx context.Context, imageID int, userID int) error {
+func (r *imageRepository) RemoveLike(ctx context.Context, imageID domain.ID, userID domain.ID) error {
 	r.likeBatcher.Add(likeBatchItem{
 		ImageID: imageID,
 		UserID:  userID,
@@ -249,7 +254,7 @@ func (r *imageRepository) RemoveLike(ctx context.Context, imageID int, userID in
 	return nil
 }
 
-func (r *imageRepository) AddView(ctx context.Context, imageID int, userID *int) error {
+func (r *imageRepository) AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error {
 	r.viewBatcher.Add(viewBatchItem{
 		ImageID: imageID,
 		UserID:  userID,

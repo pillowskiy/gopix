@@ -1,8 +1,9 @@
 package postgres
 
 const createImageQuery = `
-INSERT INTO images (author_id, path, title, description, access_level, expires_at)
-VALUES ($1, $2, $3, $4, COALESCE(NULLIF($5, '')::access_level, 'public'::access_level), $6) RETURNING *
+INSERT INTO images (author_id, path, title, description, access_level, expires_at, mime, ext)
+VALUES ($1, $2, $3, $4, COALESCE(NULLIF($5, '')::access_level, 'public'::access_level), $6, $7, $8)
+RETURNING *
 `
 
 const getByIdImageQuery = `SELECT * FROM images WHERE id = $1`
@@ -17,6 +18,8 @@ SELECT
   i.title,
   i.description,
   i.access_level,
+  i.ext,
+  i.mime,
   i.expires_at,
   i.uploaded_at,
   i.updated_at,

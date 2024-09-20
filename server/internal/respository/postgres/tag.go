@@ -31,7 +31,7 @@ func (repo *tagRepository) Upsert(ctx context.Context, tag *domain.Tag) (*domain
 	return createdTag, nil
 }
 
-func (repo *tagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID int) error {
+func (repo *tagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error {
 	upsertQuery := `INSERT INTO tags(name) VALUES($1) ON CONFLICT (name) DO NOTHING RETURNING *`
 	getByNameQuery := `SELECT * FROM tags WHERE name = $1`
 	relationQuery := `INSERT INTO images_to_tags(image_id, tag_id) VALUES($1, $2)`
@@ -95,7 +95,7 @@ func (repo *tagRepository) Search(ctx context.Context, name string) ([]domain.Ta
 	return tags, nil
 }
 
-func (repo *tagRepository) GetByID(ctx context.Context, id int) (*domain.Tag, error) {
+func (repo *tagRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error) {
 	q := `SELECT * FROM tags WHERE id = $1`
 
 	rowx := repo.db.QueryRowxContext(ctx, q, id)
@@ -111,7 +111,7 @@ func (repo *tagRepository) GetByID(ctx context.Context, id int) (*domain.Tag, er
 	return tag, nil
 }
 
-func (repo *tagRepository) Delete(ctx context.Context, id int) error {
+func (repo *tagRepository) Delete(ctx context.Context, id domain.ID) error {
 	q := `DELETE FROM tags WHERE id = $1`
 
 	_, err := repo.db.ExecContext(ctx, q, id)

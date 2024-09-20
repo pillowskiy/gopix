@@ -15,17 +15,17 @@ import (
 
 type albumUseCase interface {
 	Create(ctx context.Context, album *domain.Album) (*domain.Album, error)
-	GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error)
+	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error)
 	GetAlbumImages(
-		ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+		ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)
-	Delete(ctx context.Context, albumID int, executor *domain.User) error
+	Delete(ctx context.Context, albumID domain.ID, executor *domain.User) error
 	Update(
-		ctx context.Context, albumID int, album *domain.Album, executor *domain.User,
+		ctx context.Context, albumID domain.ID, album *domain.Album, executor *domain.User,
 	) (*domain.Album, error)
 
-	PutImage(ctx context.Context, albumID int, imageID int, executor *domain.User) error
-	DeleteImage(ctx context.Context, albumID int, imageID int, executor *domain.User) error
+	PutImage(ctx context.Context, albumID domain.ID, imageID domain.ID, executor *domain.User) error
+	DeleteImage(ctx context.Context, albumID domain.ID, imageID domain.ID, executor *domain.User) error
 }
 
 type AlbumHandlers struct {
@@ -81,7 +81,7 @@ func (h *AlbumHandlers) GetByAuthorID() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		userID, err := rest.IntParam(c, "user_id")
+		userID, err := rest.PipeDomainIdentifier(c, "user_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid user ID").Response())
 		}
@@ -104,7 +104,7 @@ func (h *AlbumHandlers) GetAlbumImages() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		albumID, err := rest.IntParam(c, "album_id")
+		albumID, err := rest.PipeDomainIdentifier(c, "album_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid album ID").Response())
 		}
@@ -136,7 +136,7 @@ func (h *AlbumHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		albumID, err := rest.IntParam(c, "album_id")
+		albumID, err := rest.PipeDomainIdentifier(c, "album_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid album ID").Response())
 		}
@@ -164,7 +164,7 @@ func (h *AlbumHandlers) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		albumID, err := rest.IntParam(c, "album_id")
+		albumID, err := rest.PipeDomainIdentifier(c, "album_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid album ID").Response())
 		}
@@ -203,12 +203,12 @@ func (h *AlbumHandlers) PutImage() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		imageID, err := rest.IntParam(c, "image_id")
+		imageID, err := rest.PipeDomainIdentifier(c, "image_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid Image ID").Response())
 		}
 
-		albumID, err := rest.IntParam(c, "album_id")
+		albumID, err := rest.PipeDomainIdentifier(c, "album_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid Album ID").Response())
 		}
@@ -231,12 +231,12 @@ func (h *AlbumHandlers) DeleteImage() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		imageID, err := rest.IntParam(c, "image_id")
+		imageID, err := rest.PipeDomainIdentifier(c, "image_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid Image ID").Response())
 		}
 
-		albumID, err := rest.IntParam(c, "album_id")
+		albumID, err := rest.PipeDomainIdentifier(c, "album_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid Album ID").Response())
 		}

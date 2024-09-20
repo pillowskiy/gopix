@@ -31,7 +31,7 @@ func (repo *albumRepository) Create(ctx context.Context, album *domain.Album) (*
 	return createdAlbum, nil
 }
 
-func (repo *albumRepository) GetByID(ctx context.Context, albumID int) (*domain.Album, error) {
+func (repo *albumRepository) GetByID(ctx context.Context, albumID domain.ID) (*domain.Album, error) {
 	q := `SELECT * FROM albums WHERE id = $1`
 
 	rowx := repo.db.QueryRowxContext(ctx, q, albumID)
@@ -48,7 +48,7 @@ func (repo *albumRepository) GetByID(ctx context.Context, albumID int) (*domain.
 }
 
 func (repo *albumRepository) GetAlbumImages(
-	ctx context.Context, albumID int, pagInput *domain.PaginationInput,
+	ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
 ) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	q := `
   SELECT
@@ -57,7 +57,7 @@ func (repo *albumRepository) GetAlbumImages(
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url"
   FROM images_to_albums ia
-  JOIN images i ON i.id = ia.image_id
+  JOIN images i ON i.id = ia.image_id AND i.access_level = 'public'::access_level
   JOIN users u ON u.id = i.author_id
   WHERE ia.album_id = $1
   LIMIT $2 OFFSET $3
@@ -84,7 +84,7 @@ func (repo *albumRepository) GetAlbumImages(
 	return pag, nil
 }
 
-func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error) {
+func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
 	q := `SELECT * FROM albums WHERE author_id = $1`
 
 	rows, err := repo.db.QueryxContext(ctx, q, authorID)
@@ -100,7 +100,7 @@ func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID int) ([
 	return albums, nil
 }
 
-func (repo *albumRepository) Delete(ctx context.Context, albumID int) error {
+func (repo *albumRepository) Delete(ctx context.Context, albumID domain.ID) error {
 	q := `DELETE FROM albums WHERE id = $1`
 
 	_, err := repo.db.ExecContext(ctx, q, albumID)
@@ -109,10 +109,11 @@ func (repo *albumRepository) Delete(ctx context.Context, albumID int) error {
 
 func (repo *albumRepository) Update(
 	ctx context.Context,
-	albumID int,
+	albumID domain.ID,
 	album *domain.Album,
 ) (*domain.Album, error) {
-	q := `UPDATE albums SET 
+	q := `
+  UPDATE albums SET 
     name = COALESCE(NULLIF($1, ''), name),
     description = COALESCE(NULLIF($2, ''), description)
   WHERE id = $3 RETURNING *`
@@ -129,8 +130,8 @@ func (repo *albumRepository) Update(
 
 func (repo *albumRepository) PutImage(
 	ctx context.Context,
-	albumID int,
-	imageID int,
+	albumID domain.ID,
+	imageID domain.ID,
 ) error {
 	q := `INSERT INTO images_to_albums (album_id, image_id) VALUES ($1, $2)`
 
@@ -144,8 +145,8 @@ func (repo *albumRepository) PutImage(
 
 func (repo *albumRepository) DeleteImage(
 	ctx context.Context,
-	albumID int,
-	imageID int,
+	albumID domain.ID,
+	imageID domain.ID,
 ) error {
 	q := `DELETE FROM album_to_images WHERE album_id = $1 AND image_id = $2`
 

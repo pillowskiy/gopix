@@ -15,9 +15,9 @@ import (
 
 type TagUseCase interface {
 	Create(ctx context.Context, tag *domain.Tag) (*domain.Tag, error)
-	UpsertImageTag(ctx context.Context, tag *domain.Tag, imageID int, executor *domain.User) error
+	UpsertImageTag(ctx context.Context, tag *domain.Tag, imageID domain.ID, executor *domain.User) error
 	Search(ctx context.Context, query string) ([]domain.Tag, error)
-	Delete(ctx context.Context, tagID int) error
+	Delete(ctx context.Context, tagID domain.ID) error
 }
 
 type TagHandlers struct {
@@ -69,7 +69,7 @@ func (h *TagHandlers) UpsertImageTag() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		imageID, err := rest.IntParam(c, "image_id")
+		imageID, err := rest.PipeDomainIdentifier(c, "image_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
@@ -128,7 +128,7 @@ func (h *TagHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		tagID, err := rest.IntParam(c, "tag_id")
+		tagID, err := rest.PipeDomainIdentifier(c, "tag_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid tag ID").Response())
 		}

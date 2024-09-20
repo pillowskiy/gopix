@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pillowskiy/gopix/internal/domain"
@@ -14,8 +13,10 @@ import (
 )
 
 type userUseCase interface {
-	Update(ctx context.Context, id int, user *domain.User) (*domain.User, error)
-	OverwritePermissions(ctx context.Context, id int, deny domain.Permission, allow domain.Permission) error
+	Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error)
+	OverwritePermissions(
+		ctx context.Context, id domain.ID, deny domain.Permission, allow domain.Permission,
+	) error
 }
 
 type UserHandlers struct {
@@ -37,7 +38,7 @@ func (h *UserHandlers) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := strconv.Atoi(c.Param("id"))
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("ID has incorrect type").Response())
 		}
@@ -83,7 +84,7 @@ func (h *UserHandlers) OverwritePermissions() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := strconv.Atoi(c.Param("id"))
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("ID has incorrect type").Response())
 		}

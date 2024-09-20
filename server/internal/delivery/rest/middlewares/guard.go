@@ -85,7 +85,7 @@ func (mw *GuardMiddlewares) OwnerOrAdmin(next echo.HandlerFunc) echo.HandlerFunc
 			return c.JSON(restErr.Response())
 		}
 
-		id, err := rest.IntParam(c, "id")
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(restErr.Response())
 		}

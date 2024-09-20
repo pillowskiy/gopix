@@ -8,14 +8,14 @@ import (
 )
 
 type UserCache interface {
-	Del(ctx context.Context, id int) error
+	Del(ctx context.Context, id string) error
 }
 
 type UserRepository interface {
 	GetUnique(ctx context.Context, user *domain.User) (*domain.User, error)
-	GetByID(ctx context.Context, id int) (*domain.User, error)
-	Update(ctx context.Context, id int, user *domain.User) (*domain.User, error)
-	SetPermissions(ctx context.Context, id int, permissions int) error
+	GetByID(ctx context.Context, id domain.ID) (*domain.User, error)
+	Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error)
+	SetPermissions(ctx context.Context, id domain.ID, permissions int) error
 }
 
 type UserUseCase struct {
@@ -28,7 +28,7 @@ func NewUserUseCase(repo UserRepository, cache UserCache, logger logger.Logger) 
 	return &UserUseCase{repo: repo, cache: cache, logger: logger}
 }
 
-func (uc *UserUseCase) Update(ctx context.Context, id int, user *domain.User) (*domain.User, error) {
+func (uc *UserUseCase) Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error) {
 	_, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, ErrNotFound
@@ -54,7 +54,7 @@ func (uc *UserUseCase) Update(ctx context.Context, id int, user *domain.User) (*
 }
 
 func (uc *UserUseCase) OverwritePermissions(
-	ctx context.Context, id int, deny domain.Permission, allow domain.Permission,
+	ctx context.Context, id domain.ID, deny domain.Permission, allow domain.Permission,
 ) error {
 	user, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
@@ -79,8 +79,8 @@ func (uc *UserUseCase) OverwritePermissions(
 	return nil
 }
 
-func (uc *UserUseCase) deleteCachedUser(ctx context.Context, id int) {
-	if err := uc.cache.Del(ctx, id); err != nil {
+func (uc *UserUseCase) deleteCachedUser(ctx context.Context, id domain.ID) {
+	if err := uc.cache.Del(ctx, id.String()); err != nil {
 		uc.logger.Errorf("UserUseCase.deleteCached: %v", err)
 	}
 }

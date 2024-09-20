@@ -5,6 +5,6 @@ import (
 	redisClient "github.com/redis/go-redis/v9"
 )
 
-func NewImageCache(client *redisClient.Client) *ItoaCache[domain.Image] {
-	return NewItoaCache[domain.Image](client)
+func NewImageCache(client *redisClient.Client) *Cache[domain.Image] {
+	return NewCache[domain.Image](client)
 }

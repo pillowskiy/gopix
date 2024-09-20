@@ -3,8 +3,8 @@ package domain
 import "time"
 
 type Album struct {
-	ID          int       `json:"id" db:"id"`
-	AuthorID    int       `json:"-" db:"author_id"`
+	ID          ID        `json:"id" db:"id"`
+	AuthorID    ID        `json:"-" db:"author_id"`
 	Name        string    `json:"name" db:"name"`
 	Description string    `json:"description,omitempty" db:"description"`
 	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
@@ -17,7 +17,7 @@ type DetailedAlbum struct {
 }
 
 type AlbumAuthor struct {
-	ID        int    `json:"id" db:"id"`
+	ID        ID     `json:"id" db:"id"`
 	Username  string `json:"username" db:"username"`
 	AvatarURL string `json:"avatarURL" db:"avatar_url"`
 }

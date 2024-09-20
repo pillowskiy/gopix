@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/pkg/batch"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -11,8 +12,8 @@ import (
 var imageViewsBatchAgg = batch.NewKGAggregator[viewBatchItem]()
 
 type viewBatchItem struct {
-	ImageID int  `db:"image_id"`
-	UserID  *int `db:"user_id"`
+	ImageID domain.ID  `db:"image_id"`
+	UserID  *domain.ID `db:"user_id"`
 }
 
 func (i viewBatchItem) Group() string {

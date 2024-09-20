@@ -17,12 +17,12 @@ type CommentUseCase interface {
 	Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
 	GetByImageID(
 		ctx context.Context,
-		imageID int,
+		imageID domain.ID,
 		pagInput *domain.PaginationInput,
 		sort domain.CommentSortMethod,
 	) (*domain.Pagination[domain.DetailedComment], error)
-	Update(ctx context.Context, commentID int, comment *domain.Comment, executor *domain.User) (*domain.Comment, error)
-	Delete(ctx context.Context, commentID int, executor *domain.User) error
+	Update(ctx context.Context, commentID domain.ID, comment *domain.Comment, executor *domain.User) (*domain.Comment, error)
+	Delete(ctx context.Context, commentID domain.ID, executor *domain.User) error
 }
 
 type CommentHandlers struct {
@@ -42,7 +42,7 @@ func (h *CommentHandlers) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		imageID, err := rest.IntParam(c, "image_id")
+		imageID, err := rest.PipeDomainIdentifier(c, "image_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Image ID has incorrect type").Response())
 		}
@@ -87,7 +87,7 @@ func (h *CommentHandlers) GetByImageID() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		imageID, err := rest.IntParam(c, "image_id")
+		imageID, err := rest.PipeDomainIdentifier(c, "image_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Image ID has incorrect type").Response())
 		}
@@ -119,7 +119,7 @@ func (h *CommentHandlers) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		commentID, err := rest.IntParam(c, "comment_id")
+		commentID, err := rest.PipeDomainIdentifier(c, "comment_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
 		}
@@ -158,7 +158,7 @@ func (h *CommentHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		commentID, err := rest.IntParam(c, "comment_id")
+		commentID, err := rest.PipeDomainIdentifier(c, "comment_id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
 		}

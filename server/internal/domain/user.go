@@ -15,7 +15,7 @@ const (
 )
 
 type User struct {
-	ID           int       `json:"id" db:"id"`
+	ID           ID        `json:"id" db:"id"`
 	Username     string    `json:"username" db:"username"`
 	Email        string    `json:"email" db:"email"`
 	Permissions  int       `json:"permissions" db:"permissions"`
@@ -31,8 +31,8 @@ type UserWithToken struct {
 }
 
 type UserPayload struct {
-	ID       int    `mapstructure:"sub"`
-	Username string `mapstructure:"username"`
+	ID       ID     `json:"sub"`
+	Username string `json:"username"`
 }
 
 func (u *User) HasPermission(permission Permission) bool {

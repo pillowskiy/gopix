@@ -40,7 +40,7 @@ func (r *userRepository) GetUnique(ctx context.Context, user *domain.User) (*dom
 	return u, nil
 }
 
-func (r *userRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
+func (r *userRepository) GetByID(ctx context.Context, id domain.ID) (*domain.User, error) {
 	q := `SELECT * FROM users WHERE id = $1`
 
 	u := new(domain.User)
@@ -52,7 +52,7 @@ func (r *userRepository) GetByID(ctx context.Context, id int) (*domain.User, err
 	return u, nil
 }
 
-func (r *userRepository) Update(ctx context.Context, id int, user *domain.User) (*domain.User, error) {
+func (r *userRepository) Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error) {
 	q := `UPDATE users SET 
     username = COALESCE(NULLIF($2, ''), username),
     email = COALESCE(NULLIF($3, ''), email),
@@ -73,7 +73,7 @@ func (r *userRepository) Update(ctx context.Context, id int, user *domain.User) 
 	return u, nil
 }
 
-func (r *userRepository) SetPermissions(ctx context.Context, id int, permissions int) error {
+func (r *userRepository) SetPermissions(ctx context.Context, id domain.ID, permissions int) error {
 	q := `UPDATE users SET permissions = $1 WHERE id = $2`
 
 	_, err := r.db.ExecContext(ctx, q, permissions, id)

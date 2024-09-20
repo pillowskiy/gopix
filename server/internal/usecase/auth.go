@@ -14,12 +14,12 @@ const userTTL = 3600
 type AuthRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetUnique(ctx context.Context, user *domain.User) (*domain.User, error)
-	GetByID(ctx context.Context, id int) (*domain.User, error)
+	GetByID(ctx context.Context, id domain.ID) (*domain.User, error)
 }
 
 type AuthCache interface {
-	Set(ctx context.Context, id int, user *domain.User, ttl int) error
-	Get(ctx context.Context, id int) (*domain.User, error)
+	Set(ctx context.Context, id string, user *domain.User, ttl int) error
+	Get(ctx context.Context, id string) (*domain.User, error)
 }
 
 type AuthUseCase struct {
@@ -93,7 +93,7 @@ func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, 
 		return nil, err
 	}
 
-	cachedUser, err := uc.cache.Get(ctx, payload.ID)
+	cachedUser, err := uc.cache.Get(ctx, payload.ID.String())
 	if cachedUser != nil {
 		return cachedUser, nil
 	}
@@ -107,7 +107,7 @@ func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, 
 		return nil, err
 	}
 
-	if err := uc.cache.Set(ctx, payload.ID, user, userTTL); err != nil {
+	if err := uc.cache.Set(ctx, payload.ID.String(), user, userTTL); err != nil {
 		uc.logger.Errorf("authUseCase.cache.SetUser: %v", err)
 	}
 

@@ -18,17 +18,17 @@ import (
 
 type imageUseCase interface {
 	Create(ctx context.Context, image *domain.Image, file *domain.FileNode) (*domain.Image, error)
-	Delete(ctx context.Context, id int, executor *domain.User) error
-	GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error)
-	Update(ctx context.Context, id int, image *domain.Image, executor *domain.User) (*domain.Image, error)
-	AddView(ctx context.Context, imageID int, userID *int) error
+	Delete(ctx context.Context, id domain.ID, executor *domain.User) error
+	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
+	Update(ctx context.Context, id domain.ID, image *domain.Image, executor *domain.User) (*domain.Image, error)
+	AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)
 
-	States(ctx context.Context, imageID int, userID int) (*domain.ImageStates, error)
-	AddLike(ctx context.Context, imageID int, userID int) error
-	RemoveLike(ctx context.Context, imageID int, userID int) error
+	States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error)
+	AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
+	RemoveLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
 }
 
 type ImageHandlers struct {
@@ -93,7 +93,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
-		img := &domain.Image{AuthorID: user.ID}
+		img := &domain.Image{AuthorID: user.ID, Ext: ext, Mime: contentType}
 		createdImg, err := h.uc.Create(ctx, img, fileNode)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Create")
@@ -107,7 +107,7 @@ func (h *ImageHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := rest.IntParam(c, "id")
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
@@ -130,7 +130,7 @@ func (h *ImageHandlers) GetDetailed() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		imageID, err := rest.IntParam(c, "id")
+		imageID, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
@@ -140,7 +140,7 @@ func (h *ImageHandlers) GetDetailed() echo.HandlerFunc {
 			return h.responseWithUseCaseErr(c, err, "GetDetailed")
 		}
 
-		var userID *int
+		var userID *domain.ID
 		if user, ok := c.Get("user").(*domain.User); ok {
 			userID = &user.ID
 		}
@@ -162,7 +162,7 @@ func (h *ImageHandlers) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := rest.IntParam(c, "id")
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
@@ -202,7 +202,7 @@ func (h *ImageHandlers) GetStates() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := rest.IntParam(c, "id")
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
@@ -259,7 +259,7 @@ func (h *ImageHandlers) AddLike() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := rest.IntParam(c, "id")
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}
@@ -282,7 +282,7 @@ func (h *ImageHandlers) RemoveLike() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		id, err := rest.IntParam(c, "id")
+		id, err := rest.PipeDomainIdentifier(c, "id")
 		if err != nil {
 			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
 		}

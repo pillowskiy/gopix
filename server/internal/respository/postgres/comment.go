@@ -41,7 +41,7 @@ func (repo *commentRepository) Create(
 
 func (repo *commentRepository) GetByImageID(
 	ctx context.Context,
-	imageID int,
+	imageID domain.ID,
 	pagInput *domain.PaginationInput,
 	sort domain.CommentSortMethod,
 ) (*domain.Pagination[domain.DetailedComment], error) {
@@ -86,7 +86,7 @@ func (repo *commentRepository) GetByImageID(
 
 func (repo *commentRepository) GetByID(
 	ctx context.Context,
-	commentID int,
+	commentID domain.ID,
 ) (*domain.Comment, error) {
 	q := `SELECT * FROM comments WHERE id = $1`
 
@@ -104,7 +104,7 @@ func (repo *commentRepository) GetByID(
 	return cmt, nil
 }
 
-func (repo *commentRepository) Delete(ctx context.Context, commentID int) error {
+func (repo *commentRepository) Delete(ctx context.Context, commentID domain.ID) error {
 	q := `DELETE FROM comments WHERE id = $1`
 
 	_, err := repo.db.ExecContext(ctx, q, commentID)
@@ -117,7 +117,7 @@ func (repo *commentRepository) Delete(ctx context.Context, commentID int) error 
 
 func (repo *commentRepository) Update(
 	ctx context.Context,
-	commnetID int,
+	commnetID domain.ID,
 	comment *domain.Comment,
 ) (*domain.Comment, error) {
 	q := `UPDATE comments SET comment = COALESCE(NULLIF($1, ''), comment) WHERE id = $2 RETURNING *`
@@ -134,8 +134,8 @@ func (repo *commentRepository) Update(
 
 func (repo *commentRepository) HasUserCommented(
 	ctx context.Context,
-	commentID int,
-	userID int,
+	commentID domain.ID,
+	userID domain.ID,
 ) (bool, error) {
 	q := `SELECT EXISTS(SELECT * FROM comments WHERE image_id = $1 AND author_id = $2)`
 
