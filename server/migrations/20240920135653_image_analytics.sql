@@ -2,9 +2,10 @@
 -- +goose StatementBegin
 
 CREATE TABLE images_analytics (
-  image_id INT NOT NULL,
+  image_id BIGINT NOT NULL,
   likes_count INT DEFAULT 0,
   views_count INT DEFAULT 0,
+
   FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
 );
 
