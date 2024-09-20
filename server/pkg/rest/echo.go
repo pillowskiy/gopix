@@ -2,10 +2,10 @@ package rest
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/pillowskiy/gopix/internal/domain"
 )
 
 type ReqIDCtxKey struct{}
@@ -36,8 +36,9 @@ func DecodeEchoBody(c echo.Context, s interface{}) error {
 	return nil
 }
 
-func IntParam(c echo.Context, name string) (int, error) {
-	id, err := strconv.Atoi(c.Param(name))
+func PipeDomainIdentifier(c echo.Context, param string) (domain.ID, error) {
+	idStr := c.Param(param)
+	id, err := domain.ParseID(idStr)
 	if err != nil {
 		return 0, err
 	}
