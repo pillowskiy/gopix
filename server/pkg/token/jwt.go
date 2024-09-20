@@ -1,11 +1,12 @@
 package token
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 )
 
 type JWTTokenGenerator struct {
@@ -31,7 +32,7 @@ func (g *JWTTokenGenerator) Generate(payload interface{}) (string, error) {
 		"exp": time.Now().Add(g.expires).Unix(),
 	}
 
-	if err := mapstructure.Decode(payload, claims); err != nil {
+	if err := g.decode(payload, claims); err != nil {
 		return "", err
 	}
 
@@ -54,11 +55,11 @@ func (g *JWTTokenGenerator) Verify(token string) (interface{}, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to parse token")
 	}
 
 	if !t.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, errors.Wrap(err, "invalid token")
 	}
 
 	return t.Claims, nil
@@ -75,8 +76,21 @@ func (g *JWTTokenGenerator) VerifyAndScan(token string, dest interface{}) error 
 		return fmt.Errorf("failed to assert payload as jwt.MapClaims")
 	}
 
-	if err := mapstructure.Decode(claims, dest); err != nil {
+	if err := g.decode(claims, dest); err != nil {
 		return fmt.Errorf("failed to decode payload: %w", err)
+	}
+
+	return nil
+}
+
+func (g *JWTTokenGenerator) decode(src interface{}, dest interface{}) error {
+	tmp, err := json.Marshal(src)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal payload")
+	}
+
+	if err := json.Unmarshal(tmp, dest); err != nil {
+		return errors.Wrap(err, "failed to unmarshal payload")
 	}
 
 	return nil
