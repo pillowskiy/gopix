@@ -11,17 +11,19 @@ import (
 )
 
 type tagRepository struct {
-	db *sqlx.DB
+	PostgresRepository
 }
 
 func NewTagRepository(db *sqlx.DB) *tagRepository {
-	return &tagRepository{db: db}
+	return &tagRepository{
+		PostgresRepository: PostgresRepository{db},
+	}
 }
 
-func (repo *tagRepository) Upsert(ctx context.Context, tag *domain.Tag) (*domain.Tag, error) {
+func (repo *tagRepository) Create(ctx context.Context, tag *domain.Tag) (*domain.Tag, error) {
 	q := `INSERT INTO tags (name) VALUES($1) ON CONFLICT (name) DO NOTHING RETURNING *`
 
-	rowx := repo.db.QueryRowxContext(ctx, q, tag.Name)
+	rowx := repo.ext(ctx).QueryRowxContext(ctx, q, tag.Name)
 
 	createdTag := new(domain.Tag)
 	if err := rowx.StructScan(createdTag); err != nil {
@@ -32,41 +34,34 @@ func (repo *tagRepository) Upsert(ctx context.Context, tag *domain.Tag) (*domain
 }
 
 func (repo *tagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error {
-	upsertQuery := `INSERT INTO tags(name) VALUES($1) ON CONFLICT (name) DO NOTHING RETURNING *`
-	getByNameQuery := `SELECT * FROM tags WHERE name = $1`
 	relationQuery := `INSERT INTO images_to_tags(image_id, tag_id) VALUES($1, $2)`
 
-	tx, err := repo.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return errors.Wrap(err, "TagRepository.UpsertImageTags.Begin")
-	}
-	defer tx.Rollback()
+	err := repo.DoInTransaction(ctx, func(ctx context.Context) error {
+		upTag, err := repo.GetByName(ctx, tag.Name)
+		if err != nil {
+			if errors.Is(err, repository.ErrNotFound) {
+				upTag, err = repo.Create(ctx, tag)
+				if err != nil {
+					return err
+				}
+			}
+			return err
+		}
 
-	if _, err := tx.ExecContext(ctx, upsertQuery, tag.Name); err != nil {
-		return errors.Wrap(err, "TagRepository.UpsertImageTags.StructScan")
-	}
+		if _, err := repo.ext(ctx).ExecContext(ctx, relationQuery, imageID, upTag.ID); err != nil {
+			return errors.Wrap(err, "TagRepository.UpsertImageTags.StructScan")
+		}
 
-	rowx := tx.QueryRowxContext(ctx, getByNameQuery, tag.Name)
-	upTag := new(domain.Tag)
-	if err := rowx.StructScan(upTag); err != nil {
-		return errors.Wrap(err, "TagRepository.UpsertImageTags.StructScan")
-	}
+		return nil
+	})
 
-	if _, err := tx.ExecContext(ctx, relationQuery, imageID, upTag.ID); err != nil {
-		return errors.Wrap(err, "TagRepository.UpsertImageTags.StructScan")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return errors.Wrap(err, "TagRepository.UpsertImageTags.Commit")
-	}
-
-	return nil
+	return err
 }
 
 func (repo *tagRepository) GetByName(ctx context.Context, name string) (*domain.Tag, error) {
 	q := `SELECT * FROM tags WHERE name = $1`
 
-	rowx := repo.db.QueryRowxContext(ctx, q, name)
+	rowx := repo.ext(ctx).QueryRowxContext(ctx, q, name)
 
 	tag := new(domain.Tag)
 	if err := rowx.StructScan(tag); err != nil {
@@ -82,7 +77,7 @@ func (repo *tagRepository) GetByName(ctx context.Context, name string) (*domain.
 func (repo *tagRepository) Search(ctx context.Context, name string) ([]domain.Tag, error) {
 	q := `SELECT * FROM tags WHERE name LIKE $1 LIMIT 10`
 
-	rows, err := repo.db.QueryxContext(ctx, q, name)
+	rows, err := repo.ext(ctx).QueryxContext(ctx, q, name)
 	if err != nil {
 		return nil, errors.Wrap(err, "TagRepository.Search.QueryxContext")
 	}
@@ -98,7 +93,7 @@ func (repo *tagRepository) Search(ctx context.Context, name string) ([]domain.Ta
 func (repo *tagRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error) {
 	q := `SELECT * FROM tags WHERE id = $1`
 
-	rowx := repo.db.QueryRowxContext(ctx, q, id)
+	rowx := repo.ext(ctx).QueryRowxContext(ctx, q, id)
 
 	tag := new(domain.Tag)
 	if err := rowx.StructScan(tag); err != nil {
@@ -114,7 +109,7 @@ func (repo *tagRepository) GetByID(ctx context.Context, id domain.ID) (*domain.T
 func (repo *tagRepository) Delete(ctx context.Context, id domain.ID) error {
 	q := `DELETE FROM tags WHERE id = $1`
 
-	_, err := repo.db.ExecContext(ctx, q, id)
+	_, err := repo.ext(ctx).ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrap(err, "TagRepository.Delete.ExecContext")
 	}

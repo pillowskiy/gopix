@@ -30,7 +30,7 @@ func TestTagUseCase_Create(t *testing.T) {
 
 	t.Run("SuccessCreate", func(t *testing.T) {
 		mockRepo.EXPECT().GetByName(gomock.Any(), tagInput.Name).Return(nil, repository.ErrNotFound)
-		mockRepo.EXPECT().Upsert(gomock.Any(), tagInput).Return(mockTag, nil)
+		mockRepo.EXPECT().Create(gomock.Any(), tagInput).Return(mockTag, nil)
 
 		createdTag, err := tagUC.Create(context.Background(), tagInput)
 		assert.NoError(t, err)

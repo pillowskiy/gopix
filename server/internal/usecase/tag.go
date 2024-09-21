@@ -9,7 +9,7 @@ import (
 )
 
 type TagRepository interface {
-	Upsert(ctx context.Context, tag *domain.Tag) (*domain.Tag, error)
+	Create(ctx context.Context, tag *domain.Tag) (*domain.Tag, error)
 	UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error
 	GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error)
 	GetByName(ctx context.Context, name string) (*domain.Tag, error)
@@ -41,7 +41,7 @@ func (uc *tagUseCase) Create(ctx context.Context, tag *domain.Tag) (*domain.Tag,
 		return nil, ErrAlreadyExists
 	}
 
-	return uc.repo.Upsert(ctx, tag)
+	return uc.repo.Create(ctx, tag)
 }
 
 func (uc *tagUseCase) UpsertImageTag(

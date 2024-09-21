@@ -40,6 +40,21 @@ func (m *MockTagRepository) EXPECT() *MockTagRepositoryMockRecorder {
 	return m.recorder
 }
 
+// Create mocks base method.
+func (m *MockTagRepository) Create(ctx context.Context, tag *domain.Tag) (*domain.Tag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, tag)
+	ret0, _ := ret[0].(*domain.Tag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockTagRepositoryMockRecorder) Create(ctx, tag any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTagRepository)(nil).Create), ctx, tag)
+}
+
 // Delete mocks base method.
 func (m *MockTagRepository) Delete(ctx context.Context, id domain.ID) error {
 	m.ctrl.T.Helper()
@@ -97,21 +112,6 @@ func (m *MockTagRepository) Search(ctx context.Context, name string) ([]domain.T
 func (mr *MockTagRepositoryMockRecorder) Search(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockTagRepository)(nil).Search), ctx, name)
-}
-
-// Upsert mocks base method.
-func (m *MockTagRepository) Upsert(ctx context.Context, tag *domain.Tag) (*domain.Tag, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upsert", ctx, tag)
-	ret0, _ := ret[0].(*domain.Tag)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Upsert indicates an expected call of Upsert.
-func (mr *MockTagRepositoryMockRecorder) Upsert(ctx, tag any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockTagRepository)(nil).Upsert), ctx, tag)
 }
 
 // UpsertImageTags mocks base method.
