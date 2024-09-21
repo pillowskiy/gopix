@@ -56,7 +56,7 @@ func (mr *MockTagUseCaseMockRecorder) Create(ctx, tag any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockTagUseCase) Delete(ctx context.Context, tagID int) error {
+func (m *MockTagUseCase) Delete(ctx context.Context, tagID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, tagID)
 	ret0, _ := ret[0].(error)
@@ -85,7 +85,7 @@ func (mr *MockTagUseCaseMockRecorder) Search(ctx, query any) *gomock.Call {
 }
 
 // UpsertImageTag mocks base method.
-func (m *MockTagUseCase) UpsertImageTag(ctx context.Context, tag *domain.Tag, imageID int, executor *domain.User) error {
+func (m *MockTagUseCase) UpsertImageTag(ctx context.Context, tag *domain.Tag, imageID domain.ID, executor *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertImageTag", ctx, tag, imageID, executor)
 	ret0, _ := ret[0].(error)

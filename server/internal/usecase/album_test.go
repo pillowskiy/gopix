@@ -25,8 +25,8 @@ func TestAlbumUseCase_Create(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	authorID := 1
-	albumID := 1
+	authorID := domain.ID(1)
+	albumID := domain.ID(2)
 	albumInput := &domain.Album{Name: "test", AuthorID: authorID}
 	mockAlbum := &domain.Album{ID: albumID, Name: albumInput.Name}
 
@@ -60,8 +60,8 @@ func TestAlbumUseCase_GetByAuthorID(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	authorID := 1
-	albumID := 1
+	authorID := domain.ID(1)
+	albumID := domain.ID(2)
 	mockAlbums := []domain.Album{
 		{
 			ID:       albumID,
@@ -111,7 +111,7 @@ func TestAlbumUseCase_GetByID(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	albumID := 1
+	albumID := domain.ID(1)
 	mockAlbum := &domain.Album{
 		ID:   albumID,
 		Name: "test",
@@ -158,8 +158,7 @@ func TestAlbumUseCase_GetAlbumImages(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	albumID := 1
-
+	albumID := domain.ID(1)
 	mockAlbum := &domain.Album{
 		ID:   albumID,
 		Name: "test",
@@ -227,8 +226,8 @@ func TestAlbumUseCase_Delete(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	albumID := 1
-	authorID := 1
+	albumID := domain.ID(1)
+	authorID := domain.ID(2)
 
 	mockUser := &domain.User{ID: authorID}
 	mockAlbum := &domain.Album{
@@ -292,8 +291,8 @@ func TestAlbumUseCase_Update(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	albumID := 1
-	authorID := 1
+	albumID := domain.ID(1)
+	authorID := domain.ID(2)
 
 	mockUser := &domain.User{ID: authorID}
 	mockAlbum := &domain.Album{
@@ -361,8 +360,8 @@ func TestAlbumUseCase_ExistsAndModifiable(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	albumID := 1
-	authorID := 1
+	albumID := domain.ID(1)
+	authorID := domain.ID(2)
 
 	mockUser := &domain.User{ID: authorID}
 	mockAlbum := &domain.Album{
@@ -413,8 +412,8 @@ func TestAlbumUseCase_PutImage(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	imageID := 1
-	albumID := 1
+	imageID := domain.ID(1)
+	albumID := domain.ID(2)
 
 	mockImage := &domain.Image{ID: imageID, AccessLevel: domain.ImageAccessPublic}
 	mockAlbum := &domain.Album{ID: albumID}
@@ -516,8 +515,8 @@ func TestAlbumUseCase_DeleteImage(t *testing.T) {
 
 	albumUC := usecase.NewAlbumUseCase(mockRepo, mockACL, mockImageUC)
 
-	imageID := 1
-	albumID := 1
+	imageID := domain.ID(1)
+	albumID := domain.ID(2)
 
 	mockImage := &domain.Image{ID: imageID, AccessLevel: domain.ImageAccessPublic}
 	mockAlbum := &domain.Album{ID: albumID}

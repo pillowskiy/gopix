@@ -56,7 +56,7 @@ func (mr *MockCommentUseCaseMockRecorder) Create(ctx, comment any) *gomock.Call 
 }
 
 // Delete mocks base method.
-func (m *MockCommentUseCase) Delete(ctx context.Context, commentID int, executor *domain.User) error {
+func (m *MockCommentUseCase) Delete(ctx context.Context, commentID domain.ID, executor *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, commentID, executor)
 	ret0, _ := ret[0].(error)
@@ -70,7 +70,7 @@ func (mr *MockCommentUseCaseMockRecorder) Delete(ctx, commentID, executor any) *
 }
 
 // GetByImageID mocks base method.
-func (m *MockCommentUseCase) GetByImageID(ctx context.Context, imageID int, pagInput *domain.PaginationInput, sort domain.CommentSortMethod) (*domain.Pagination[domain.DetailedComment], error) {
+func (m *MockCommentUseCase) GetByImageID(ctx context.Context, imageID domain.ID, pagInput *domain.PaginationInput, sort domain.CommentSortMethod) (*domain.Pagination[domain.DetailedComment], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByImageID", ctx, imageID, pagInput, sort)
 	ret0, _ := ret[0].(*domain.Pagination[domain.DetailedComment])
@@ -85,7 +85,7 @@ func (mr *MockCommentUseCaseMockRecorder) GetByImageID(ctx, imageID, pagInput, s
 }
 
 // Update mocks base method.
-func (m *MockCommentUseCase) Update(ctx context.Context, commentID int, comment *domain.Comment, executor *domain.User) (*domain.Comment, error) {
+func (m *MockCommentUseCase) Update(ctx context.Context, commentID domain.ID, comment *domain.Comment, executor *domain.User) (*domain.Comment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, commentID, comment, executor)
 	ret0, _ := ret[0].(*domain.Comment)

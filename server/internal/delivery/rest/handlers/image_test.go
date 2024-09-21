@@ -193,8 +193,8 @@ func TestImageHandlers_Delete(t *testing.T) {
 	h := handlers.NewImageHandlers(mockImageUC, mockLog)
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareDeleteQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/images/:id", nil)
@@ -285,8 +285,8 @@ func TestImageHandlers_GetDetailed(t *testing.T) {
 	h := handlers.NewImageHandlers(mockImageUC, mockLog)
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareGetDetailedQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/images/:id", nil)
@@ -388,8 +388,8 @@ func TestImageHandlers_Update(t *testing.T) {
 	h := handlers.NewImageHandlers(mockImageUC, mockLog)
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/images/:id", body)
@@ -518,8 +518,8 @@ func TestImageHandlers_GetStates(t *testing.T) {
 	h := handlers.NewImageHandlers(mockImageUC, mockLog)
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareGetStatesQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/images/:id/states", nil)
@@ -703,8 +703,8 @@ func TestImageHandlers_AddLike(t *testing.T) {
 	h := handlers.NewImageHandlers(mockImageUC, mockLog)
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareAddLikeQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/:id/like", nil)
@@ -775,8 +775,8 @@ func TestImageHandlers_RemoveLike(t *testing.T) {
 	h := handlers.NewImageHandlers(mockImageUC, mockLog)
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareRemoveLikeQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/images/:id/like", nil)

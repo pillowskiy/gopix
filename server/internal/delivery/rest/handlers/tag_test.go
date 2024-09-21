@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"testing"
 
 	"github.com/labstack/echo/v4"
@@ -139,8 +138,8 @@ func TestTagHandlers_UpsertImageTag(t *testing.T) {
 
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareUpsertImageTagQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/images/:image_id/tags", body)
@@ -327,8 +326,8 @@ func TestTagHandlers_Delete(t *testing.T) {
 	h := handlers.NewTagHandlers(mockTagUC, mockLog)
 	e := echo.New()
 
-	tagID := 1
-	itoaTagID := strconv.Itoa(tagID)
+	tagID := handlersMock.DomainID()
+	itoaTagID := tagID.String()
 
 	prepareDeleteQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/images/tags/:tag_id", nil)

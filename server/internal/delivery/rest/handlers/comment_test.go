@@ -37,8 +37,8 @@ func TestCommentHandlers_Create(t *testing.T) {
 
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareCreateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/:image_id/commnets", body)
@@ -177,8 +177,8 @@ func TestCommentHandlers_GetByImageID(t *testing.T) {
 
 	e := echo.New()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	type ImageCommentsQuery struct {
 		Limit int    `query:"limit"`
@@ -326,8 +326,8 @@ func TestCommentHandlers_Update(t *testing.T) {
 	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
 	e := echo.New()
 
-	commentID := 1
-	itoaCommentID := strconv.Itoa(commentID)
+	commentID := handlersMock.DomainID()
+	itoaCommentID := commentID.String()
 
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/comments/:comment_id", body)
@@ -486,8 +486,8 @@ func TestCommentHandlers_Delete(t *testing.T) {
 
 	e := echo.New()
 
-	commentID := 1
-	itoaCommentID := strconv.Itoa(commentID)
+	commentID := handlersMock.DomainID()
+	itoaCommentID := commentID.String()
 
 	prepareDeleteQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/comments/:comment_id", nil)

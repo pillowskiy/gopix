@@ -41,7 +41,7 @@ func (m *MockuserUseCase) EXPECT() *MockuserUseCaseMockRecorder {
 }
 
 // OverwritePermissions mocks base method.
-func (m *MockuserUseCase) OverwritePermissions(ctx context.Context, id int, deny, allow domain.Permission) error {
+func (m *MockuserUseCase) OverwritePermissions(ctx context.Context, id domain.ID, deny, allow domain.Permission) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "OverwritePermissions", ctx, id, deny, allow)
 	ret0, _ := ret[0].(error)
@@ -55,7 +55,7 @@ func (mr *MockuserUseCaseMockRecorder) OverwritePermissions(ctx, id, deny, allow
 }
 
 // Update mocks base method.
-func (m *MockuserUseCase) Update(ctx context.Context, id int, user *domain.User) (*domain.User, error) {
+func (m *MockuserUseCase) Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, id, user)
 	ret0, _ := ret[0].(*domain.User)

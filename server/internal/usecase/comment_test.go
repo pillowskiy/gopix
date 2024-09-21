@@ -27,9 +27,9 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
 
-	commentID := 1
-	imageID := 1
-	authorID := 1
+	commentID := domain.ID(1)
+	imageID := domain.ID(2)
+	authorID := domain.ID(3)
 
 	mockComment := &domain.Comment{
 		ID:       commentID,
@@ -40,7 +40,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 	t.Run("SucessCreate", func(t *testing.T) {
 		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(&domain.Image{ID: imageID}, nil)
-		mockRepo.EXPECT().HasUserCommented(gomock.Any(), commentID, authorID).Return(false, nil)
+		mockRepo.EXPECT().HasUserCommented(gomock.Any(), imageID, authorID).Return(false, nil)
 		mockRepo.EXPECT().Create(gomock.Any(), mockComment).Return(mockComment, nil)
 
 		createdComment, err := commentUC.Create(context.Background(), mockComment)
@@ -51,7 +51,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 	t.Run("IncorrectImageRef", func(t *testing.T) {
 		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(nil, repository.ErrNotFound)
-		mockRepo.EXPECT().HasUserCommented(gomock.Any(), commentID, authorID).Times(0)
+		mockRepo.EXPECT().HasUserCommented(gomock.Any(), imageID, authorID).Times(0)
 		mockRepo.EXPECT().Create(gomock.Any(), mockComment).Times(0)
 
 		createdComment, err := commentUC.Create(context.Background(), mockComment)
@@ -62,7 +62,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 	t.Run("AlreadyCommented", func(t *testing.T) {
 		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(&domain.Image{ID: imageID}, nil)
-		mockRepo.EXPECT().HasUserCommented(gomock.Any(), commentID, authorID).Return(true, nil)
+		mockRepo.EXPECT().HasUserCommented(gomock.Any(), imageID, authorID).Return(true, nil)
 		mockRepo.EXPECT().Create(gomock.Any(), mockComment).Times(0)
 
 		createdComment, err := commentUC.Create(context.Background(), mockComment)
@@ -73,7 +73,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 	t.Run("RepoError_HasUserComment", func(t *testing.T) {
 		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(&domain.Image{ID: imageID}, nil)
-		mockRepo.EXPECT().HasUserCommented(gomock.Any(), commentID, authorID).Return(false, errors.New("repo error"))
+		mockRepo.EXPECT().HasUserCommented(gomock.Any(), imageID, authorID).Return(false, errors.New("repo error"))
 		mockRepo.EXPECT().Create(gomock.Any(), mockComment).Times(0)
 
 		createdComment, err := commentUC.Create(context.Background(), mockComment)
@@ -83,7 +83,7 @@ func TestCommentUseCase_Create(t *testing.T) {
 
 	t.Run("RepoError", func(t *testing.T) {
 		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(&domain.Image{ID: imageID}, nil)
-		mockRepo.EXPECT().HasUserCommented(gomock.Any(), commentID, authorID).Return(false, nil)
+		mockRepo.EXPECT().HasUserCommented(gomock.Any(), imageID, authorID).Return(false, nil)
 		mockRepo.EXPECT().Create(gomock.Any(), mockComment).Return(nil, errors.New("repo error"))
 
 		createdComment, err := commentUC.Create(context.Background(), mockComment)
@@ -105,7 +105,7 @@ func TestCommentUseCase_GetByImageID(t *testing.T) {
 
 	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
 
-	imageID := 1
+	imageID := domain.ID(1)
 
 	pagInput := &domain.PaginationInput{
 		PerPage: 10,
@@ -182,7 +182,7 @@ func TestCommentUseCase_GetByID(t *testing.T) {
 
 	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
 
-	commentID := 1
+	commentID := domain.ID(1)
 	mockComment := &domain.Comment{
 		ID:       commentID,
 		ImageID:  1,
@@ -230,7 +230,7 @@ func TestCommentUseCase_Delete(t *testing.T) {
 
 	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
 
-	commentID := 1
+	commentID := domain.ID(1)
 	mockComment := &domain.Comment{ID: commentID}
 	mockExecutor := &domain.User{ID: 1, Permissions: int(domain.PermissionsAdmin)}
 
@@ -286,7 +286,7 @@ func TestCommentUseCase_Update(t *testing.T) {
 
 	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
 
-	commentID := 1
+	commentID := domain.ID(1)
 	mockComment := &domain.Comment{ID: commentID}
 	mockExecutor := &domain.User{ID: 1, Permissions: int(domain.PermissionsAdmin)}
 

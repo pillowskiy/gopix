@@ -56,7 +56,7 @@ func (mr *MockAuthRepositoryMockRecorder) Create(ctx, user any) *gomock.Call {
 }
 
 // GetByID mocks base method.
-func (m *MockAuthRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
+func (m *MockAuthRepository) GetByID(ctx context.Context, id domain.ID) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*domain.User)
@@ -109,7 +109,7 @@ func (m *MockAuthCache) EXPECT() *MockAuthCacheMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockAuthCache) Get(ctx context.Context, id int) (*domain.User, error) {
+func (m *MockAuthCache) Get(ctx context.Context, id string) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, id)
 	ret0, _ := ret[0].(*domain.User)
@@ -124,7 +124,7 @@ func (mr *MockAuthCacheMockRecorder) Get(ctx, id any) *gomock.Call {
 }
 
 // Set mocks base method.
-func (m *MockAuthCache) Set(ctx context.Context, id int, user *domain.User, ttl int) error {
+func (m *MockAuthCache) Set(ctx context.Context, id string, user *domain.User, ttl int) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, id, user, ttl)
 	ret0, _ := ret[0].(error)

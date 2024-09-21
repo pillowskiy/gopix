@@ -93,7 +93,7 @@ func (m *MockImageCache) EXPECT() *MockImageCacheMockRecorder {
 }
 
 // Del mocks base method.
-func (m *MockImageCache) Del(ctx context.Context, id int) error {
+func (m *MockImageCache) Del(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Del", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -107,7 +107,7 @@ func (mr *MockImageCacheMockRecorder) Del(ctx, id any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockImageCache) Get(ctx context.Context, id int) (*domain.Image, error) {
+func (m *MockImageCache) Get(ctx context.Context, id string) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, id)
 	ret0, _ := ret[0].(*domain.Image)
@@ -122,7 +122,7 @@ func (mr *MockImageCacheMockRecorder) Get(ctx, id any) *gomock.Call {
 }
 
 // Set mocks base method.
-func (m *MockImageCache) Set(ctx context.Context, id int, image *domain.Image, ttl int) error {
+func (m *MockImageCache) Set(ctx context.Context, id string, image *domain.Image, ttl int) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Set", ctx, id, image, ttl)
 	ret0, _ := ret[0].(error)
@@ -159,7 +159,7 @@ func (m *MockImageRepository) EXPECT() *MockImageRepositoryMockRecorder {
 }
 
 // AddLike mocks base method.
-func (m *MockImageRepository) AddLike(ctx context.Context, imageID, userID int) error {
+func (m *MockImageRepository) AddLike(ctx context.Context, imageID, userID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddLike", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
@@ -173,7 +173,7 @@ func (mr *MockImageRepositoryMockRecorder) AddLike(ctx, imageID, userID any) *go
 }
 
 // AddView mocks base method.
-func (m *MockImageRepository) AddView(ctx context.Context, imageID int, userID *int) error {
+func (m *MockImageRepository) AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddView", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
@@ -202,7 +202,7 @@ func (mr *MockImageRepositoryMockRecorder) Create(ctx, image any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockImageRepository) Delete(ctx context.Context, id int) error {
+func (m *MockImageRepository) Delete(ctx context.Context, id domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -245,7 +245,7 @@ func (mr *MockImageRepositoryMockRecorder) DoInTransaction(arg0, arg1 any) *gomo
 }
 
 // GetByID mocks base method.
-func (m *MockImageRepository) GetByID(ctx context.Context, id int) (*domain.Image, error) {
+func (m *MockImageRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*domain.Image)
@@ -260,7 +260,7 @@ func (mr *MockImageRepositoryMockRecorder) GetByID(ctx, id any) *gomock.Call {
 }
 
 // GetDetailed mocks base method.
-func (m *MockImageRepository) GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error) {
+func (m *MockImageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDetailed", ctx, id)
 	ret0, _ := ret[0].(*domain.DetailedImage)
@@ -275,7 +275,7 @@ func (mr *MockImageRepositoryMockRecorder) GetDetailed(ctx, id any) *gomock.Call
 }
 
 // HasLike mocks base method.
-func (m *MockImageRepository) HasLike(ctx context.Context, imageID, userID int) (bool, error) {
+func (m *MockImageRepository) HasLike(ctx context.Context, imageID, userID domain.ID) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HasLike", ctx, imageID, userID)
 	ret0, _ := ret[0].(bool)
@@ -290,7 +290,7 @@ func (mr *MockImageRepositoryMockRecorder) HasLike(ctx, imageID, userID any) *go
 }
 
 // RemoveLike mocks base method.
-func (m *MockImageRepository) RemoveLike(ctx context.Context, imageID, userID int) error {
+func (m *MockImageRepository) RemoveLike(ctx context.Context, imageID, userID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveLike", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
@@ -304,7 +304,7 @@ func (mr *MockImageRepositoryMockRecorder) RemoveLike(ctx, imageID, userID any) 
 }
 
 // States mocks base method.
-func (m *MockImageRepository) States(ctx context.Context, imageID, userID int) (*domain.ImageStates, error) {
+func (m *MockImageRepository) States(ctx context.Context, imageID, userID domain.ID) (*domain.ImageStates, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "States", ctx, imageID, userID)
 	ret0, _ := ret[0].(*domain.ImageStates)
@@ -319,7 +319,7 @@ func (mr *MockImageRepositoryMockRecorder) States(ctx, imageID, userID any) *gom
 }
 
 // Update mocks base method.
-func (m *MockImageRepository) Update(ctx context.Context, id int, image *domain.Image) (*domain.Image, error) {
+func (m *MockImageRepository) Update(ctx context.Context, id domain.ID, image *domain.Image) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, id, image)
 	ret0, _ := ret[0].(*domain.Image)

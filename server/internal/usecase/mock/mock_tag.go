@@ -41,7 +41,7 @@ func (m *MockTagRepository) EXPECT() *MockTagRepositoryMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockTagRepository) Delete(ctx context.Context, id int) error {
+func (m *MockTagRepository) Delete(ctx context.Context, id domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -55,7 +55,7 @@ func (mr *MockTagRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
 }
 
 // GetByID mocks base method.
-func (m *MockTagRepository) GetByID(ctx context.Context, id int) (*domain.Tag, error) {
+func (m *MockTagRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*domain.Tag)
@@ -115,7 +115,7 @@ func (mr *MockTagRepositoryMockRecorder) Upsert(ctx, tag any) *gomock.Call {
 }
 
 // UpsertImageTags mocks base method.
-func (m *MockTagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID int) error {
+func (m *MockTagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertImageTags", ctx, tag, imageID)
 	ret0, _ := ret[0].(error)
@@ -152,7 +152,7 @@ func (m *MockTagImageUseCase) EXPECT() *MockTagImageUseCaseMockRecorder {
 }
 
 // GetByID mocks base method.
-func (m *MockTagImageUseCase) GetByID(ctx context.Context, id int) (*domain.Image, error) {
+func (m *MockTagImageUseCase) GetByID(ctx context.Context, id domain.ID) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*domain.Image)

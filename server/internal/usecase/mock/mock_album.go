@@ -56,7 +56,7 @@ func (mr *MockAlbumRepositoryMockRecorder) Create(ctx, album any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockAlbumRepository) Delete(ctx context.Context, albumID int) error {
+func (m *MockAlbumRepository) Delete(ctx context.Context, albumID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, albumID)
 	ret0, _ := ret[0].(error)
@@ -70,7 +70,7 @@ func (mr *MockAlbumRepositoryMockRecorder) Delete(ctx, albumID any) *gomock.Call
 }
 
 // DeleteImage mocks base method.
-func (m *MockAlbumRepository) DeleteImage(ctx context.Context, albumID, imageID int) error {
+func (m *MockAlbumRepository) DeleteImage(ctx context.Context, albumID, imageID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteImage", ctx, albumID, imageID)
 	ret0, _ := ret[0].(error)
@@ -84,7 +84,7 @@ func (mr *MockAlbumRepositoryMockRecorder) DeleteImage(ctx, albumID, imageID any
 }
 
 // GetAlbumImages mocks base method.
-func (m *MockAlbumRepository) GetAlbumImages(ctx context.Context, albumID int, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
+func (m *MockAlbumRepository) GetAlbumImages(ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAlbumImages", ctx, albumID, pagInput)
 	ret0, _ := ret[0].(*domain.Pagination[domain.ImageWithAuthor])
@@ -99,7 +99,7 @@ func (mr *MockAlbumRepositoryMockRecorder) GetAlbumImages(ctx, albumID, pagInput
 }
 
 // GetByAuthorID mocks base method.
-func (m *MockAlbumRepository) GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error) {
+func (m *MockAlbumRepository) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByAuthorID", ctx, authorID)
 	ret0, _ := ret[0].([]domain.Album)
@@ -114,7 +114,7 @@ func (mr *MockAlbumRepositoryMockRecorder) GetByAuthorID(ctx, authorID any) *gom
 }
 
 // GetByID mocks base method.
-func (m *MockAlbumRepository) GetByID(ctx context.Context, albumID int) (*domain.Album, error) {
+func (m *MockAlbumRepository) GetByID(ctx context.Context, albumID domain.ID) (*domain.Album, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, albumID)
 	ret0, _ := ret[0].(*domain.Album)
@@ -129,7 +129,7 @@ func (mr *MockAlbumRepositoryMockRecorder) GetByID(ctx, albumID any) *gomock.Cal
 }
 
 // PutImage mocks base method.
-func (m *MockAlbumRepository) PutImage(ctx context.Context, albumID, imageID int) error {
+func (m *MockAlbumRepository) PutImage(ctx context.Context, albumID, imageID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PutImage", ctx, albumID, imageID)
 	ret0, _ := ret[0].(error)
@@ -143,7 +143,7 @@ func (mr *MockAlbumRepositoryMockRecorder) PutImage(ctx, albumID, imageID any) *
 }
 
 // Update mocks base method.
-func (m *MockAlbumRepository) Update(ctx context.Context, albumID int, album *domain.Album) (*domain.Album, error) {
+func (m *MockAlbumRepository) Update(ctx context.Context, albumID domain.ID, album *domain.Album) (*domain.Album, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, albumID, album)
 	ret0, _ := ret[0].(*domain.Album)
@@ -218,7 +218,7 @@ func (m *MockAlbumImageUseCase) EXPECT() *MockAlbumImageUseCaseMockRecorder {
 }
 
 // GetByID mocks base method.
-func (m *MockAlbumImageUseCase) GetByID(ctx context.Context, imageID int) (*domain.Image, error) {
+func (m *MockAlbumImageUseCase) GetByID(ctx context.Context, imageID domain.ID) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, imageID)
 	ret0, _ := ret[0].(*domain.Image)

@@ -28,7 +28,7 @@ func TestAuthUseCase_Register(t *testing.T) {
 
 	authUC := usecase.NewAuthUseCase(mockRepo, mockCache, mockLogger, mockTokenGen)
 
-	userID := 1
+	userID := domain.ID(1)
 	token := "test"
 	pwd := "test"
 
@@ -97,12 +97,12 @@ func TestAuthUseCase_Login(t *testing.T) {
 
 	authUC := usecase.NewAuthUseCase(mockRepo, mockCache, mockLogger, mockTokenGen)
 
-	userID := 1
+	userID := domain.ID(1)
 	token := "test"
 	pwd := "test"
 
 	mockUser := func() *domain.User {
-		u := &domain.User{ID: userID, Username: "test", PasswordHash: "test"}
+		u := &domain.User{ID: userID, Username: "test", PasswordHash: pwd}
 		err := u.PrepareMutation()
 		if err != nil {
 			panic(err)
@@ -181,13 +181,14 @@ func TestAuthUseCase_Verify(t *testing.T) {
 
 	token := "test"
 	payload := &domain.UserPayload{}
+	cacheKey := payload.ID.String()
 	mockUser := &domain.User{ID: payload.ID, Username: payload.Username}
 
 	t.Run("SuccessVerify_Cached", func(t *testing.T) {
 		mockTokenGen.EXPECT().VerifyAndScan(token, payload).Return(nil)
-		mockCache.EXPECT().Get(gomock.Any(), payload.ID).Return(mockUser, nil)
+		mockCache.EXPECT().Get(gomock.Any(), cacheKey).Return(mockUser, nil)
 		mockRepo.EXPECT().GetByID(gomock.Any(), payload.ID).Times(0)
-		mockCache.EXPECT().Set(gomock.Any(), payload.ID, gomock.Any(), gomock.Any()).Times(0)
+		mockCache.EXPECT().Set(gomock.Any(), cacheKey, gomock.Any(), gomock.Any()).Times(0)
 
 		user, err := authUC.Verify(context.Background(), token)
 		assert.NoError(t, err)
@@ -197,9 +198,9 @@ func TestAuthUseCase_Verify(t *testing.T) {
 
 	t.Run("SuccessVerify_Repo", func(t *testing.T) {
 		mockTokenGen.EXPECT().VerifyAndScan(token, payload).Return(nil)
-		mockCache.EXPECT().Get(gomock.Any(), payload.ID).Return(nil, nil)
+		mockCache.EXPECT().Get(gomock.Any(), cacheKey).Return(nil, nil)
 		mockRepo.EXPECT().GetByID(gomock.Any(), payload.ID).Return(mockUser, nil)
-		mockCache.EXPECT().Set(gomock.Any(), payload.ID, gomock.Any(), gomock.Any()).Return(nil)
+		mockCache.EXPECT().Set(gomock.Any(), cacheKey, gomock.Any(), gomock.Any()).Return(nil)
 
 		user, err := authUC.Verify(context.Background(), token)
 		assert.NoError(t, err)
@@ -209,9 +210,9 @@ func TestAuthUseCase_Verify(t *testing.T) {
 
 	t.Run("ErrorVerify", func(t *testing.T) {
 		mockTokenGen.EXPECT().VerifyAndScan(token, payload).Return(errors.New("tokenGen error"))
-		mockCache.EXPECT().Get(gomock.Any(), payload.ID).Times(0)
+		mockCache.EXPECT().Get(gomock.Any(), cacheKey).Times(0)
 		mockRepo.EXPECT().GetByID(gomock.Any(), payload.ID).Times(0)
-		mockCache.EXPECT().Set(gomock.Any(), payload.ID, gomock.Any(), gomock.Any()).Times(0)
+		mockCache.EXPECT().Set(gomock.Any(), cacheKey, gomock.Any(), gomock.Any()).Times(0)
 
 		user, err := authUC.Verify(context.Background(), token)
 		assert.Error(t, err)
@@ -220,9 +221,9 @@ func TestAuthUseCase_Verify(t *testing.T) {
 
 	t.Run("CacheReadError", func(t *testing.T) {
 		mockTokenGen.EXPECT().VerifyAndScan(token, payload).Return(nil)
-		mockCache.EXPECT().Get(gomock.Any(), payload.ID).Return(nil, errors.New("cache error"))
+		mockCache.EXPECT().Get(gomock.Any(), cacheKey).Return(nil, errors.New("cache error"))
 		mockRepo.EXPECT().GetByID(gomock.Any(), payload.ID).Return(mockUser, nil)
-		mockCache.EXPECT().Set(gomock.Any(), payload.ID, gomock.Any(), gomock.Any()).Return(nil)
+		mockCache.EXPECT().Set(gomock.Any(), cacheKey, gomock.Any(), gomock.Any()).Return(nil)
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		user, err := authUC.Verify(context.Background(), token)
@@ -233,9 +234,9 @@ func TestAuthUseCase_Verify(t *testing.T) {
 
 	t.Run("CacheWriteError", func(t *testing.T) {
 		mockTokenGen.EXPECT().VerifyAndScan(token, payload).Return(nil)
-		mockCache.EXPECT().Get(gomock.Any(), payload.ID).Return(nil, nil)
+		mockCache.EXPECT().Get(gomock.Any(), cacheKey).Return(nil, nil)
 		mockRepo.EXPECT().GetByID(gomock.Any(), payload.ID).Return(mockUser, nil)
-		mockCache.EXPECT().Set(gomock.Any(), payload.ID, gomock.Any(), gomock.Any()).Return(errors.New("cache error"))
+		mockCache.EXPECT().Set(gomock.Any(), cacheKey, gomock.Any(), gomock.Any()).Return(errors.New("cache error"))
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
 
 		user, err := authUC.Verify(context.Background(), token)
@@ -246,9 +247,9 @@ func TestAuthUseCase_Verify(t *testing.T) {
 
 	t.Run("RepoError", func(t *testing.T) {
 		mockTokenGen.EXPECT().VerifyAndScan(token, payload).Return(nil)
-		mockCache.EXPECT().Get(gomock.Any(), payload.ID).Return(nil, nil)
+		mockCache.EXPECT().Get(gomock.Any(), cacheKey).Return(nil, nil)
 		mockRepo.EXPECT().GetByID(gomock.Any(), payload.ID).Return(nil, errors.New("repo error"))
-		mockCache.EXPECT().Set(gomock.Any(), payload.ID, gomock.Any(), gomock.Any()).Times(0)
+		mockCache.EXPECT().Set(gomock.Any(), cacheKey, gomock.Any(), gomock.Any()).Times(0)
 
 		user, err := authUC.Verify(context.Background(), token)
 		assert.Error(t, err)

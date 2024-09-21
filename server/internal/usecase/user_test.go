@@ -27,7 +27,7 @@ func TestUserUseCase_Update(t *testing.T) {
 
 	userUC := usecase.NewUserUseCase(mockUserRepo, mockUserCache, mockLog)
 
-	userID := 1
+	userID := domain.ID(1)
 	validUserInput := &domain.User{
 		Username:  "test",
 		AvatarURL: "https://test.com/test.png",
@@ -44,7 +44,7 @@ func TestUserUseCase_Update(t *testing.T) {
 		mockUserRepo.EXPECT().GetByID(gomock.Any(), userID).Return(mockUser, nil)
 		mockUserRepo.EXPECT().GetUnique(gomock.Any(), validUserInput).Return(nil, repository.ErrNotFound)
 		mockUserRepo.EXPECT().Update(gomock.Any(), userID, validUserInput).Return(mockUser, nil)
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Return(nil)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Return(nil)
 
 		updUser, err := userUC.Update(context.Background(), userID, validUserInput)
 		if assert.NoError(t, err) {
@@ -56,7 +56,7 @@ func TestUserUseCase_Update(t *testing.T) {
 		mockUserRepo.EXPECT().GetByID(gomock.Any(), userID).Return(mockUser, repository.ErrNotFound)
 		mockUserRepo.EXPECT().GetUnique(gomock.Any(), validUserInput).Times(0)
 		mockUserRepo.EXPECT().Update(gomock.Any(), userID, validUserInput).Times(0)
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Times(0)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Times(0)
 
 		updUser, err := userUC.Update(context.Background(), userID, validUserInput)
 		assert.Error(t, err)
@@ -69,7 +69,7 @@ func TestUserUseCase_Update(t *testing.T) {
 		mockUserRepo.EXPECT().GetByID(gomock.Any(), userID).Return(mockUser, nil)
 		mockUserRepo.EXPECT().GetUnique(gomock.Any(), validUserInput).Return(anyExceptMockUser, nil)
 		mockUserRepo.EXPECT().Update(gomock.Any(), userID, validUserInput).Times(0)
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Times(0)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Times(0)
 
 		updUser, err := userUC.Update(context.Background(), userID, validUserInput)
 		assert.Error(t, err)
@@ -83,7 +83,7 @@ func TestUserUseCase_Update(t *testing.T) {
 		mockUserRepo.EXPECT().Update(
 			gomock.Any(), userID, validUserInput,
 		).Return(nil, errors.New("repo error"))
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Times(0)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Times(0)
 
 		updUser, err := userUC.Update(context.Background(), userID, validUserInput)
 
@@ -104,10 +104,9 @@ func TestUserUseCase_OverwritePermissions(t *testing.T) {
 
 	userUC := usecase.NewUserUseCase(mockUserRepo, mockUserCache, mockLog)
 
-	userID := 1
-
+	userID := domain.ID(1)
 	mockUser := &domain.User{
-		ID:          1,
+		ID:          userID,
 		Username:    "test",
 		AvatarURL:   "https://test.com/test.png",
 		Permissions: 1,
@@ -116,13 +115,14 @@ func TestUserUseCase_OverwritePermissions(t *testing.T) {
 	initialPermissions := domain.PermissionsAdmin
 	denyPerms := domain.PermissionsAdmin
 	allowPerms := domain.PermissionsUploadImage
+
 	// TEMP: magic operations
 	expectPermissions := (initialPermissions | allowPerms) &^ denyPerms
 
 	t.Run("SuccessPermissionsOverwrite", func(t *testing.T) {
 		mockUserRepo.EXPECT().GetByID(gomock.Any(), userID).Return(mockUser, nil)
 		mockUserRepo.EXPECT().SetPermissions(gomock.Any(), userID, int(expectPermissions)).Return(nil)
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Return(nil)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Return(nil)
 
 		err := userUC.OverwritePermissions(context.Background(), userID, denyPerms, allowPerms)
 
@@ -132,7 +132,7 @@ func TestUserUseCase_OverwritePermissions(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		mockUserRepo.EXPECT().GetByID(gomock.Any(), userID).Return(mockUser, repository.ErrNotFound)
 		mockUserRepo.EXPECT().SetPermissions(gomock.Any(), userID, gomock.Any()).Times(0)
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Times(0)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Times(0)
 
 		err := userUC.OverwritePermissions(context.Background(), userID, denyPerms, allowPerms)
 		assert.Error(t, err)
@@ -144,7 +144,7 @@ func TestUserUseCase_OverwritePermissions(t *testing.T) {
 		mockUserRepo.EXPECT().SetPermissions(
 			gomock.Any(), userID, gomock.Any(),
 		).Return(errors.New("repo error"))
-		mockUserCache.EXPECT().Del(gomock.Any(), userID).Times(0)
+		mockUserCache.EXPECT().Del(gomock.Any(), userID.String()).Times(0)
 
 		err := userUC.OverwritePermissions(context.Background(), userID, denyPerms, allowPerms)
 		assert.Error(t, err)

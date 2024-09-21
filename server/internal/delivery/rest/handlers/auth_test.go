@@ -66,7 +66,7 @@ func TestAuthHandlers_Register(t *testing.T) {
 	}
 
 	mockUser := &domain.User{
-		ID:          0,
+		ID:          handlersMock.DomainID(),
 		Username:    "username",
 		Email:       "username@gmail.com",
 		Permissions: 1,
@@ -175,7 +175,7 @@ func TestAuthHandlers_Login(t *testing.T) {
 	}
 
 	mockUser := &domain.User{
-		ID:          0,
+		ID:          handlersMock.DomainID(),
 		Username:    "username",
 		Email:       "username@gmail.com",
 		Permissions: 1,

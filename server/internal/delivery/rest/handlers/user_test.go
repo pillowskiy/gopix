@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/labstack/echo/v4"
@@ -32,8 +31,8 @@ func TestUserHanlers_Update(t *testing.T) {
 
 	e := echo.New()
 
-	userID := 1
-	itoaUserID := strconv.Itoa(userID)
+	userID := handlersMock.DomainID()
+	itoaUserID := userID.String()
 
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/:id", body)
@@ -221,8 +220,8 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 		Allow: 1024,
 	}
 
-	targetUserID := 2
-	targetItoaUserID := strconv.Itoa(targetUserID)
+	targetUserID := handlersMock.DomainID()
+	targetItoaUserID := targetUserID.String()
 
 	mockUserUC := handlersMock.NewMockuserUseCase(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
@@ -296,7 +295,7 @@ func TestUserHanlers_OverwritePermissions(t *testing.T) {
 
 	t.Run("DenySelfAction", func(t *testing.T) {
 		body, _ := json.Marshal(validOPInput)
-		c, rec := prepareOverwritePermissionQuery(strconv.Itoa(ctxUser.ID), bytes.NewBuffer(body))
+		c, rec := prepareOverwritePermissionQuery(ctxUser.ID.String(), bytes.NewBuffer(body))
 		mockCtxUser(c)
 
 		mockUserUC.EXPECT().OverwritePermissions(

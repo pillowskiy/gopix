@@ -56,7 +56,7 @@ func (mr *MockCommentRepositoryMockRecorder) Create(ctx, comment any) *gomock.Ca
 }
 
 // Delete mocks base method.
-func (m *MockCommentRepository) Delete(ctx context.Context, commentID int) error {
+func (m *MockCommentRepository) Delete(ctx context.Context, commentID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, commentID)
 	ret0, _ := ret[0].(error)
@@ -70,7 +70,7 @@ func (mr *MockCommentRepositoryMockRecorder) Delete(ctx, commentID any) *gomock.
 }
 
 // GetByID mocks base method.
-func (m *MockCommentRepository) GetByID(ctx context.Context, imageID int) (*domain.Comment, error) {
+func (m *MockCommentRepository) GetByID(ctx context.Context, imageID domain.ID) (*domain.Comment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, imageID)
 	ret0, _ := ret[0].(*domain.Comment)
@@ -85,7 +85,7 @@ func (mr *MockCommentRepositoryMockRecorder) GetByID(ctx, imageID any) *gomock.C
 }
 
 // GetByImageID mocks base method.
-func (m *MockCommentRepository) GetByImageID(ctx context.Context, imageID int, pagInput *domain.PaginationInput, sort domain.CommentSortMethod) (*domain.Pagination[domain.DetailedComment], error) {
+func (m *MockCommentRepository) GetByImageID(ctx context.Context, imageID domain.ID, pagInput *domain.PaginationInput, sort domain.CommentSortMethod) (*domain.Pagination[domain.DetailedComment], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByImageID", ctx, imageID, pagInput, sort)
 	ret0, _ := ret[0].(*domain.Pagination[domain.DetailedComment])
@@ -100,7 +100,7 @@ func (mr *MockCommentRepositoryMockRecorder) GetByImageID(ctx, imageID, pagInput
 }
 
 // HasUserCommented mocks base method.
-func (m *MockCommentRepository) HasUserCommented(ctx context.Context, commentID, userID int) (bool, error) {
+func (m *MockCommentRepository) HasUserCommented(ctx context.Context, commentID, userID domain.ID) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HasUserCommented", ctx, commentID, userID)
 	ret0, _ := ret[0].(bool)
@@ -115,7 +115,7 @@ func (mr *MockCommentRepositoryMockRecorder) HasUserCommented(ctx, commentID, us
 }
 
 // Update mocks base method.
-func (m *MockCommentRepository) Update(ctx context.Context, commentID int, comment *domain.Comment) (*domain.Comment, error) {
+func (m *MockCommentRepository) Update(ctx context.Context, commentID domain.ID, comment *domain.Comment) (*domain.Comment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, commentID, comment)
 	ret0, _ := ret[0].(*domain.Comment)
@@ -190,7 +190,7 @@ func (m *MockCommentImageUseCase) EXPECT() *MockCommentImageUseCaseMockRecorder 
 }
 
 // GetByID mocks base method.
-func (m *MockCommentImageUseCase) GetByID(ctx context.Context, imageID int) (*domain.Image, error) {
+func (m *MockCommentImageUseCase) GetByID(ctx context.Context, imageID domain.ID) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, imageID)
 	ret0, _ := ret[0].(*domain.Image)

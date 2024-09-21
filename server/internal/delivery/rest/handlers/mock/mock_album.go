@@ -56,7 +56,7 @@ func (mr *MockalbumUseCaseMockRecorder) Create(ctx, album any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockalbumUseCase) Delete(ctx context.Context, albumID int, executor *domain.User) error {
+func (m *MockalbumUseCase) Delete(ctx context.Context, albumID domain.ID, executor *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, albumID, executor)
 	ret0, _ := ret[0].(error)
@@ -70,7 +70,7 @@ func (mr *MockalbumUseCaseMockRecorder) Delete(ctx, albumID, executor any) *gomo
 }
 
 // DeleteImage mocks base method.
-func (m *MockalbumUseCase) DeleteImage(ctx context.Context, albumID, imageID int, executor *domain.User) error {
+func (m *MockalbumUseCase) DeleteImage(ctx context.Context, albumID, imageID domain.ID, executor *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteImage", ctx, albumID, imageID, executor)
 	ret0, _ := ret[0].(error)
@@ -84,7 +84,7 @@ func (mr *MockalbumUseCaseMockRecorder) DeleteImage(ctx, albumID, imageID, execu
 }
 
 // GetAlbumImages mocks base method.
-func (m *MockalbumUseCase) GetAlbumImages(ctx context.Context, albumID int, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
+func (m *MockalbumUseCase) GetAlbumImages(ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAlbumImages", ctx, albumID, pagInput)
 	ret0, _ := ret[0].(*domain.Pagination[domain.ImageWithAuthor])
@@ -99,7 +99,7 @@ func (mr *MockalbumUseCaseMockRecorder) GetAlbumImages(ctx, albumID, pagInput an
 }
 
 // GetByAuthorID mocks base method.
-func (m *MockalbumUseCase) GetByAuthorID(ctx context.Context, authorID int) ([]domain.Album, error) {
+func (m *MockalbumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByAuthorID", ctx, authorID)
 	ret0, _ := ret[0].([]domain.Album)
@@ -114,7 +114,7 @@ func (mr *MockalbumUseCaseMockRecorder) GetByAuthorID(ctx, authorID any) *gomock
 }
 
 // PutImage mocks base method.
-func (m *MockalbumUseCase) PutImage(ctx context.Context, albumID, imageID int, executor *domain.User) error {
+func (m *MockalbumUseCase) PutImage(ctx context.Context, albumID, imageID domain.ID, executor *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PutImage", ctx, albumID, imageID, executor)
 	ret0, _ := ret[0].(error)
@@ -128,7 +128,7 @@ func (mr *MockalbumUseCaseMockRecorder) PutImage(ctx, albumID, imageID, executor
 }
 
 // Update mocks base method.
-func (m *MockalbumUseCase) Update(ctx context.Context, albumID int, album *domain.Album, executor *domain.User) (*domain.Album, error) {
+func (m *MockalbumUseCase) Update(ctx context.Context, albumID domain.ID, album *domain.Album, executor *domain.User) (*domain.Album, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, albumID, album, executor)
 	ret0, _ := ret[0].(*domain.Album)

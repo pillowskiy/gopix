@@ -41,7 +41,7 @@ func (m *MockUserCache) EXPECT() *MockUserCacheMockRecorder {
 }
 
 // Del mocks base method.
-func (m *MockUserCache) Del(ctx context.Context, id int) error {
+func (m *MockUserCache) Del(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Del", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -78,7 +78,7 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // GetByID mocks base method.
-func (m *MockUserRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
+func (m *MockUserRepository) GetByID(ctx context.Context, id domain.ID) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*domain.User)
@@ -108,7 +108,7 @@ func (mr *MockUserRepositoryMockRecorder) GetUnique(ctx, user any) *gomock.Call 
 }
 
 // SetPermissions mocks base method.
-func (m *MockUserRepository) SetPermissions(ctx context.Context, id, permissions int) error {
+func (m *MockUserRepository) SetPermissions(ctx context.Context, id domain.ID, permissions int) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetPermissions", ctx, id, permissions)
 	ret0, _ := ret[0].(error)
@@ -122,7 +122,7 @@ func (mr *MockUserRepositoryMockRecorder) SetPermissions(ctx, id, permissions an
 }
 
 // Update mocks base method.
-func (m *MockUserRepository) Update(ctx context.Context, id int, user *domain.User) (*domain.User, error) {
+func (m *MockUserRepository) Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, id, user)
 	ret0, _ := ret[0].(*domain.User)

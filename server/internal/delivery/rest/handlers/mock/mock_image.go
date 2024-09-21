@@ -41,7 +41,7 @@ func (m *MockimageUseCase) EXPECT() *MockimageUseCaseMockRecorder {
 }
 
 // AddLike mocks base method.
-func (m *MockimageUseCase) AddLike(ctx context.Context, imageID, userID int) error {
+func (m *MockimageUseCase) AddLike(ctx context.Context, imageID, userID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddLike", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
@@ -55,7 +55,7 @@ func (mr *MockimageUseCaseMockRecorder) AddLike(ctx, imageID, userID any) *gomoc
 }
 
 // AddView mocks base method.
-func (m *MockimageUseCase) AddView(ctx context.Context, imageID int, userID *int) error {
+func (m *MockimageUseCase) AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddView", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
@@ -84,7 +84,7 @@ func (mr *MockimageUseCaseMockRecorder) Create(ctx, image, file any) *gomock.Cal
 }
 
 // Delete mocks base method.
-func (m *MockimageUseCase) Delete(ctx context.Context, id int, executor *domain.User) error {
+func (m *MockimageUseCase) Delete(ctx context.Context, id domain.ID, executor *domain.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, id, executor)
 	ret0, _ := ret[0].(error)
@@ -113,7 +113,7 @@ func (mr *MockimageUseCaseMockRecorder) Discover(ctx, pagInput, sort any) *gomoc
 }
 
 // GetDetailed mocks base method.
-func (m *MockimageUseCase) GetDetailed(ctx context.Context, id int) (*domain.DetailedImage, error) {
+func (m *MockimageUseCase) GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDetailed", ctx, id)
 	ret0, _ := ret[0].(*domain.DetailedImage)
@@ -128,7 +128,7 @@ func (mr *MockimageUseCaseMockRecorder) GetDetailed(ctx, id any) *gomock.Call {
 }
 
 // RemoveLike mocks base method.
-func (m *MockimageUseCase) RemoveLike(ctx context.Context, imageID, userID int) error {
+func (m *MockimageUseCase) RemoveLike(ctx context.Context, imageID, userID domain.ID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveLike", ctx, imageID, userID)
 	ret0, _ := ret[0].(error)
@@ -142,7 +142,7 @@ func (mr *MockimageUseCaseMockRecorder) RemoveLike(ctx, imageID, userID any) *go
 }
 
 // States mocks base method.
-func (m *MockimageUseCase) States(ctx context.Context, imageID, userID int) (*domain.ImageStates, error) {
+func (m *MockimageUseCase) States(ctx context.Context, imageID, userID domain.ID) (*domain.ImageStates, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "States", ctx, imageID, userID)
 	ret0, _ := ret[0].(*domain.ImageStates)
@@ -157,7 +157,7 @@ func (mr *MockimageUseCaseMockRecorder) States(ctx, imageID, userID any) *gomock
 }
 
 // Update mocks base method.
-func (m *MockimageUseCase) Update(ctx context.Context, id int, image *domain.Image, executor *domain.User) (*domain.Image, error) {
+func (m *MockimageUseCase) Update(ctx context.Context, id domain.ID, image *domain.Image, executor *domain.User) (*domain.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, id, image, executor)
 	ret0, _ := ret[0].(*domain.Image)

@@ -135,8 +135,8 @@ func TestAlbumHandlers_GetByAuthorID(t *testing.T) {
 
 	e := echo.New()
 
-	authorID := 1
-	itoaAuthorID := strconv.Itoa(authorID)
+	authorID := handlersMock.DomainID()
+	itoaAuthorID := authorID.String()
 
 	prepareGetByAuthorIDQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/albums/users/:user_id", nil)
@@ -190,8 +190,8 @@ func TestAlbumHandlers_GetAlbumImages(t *testing.T) {
 
 	e := echo.New()
 
-	albumID := 1
-	itoaAlbumID := strconv.Itoa(albumID)
+	albumID := handlersMock.DomainID()
+	itoaAlbumID := albumID.String()
 
 	type AlbumImagesQuery struct {
 		Limit int `query:"limit"`
@@ -305,8 +305,8 @@ func TestAlbumHandlers_Delete(t *testing.T) {
 
 	e := echo.New()
 
-	albumID := 1
-	itoaAlbumID := strconv.Itoa(albumID)
+	albumID := handlersMock.DomainID()
+	itoaAlbumID := albumID.String()
 
 	prepareDeleteAlbumQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/albums/:album_id", nil)
@@ -388,8 +388,8 @@ func TestAlbumHandlers_Update(t *testing.T) {
 
 	e := echo.New()
 
-	albumID := 1
-	itoaAlbumID := strconv.Itoa(albumID)
+	albumID := handlersMock.DomainID()
+	itoaAlbumID := albumID.String()
 
 	prepareUpdateQuery := func(id string, body io.Reader) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/images/albums/:album_id", body)
@@ -510,11 +510,11 @@ func TestAlbumHandlers_PutImage(t *testing.T) {
 
 	e := echo.New()
 
-	albumID := 1
-	itoaAlbumID := strconv.Itoa(albumID)
+	albumID := handlersMock.DomainID()
+	itoaAlbumID := albumID.String()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	preparePutImageQuery := func(albumID string, imageID string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodPost, "/", nil)
@@ -620,11 +620,11 @@ func TestAlbumHandlers_DeleteImage(t *testing.T) {
 
 	e := echo.New()
 
-	albumID := 1
-	itoaAlbumID := strconv.Itoa(albumID)
+	albumID := handlersMock.DomainID()
+	itoaAlbumID := albumID.String()
 
-	imageID := 1
-	itoaImageID := strconv.Itoa(imageID)
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
 
 	prepareDeleteImageQuery := func(albumID string, imageID string) (echo.Context, *httptest.ResponseRecorder) {
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)

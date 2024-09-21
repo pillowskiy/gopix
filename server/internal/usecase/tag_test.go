@@ -60,14 +60,14 @@ func TestTagUseCase_UpsertImageTag(t *testing.T) {
 
 	tagInput := &domain.Tag{Name: "test"}
 
-	imageID := 1
-	userID := 1
+	imageID := domain.ID(1)
+	userID := domain.ID(2)
 
 	mockUser := &domain.User{ID: userID, Permissions: int(domain.PermissionsAdmin)}
 	mockImage := &domain.Image{ID: imageID, AuthorID: userID}
 
 	t.Run("SuccessUpsertImageTag", func(t *testing.T) {
-		mockImageUC.EXPECT().GetByID(gomock.Any(), 1).Return(mockImage, nil)
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(mockImage, nil)
 		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Return(true)
 		mockRepo.EXPECT().UpsertImageTags(gomock.Any(), tagInput, imageID).Return(nil)
 
@@ -77,7 +77,7 @@ func TestTagUseCase_UpsertImageTag(t *testing.T) {
 	})
 
 	t.Run("IncorrectImageRef", func(t *testing.T) {
-		mockImageUC.EXPECT().GetByID(gomock.Any(), 1).Return(nil, usecase.ErrNotFound)
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(nil, usecase.ErrNotFound)
 		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Times(0)
 		mockRepo.EXPECT().UpsertImageTags(gomock.Any(), tagInput, imageID).Times(0)
 
@@ -88,7 +88,7 @@ func TestTagUseCase_UpsertImageTag(t *testing.T) {
 	})
 
 	t.Run("Forbidden", func(t *testing.T) {
-		mockImageUC.EXPECT().GetByID(gomock.Any(), 1).Return(mockImage, nil)
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(mockImage, nil)
 		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Return(false)
 		mockRepo.EXPECT().UpsertImageTags(gomock.Any(), tagInput, imageID).Times(0)
 
@@ -99,7 +99,7 @@ func TestTagUseCase_UpsertImageTag(t *testing.T) {
 	})
 
 	t.Run("RepoError", func(t *testing.T) {
-		mockImageUC.EXPECT().GetByID(gomock.Any(), 1).Return(mockImage, nil)
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(mockImage, nil)
 		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Return(true)
 		mockRepo.EXPECT().UpsertImageTags(gomock.Any(), tagInput, imageID).Return(errors.New("repo error"))
 
@@ -155,7 +155,7 @@ func TestTagUseCase_Delete(t *testing.T) {
 
 	tagUC := usecase.NewTagUseCase(mockRepo, mockACL, mockImageUC)
 
-	tagID := 1
+	tagID := domain.ID(1)
 	tag := &domain.Tag{ID: tagID}
 
 	t.Run("SuccessDelete", func(t *testing.T) {
@@ -195,7 +195,7 @@ func TestTagUseCase_GetByID(t *testing.T) {
 
 	tagUC := usecase.NewTagUseCase(mockRepo, mockACL, mockImageUC)
 
-	tagID := 1
+	tagID := domain.ID(1)
 	tag := &domain.Tag{ID: tagID}
 
 	t.Run("SuccessGetByID", func(t *testing.T) {
@@ -222,5 +222,4 @@ func TestTagUseCase_GetByID(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, tTag)
 	})
-
 }
