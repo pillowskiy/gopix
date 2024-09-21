@@ -53,6 +53,9 @@ func (s *EchoServer) Listen() error {
 }
 
 func (s *EchoServer) MapHandlers() error {
+	followingRepo := postgres.NewFollowingRepository(s.sh.Postgres)
+	followingUC := usecase.NewFollowingUseCase(followingRepo)
+
 	userCache := redis.NewUserCache(s.sh.Redis)
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
@@ -61,7 +64,9 @@ func (s *EchoServer) MapHandlers() error {
 		s.cfg.Session.Expire*time.Second,
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
-	userUC := usecase.NewUserUseCase(userRepo, userCache, s.logger)
+	userUC := usecase.NewUserUseCase(userRepo, userCache, followingUC, s.logger)
+
+	subscriptionUC := usecase.NewSubscriptionUseCase(followingUC, userUC)
 
 	imageCache := redis.NewImageCache(s.sh.Redis)
 	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
@@ -94,6 +99,10 @@ func (s *EchoServer) MapHandlers() error {
 	userGroup := v1.Group("/users")
 	userHandlers := handlers.NewUserHandlers(userUC, s.logger)
 	routes.MapUserRoutes(userGroup, userHandlers, guardMiddlewares)
+
+	subscriptionGroup := v1.Group("/subscriptions")
+	subscriptionHandlers := handlers.NewSubscriptionHandlers(subscriptionUC)
+	routes.MapSubscriptionRoutes(subscriptionGroup, subscriptionHandlers, guardMiddlewares)
 
 	imagesGroup := v1.Group("/images")
 	imagesHandlers := handlers.NewImageHandlers(imageUC, s.logger)

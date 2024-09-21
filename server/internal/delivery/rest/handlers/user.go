@@ -17,6 +17,7 @@ type userUseCase interface {
 	OverwritePermissions(
 		ctx context.Context, id domain.ID, deny domain.Permission, allow domain.Permission,
 	) error
+	GetDetailed(ctx context.Context, username string, executorID *domain.ID) (*domain.DetailedUser, error)
 }
 
 type UserHandlers struct {
@@ -26,6 +27,36 @@ type UserHandlers struct {
 
 func NewUserHandlers(uc userUseCase, logger logger.Logger) *UserHandlers {
 	return &UserHandlers{uc: uc, logger: logger}
+}
+
+func (h *UserHandlers) GetDetailed() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		username := c.Param("username")
+		if len(username) < 2 {
+			return c.JSON(rest.NewBadRequestError("Username is invalid").Response())
+		}
+
+		executorID := new(domain.ID)
+		executor, err := GetContextUser(c)
+		if err == nil && executor != nil {
+			executorID = &executor.ID
+		}
+
+		user, err := h.uc.GetDetailed(ctx, username, executorID)
+		if err != nil {
+			switch err {
+			case usecase.ErrNotFound:
+				return c.JSON(rest.NewNotFoundError("User not found").Response())
+			default:
+				h.logger.Errorf("User.Update: %v", err)
+				return c.JSON(rest.NewInternalServerError().Response())
+			}
+		}
+
+		return c.JSON(http.StatusOK, user)
+	}
 }
 
 func (h *UserHandlers) Update() echo.HandlerFunc {

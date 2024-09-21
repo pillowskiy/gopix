@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/pillowskiy/gopix/internal/domain"
+	repository "github.com/pillowskiy/gopix/internal/respository"
 	"github.com/pillowskiy/gopix/pkg/logger"
+	"github.com/pkg/errors"
 )
 
 type UserCache interface {
@@ -18,20 +20,46 @@ type UserRepository interface {
 	SetPermissions(ctx context.Context, id domain.ID, permissions int) error
 }
 
-type UserUseCase struct {
-	repo   UserRepository
-	cache  UserCache
-	logger logger.Logger
+type UserFollowingUseCase interface {
+	Stats(ctx context.Context, userID domain.ID, executorID *domain.ID) (*domain.FollowingStats, error)
 }
 
-func NewUserUseCase(repo UserRepository, cache UserCache, logger logger.Logger) *UserUseCase {
-	return &UserUseCase{repo: repo, cache: cache, logger: logger}
+type UserUseCase struct {
+	repo        UserRepository
+	cache       UserCache
+	followingUC UserFollowingUseCase
+	logger      logger.Logger
+}
+
+func NewUserUseCase(
+	repo UserRepository, cache UserCache, followingUC UserFollowingUseCase, logger logger.Logger,
+) *UserUseCase {
+	return &UserUseCase{repo: repo, cache: cache, followingUC: followingUC, logger: logger}
+}
+
+func (uc *UserUseCase) GetDetailed(
+	ctx context.Context, username string, executorID *domain.ID,
+) (*domain.DetailedUser, error) {
+	user, err := uc.repo.GetUnique(ctx, &domain.User{Username: username})
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	user.HidePassword()
+
+	stats, err := uc.followingUC.Stats(ctx, user.ID, executorID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.DetailedUser{User: *user, Subscription: *stats}, nil
 }
 
 func (uc *UserUseCase) Update(ctx context.Context, id domain.ID, user *domain.User) (*domain.User, error) {
-	_, err := uc.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, ErrNotFound
+	if _, err := uc.GetByID(ctx, id); err != nil {
+		return nil, err
 	}
 
 	existUser, err := uc.repo.GetUnique(ctx, user)
@@ -56,9 +84,9 @@ func (uc *UserUseCase) Update(ctx context.Context, id domain.ID, user *domain.Us
 func (uc *UserUseCase) OverwritePermissions(
 	ctx context.Context, id domain.ID, deny domain.Permission, allow domain.Permission,
 ) error {
-	user, err := uc.repo.GetByID(ctx, id)
+	user, err := uc.GetByID(ctx, id)
 	if err != nil {
-		return ErrNotFound
+		return err
 	}
 
 	perms := user.Permissions
@@ -77,6 +105,18 @@ func (uc *UserUseCase) OverwritePermissions(
 
 	uc.deleteCachedUser(ctx, id)
 	return nil
+}
+
+func (uc *UserUseCase) GetByID(ctx context.Context, id domain.ID) (*domain.User, error) {
+	user, err := uc.repo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, errors.Wrap(err, "UserUseCase.GetByID")
+	}
+
+	return user, nil
 }
 
 func (uc *UserUseCase) deleteCachedUser(ctx context.Context, id domain.ID) {

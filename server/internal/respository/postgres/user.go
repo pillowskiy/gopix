@@ -2,10 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
+	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pkg/errors"
 )
 
 type userRepository struct {
@@ -34,6 +37,9 @@ func (r *userRepository) GetUnique(ctx context.Context, user *domain.User) (*dom
 	u := new(domain.User)
 	rowx := r.db.QueryRowxContext(ctx, q, user.Username, user.Email)
 	if err := rowx.StructScan(u); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repository.ErrNotFound
+		}
 		return nil, fmt.Errorf("UserRepository.GetUnique.StructScan: %v", err)
 	}
 

@@ -93,7 +93,9 @@ func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID domain.
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url",
     (
-      SELECT json_agg(to_jsonb(img))
+      SELECT TO_JSON(
+        COALESCE(ARRAY_AGG(to_jsonb(img)) FILTER (WHERE img.id IS NOT NULL), '{}')
+      )
       FROM (
         SELECT i.*
         FROM images i

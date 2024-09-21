@@ -10,4 +10,5 @@ var (
 	ErrForbidden          = errors.New("forbidden")
 
 	ErrIncorrectImageRef = errors.New("incorrect image reference provided")
+	ErrIncorrectUserRef  = errors.New("incorrect user reference provided")
 )

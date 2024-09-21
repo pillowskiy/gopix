@@ -25,6 +25,17 @@ type User struct {
 	UpdatedAt    time.Time `json:"-" db:"updated_at"`
 }
 
+type DetailedUser struct {
+	User
+	Subscription FollowingStats `json:"subscription"`
+}
+
+type FollowingStats struct {
+	Followers   int  `json:"followers" db:"followers"`
+	Following   int  `json:"following" db:"following"`
+	IsFollowing bool `json:"isFollowing" db:"is_following"`
+}
+
 type UserWithToken struct {
 	User  *User  `json:"user"`
 	Token string `json:"token"`
