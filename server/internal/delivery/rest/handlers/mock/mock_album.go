@@ -99,10 +99,10 @@ func (mr *MockalbumUseCaseMockRecorder) GetAlbumImages(ctx, albumID, pagInput an
 }
 
 // GetByAuthorID mocks base method.
-func (m *MockalbumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
+func (m *MockalbumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByAuthorID", ctx, authorID)
-	ret0, _ := ret[0].([]domain.Album)
+	ret0, _ := ret[0].([]domain.DetailedAlbum)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

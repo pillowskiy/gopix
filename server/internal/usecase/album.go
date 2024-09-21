@@ -12,7 +12,7 @@ import (
 type AlbumRepository interface {
 	Create(ctx context.Context, album *domain.Album) (*domain.Album, error)
 	GetByID(ctx context.Context, albumID domain.ID) (*domain.Album, error)
-	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error)
+	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error)
 	GetAlbumImages(
 		ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)
@@ -49,7 +49,7 @@ func (uc *albumUseCase) Create(ctx context.Context, album *domain.Album) (*domai
 	return uc.repo.Create(ctx, album)
 }
 
-func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
+func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error) {
 	album, err := uc.repo.GetByAuthorID(ctx, authorID)
 
 	if err != nil {

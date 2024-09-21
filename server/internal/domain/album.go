@@ -13,6 +13,7 @@ type Album struct {
 
 type DetailedAlbum struct {
 	Album
+	Cover  []Image     `json:"cover" db:"cover"`
 	Author AlbumAuthor `json:"author" db:"author"`
 }
 

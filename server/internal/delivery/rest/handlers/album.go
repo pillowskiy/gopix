@@ -15,7 +15,7 @@ import (
 
 type albumUseCase interface {
 	Create(ctx context.Context, album *domain.Album) (*domain.Album, error)
-	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error)
+	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error)
 	GetAlbumImages(
 		ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)

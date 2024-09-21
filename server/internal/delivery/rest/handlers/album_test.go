@@ -151,7 +151,7 @@ func TestAlbumHandlers_GetByAuthorID(t *testing.T) {
 	t.Run("SuccessGetByAuthorID", func(t *testing.T) {
 		c, rec := prepareGetByAuthorIDQuery(itoaAuthorID)
 
-		mockAlbumUC.EXPECT().GetByAuthorID(gomock.Any(), authorID).Return([]domain.Album{}, nil)
+		mockAlbumUC.EXPECT().GetByAuthorID(gomock.Any(), authorID).Return([]domain.DetailedAlbum{}, nil)
 
 		assert.NoError(t, h.GetByAuthorID()(c))
 		assert.Equal(t, http.StatusOK, rec.Code)

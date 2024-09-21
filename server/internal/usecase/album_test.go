@@ -62,11 +62,13 @@ func TestAlbumUseCase_GetByAuthorID(t *testing.T) {
 
 	authorID := domain.ID(1)
 	albumID := domain.ID(2)
-	mockAlbums := []domain.Album{
+	mockAlbums := []domain.DetailedAlbum{
 		{
-			ID:       albumID,
-			Name:     "test",
-			AuthorID: authorID,
+			Album: domain.Album{
+				ID:       albumID,
+				Name:     "test",
+				AuthorID: authorID,
+			},
 		},
 	}
 

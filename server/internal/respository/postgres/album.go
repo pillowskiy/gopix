@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
@@ -84,17 +85,61 @@ func (repo *albumRepository) GetAlbumImages(
 	return pag, nil
 }
 
-func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.Album, error) {
-	q := `SELECT * FROM albums WHERE author_id = $1`
+func (repo *albumRepository) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error) {
+	q := `
+  SELECT
+    a.*,
+    u.id AS "author.id",
+    u.username AS "author.username",
+    u.avatar_url AS "author.avatar_url",
+    (
+      SELECT json_agg(to_jsonb(img))
+      FROM (
+        SELECT i.*
+        FROM images i
+        INNER JOIN images_to_albums ita ON i.id = ita.image_id
+        WHERE ita.album_id = a.id LIMIT 3
+      ) AS img
+    ) AS "cover"
+  FROM albums a
+  INNER JOIN users u ON a.author_id = u.id
+  WHERE a.author_id = $1 GROUP BY a.id, u.id
+  `
 
 	rows, err := repo.db.QueryxContext(ctx, q, authorID)
 	if err != nil {
 		return nil, errors.Wrap(err, "AlbumRepository.GetByAuthorID.QueryxContext")
 	}
 
-	albums, err := scanToStructSliceOf[domain.Album](rows)
-	if err != nil {
-		return nil, errors.Wrap(err, "AlbumRepository.GetByAuthorID.scanToStructSliceOf")
+	defer rows.Close()
+	var albums []domain.DetailedAlbum
+	for rows.Next() {
+		var row domain.DetailedAlbum
+		var rowCoverJSON []byte
+
+		if err := rows.Scan(
+			&row.ID,
+			&row.AuthorID,
+			&row.Name,
+			&row.Description,
+			&row.CreatedAt,
+			&row.UpdatedAt,
+			&row.Author.ID,
+			&row.Author.Username,
+			&row.Author.AvatarURL,
+			&rowCoverJSON,
+		); err != nil {
+			return nil, errors.Wrap(err, "AlbumRepository.GetByAuthorID.Scan")
+		}
+
+		row.Cover = []domain.Image{}
+		if len(rowCoverJSON) > 0 {
+			if err := json.Unmarshal(rowCoverJSON, &row.Cover); err != nil {
+				return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
+			}
+		}
+
+		albums = append(albums, row)
 	}
 
 	return albums, nil
