@@ -114,8 +114,11 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domai
 		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Scan")
 	}
 
-	if err := json.Unmarshal(tagsJSON, &detailedImage.Tags); err != nil {
-		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
+	detailedImage.Tags = []domain.ImageTag{}
+	if len(tagsJSON) > 0 {
+		if err := json.Unmarshal(tagsJSON, &detailedImage.Tags); err != nil {
+			return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
+		}
 	}
 
 	detailedImage.Views += r.viewBatcher.CountByGroup(imageGroupKey(id))

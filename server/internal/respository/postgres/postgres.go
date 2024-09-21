@@ -58,7 +58,7 @@ func (s *SortQueryBuilder) SortQuery(name string) (string, bool) {
 func scanToStructSliceOf[T any](rows *sqlx.Rows) ([]T, error) {
 	defer rows.Close()
 
-	var dest []T
+	dest := []T{}
 	for rows.Next() {
 		var row T
 		if err := rows.StructScan(&row); err != nil {
