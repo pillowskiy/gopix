@@ -27,7 +27,12 @@ func (s SnowflakeID) MarshalJSON() ([]byte, error) {
 func (s *SnowflakeID) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
-		return err
+		var i uint64
+		if err := json.Unmarshal(data, &i); err != nil {
+			return err
+		}
+		*s = SnowflakeID(i)
+		return nil
 	}
 
 	id, err := Parse(str)
