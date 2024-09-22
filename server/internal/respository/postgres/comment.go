@@ -58,7 +58,7 @@ func (repo *commentRepository) GetByImageID(
     u.avatar_url AS "author.avatar_url"
   FROM comments c
   JOIN users u ON c.author_id = u.id
-  WHERE image_id = $1 ORDER BY %s LIMIT $2 OFFSET $3
+  WHERE image_id = $1 AND parent_id IS NULL ORDER BY %s LIMIT $2 OFFSET $3
   `, sortQuery)
 
 	limit := pagInput.PerPage
@@ -144,6 +144,65 @@ func (repo *commentRepository) HasUserCommented(
 	var exists bool
 	if err := rowx.Scan(&exists); err != nil {
 		return false, fmt.Errorf("CommentRepository.IsCommentedByUser.Scan: %v", err)
+	}
+
+	return exists, nil
+}
+
+func (repo *commentRepository) GetReplies(ctx context.Context, commentID domain.ID, userID *domain.ID) ([]domain.DetailedComment, error) {
+	q := `
+  SELECT
+    c.*,
+    u.id AS "author.id",
+    u.username AS "author.username",
+    u.avatar_url AS "author.avatar_url",
+    EXISTS(SELECT * FROM comments_to_likes WHERE comment_id = c.id AND user_id = $2) AS "stats.liked",
+    COUNT(DISTINCT cl.user_id) AS "stats.likes"
+  FROM comments c
+  JOIN users u ON c.author_id = u.id
+  LEFT JOIN comments_to_likes cl ON c.id = cl.comment_id
+  WHERE parent_id = $1 GROUP BY c.id, u.id
+  `
+
+	rows, err := repo.db.QueryxContext(ctx, q, commentID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("CommentRepository.GetReplies.QueryxContext: %v", err)
+	}
+
+	cmts, err := scanToStructSliceOf[domain.DetailedComment](rows)
+	if err != nil {
+		return nil, fmt.Errorf("CommentRepository.GetReplies.scanToStructSliceOf: %v", err)
+	}
+
+	return cmts, nil
+}
+
+func (repo *commentRepository) LikeComment(ctx context.Context, commentID domain.ID, userID domain.ID) error {
+	q := `INSERT INTO comments_to_likes (comment_id, user_id) VALUES ($1, $2)`
+
+	_, err := repo.db.ExecContext(ctx, q, commentID, userID)
+	return err
+}
+
+func (repo *commentRepository) UnlikeComment(ctx context.Context, commentID domain.ID, userID domain.ID) error {
+	q := `DELETE FROM comments_to_likes WHERE comment_id = $1 AND user_id = $2`
+
+	_, err := repo.db.ExecContext(ctx, q, commentID, userID)
+	return err
+}
+
+func (repo *commentRepository) HasUserLikedComment(
+	ctx context.Context,
+	commentID domain.ID,
+	userID domain.ID,
+) (bool, error) {
+	q := `SELECT EXISTS(SELECT * FROM comments_to_likes WHERE comment_id = $1 AND user_id = $2)`
+
+	rowx := repo.db.QueryRowxContext(ctx, q, commentID, userID)
+
+	var exists bool
+	if err := rowx.Scan(&exists); err != nil {
+		return false, fmt.Errorf("CommentRepository.HasUserLikedComment.Scan: %v", err)
 	}
 
 	return exists, nil

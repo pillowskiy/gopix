@@ -84,6 +84,49 @@ func (mr *MockCommentUseCaseMockRecorder) GetByImageID(ctx, imageID, pagInput, s
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByImageID", reflect.TypeOf((*MockCommentUseCase)(nil).GetByImageID), ctx, imageID, pagInput, sort)
 }
 
+// GetReplies mocks base method.
+func (m *MockCommentUseCase) GetReplies(ctx context.Context, commentID domain.ID, executorID *domain.ID) ([]domain.DetailedComment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReplies", ctx, commentID, executorID)
+	ret0, _ := ret[0].([]domain.DetailedComment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReplies indicates an expected call of GetReplies.
+func (mr *MockCommentUseCaseMockRecorder) GetReplies(ctx, commentID, executorID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReplies", reflect.TypeOf((*MockCommentUseCase)(nil).GetReplies), ctx, commentID, executorID)
+}
+
+// LikeComment mocks base method.
+func (m *MockCommentUseCase) LikeComment(ctx context.Context, commentID domain.ID, executor *domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LikeComment", ctx, commentID, executor)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LikeComment indicates an expected call of LikeComment.
+func (mr *MockCommentUseCaseMockRecorder) LikeComment(ctx, commentID, executor any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LikeComment", reflect.TypeOf((*MockCommentUseCase)(nil).LikeComment), ctx, commentID, executor)
+}
+
+// UnlikeComment mocks base method.
+func (m *MockCommentUseCase) UnlikeComment(ctx context.Context, commentID domain.ID, executor *domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlikeComment", ctx, commentID, executor)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnlikeComment indicates an expected call of UnlikeComment.
+func (mr *MockCommentUseCaseMockRecorder) UnlikeComment(ctx, commentID, executor any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlikeComment", reflect.TypeOf((*MockCommentUseCase)(nil).UnlikeComment), ctx, commentID, executor)
+}
+
 // Update mocks base method.
 func (m *MockCommentUseCase) Update(ctx context.Context, commentID domain.ID, comment *domain.Comment, executor *domain.User) (*domain.Comment, error) {
 	m.ctrl.T.Helper()

@@ -333,3 +333,155 @@ func TestCommentUseCase_Update(t *testing.T) {
 		assert.Nil(t, updComment)
 	})
 }
+
+func TestCommentUseCase_LikeComment(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockImageUC := usecaseMock.NewMockCommentImageUseCase(ctrl)
+	mockRepo := usecaseMock.NewMockCommentRepository(ctrl)
+	mockACL := usecaseMock.NewMockCommentAccessPolicy(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+
+	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
+
+	commentID := domain.ID(1)
+	mockComment := &domain.Comment{ID: commentID}
+	mockExecutor := &domain.User{ID: 1, Permissions: int(domain.PermissionsAdmin)}
+
+	t.Run("SuccessLikeComment", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(mockComment, nil)
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Return(false, nil)
+		mockRepo.EXPECT().LikeComment(gomock.Any(), commentID, mockExecutor.ID).Return(nil)
+
+		err := commentUC.LikeComment(context.Background(), commentID, mockExecutor)
+		assert.NoError(t, err)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(nil, repository.ErrNotFound)
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Times(0)
+		mockRepo.EXPECT().LikeComment(gomock.Any(), commentID, mockExecutor.ID).Times(0)
+
+		err := commentUC.LikeComment(context.Background(), commentID, mockExecutor)
+		assert.Error(t, err)
+		assert.Equal(t, usecase.ErrNotFound, err)
+	})
+
+	t.Run("AlreadyExists", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(mockComment, nil)
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Return(true, nil)
+		mockRepo.EXPECT().LikeComment(gomock.Any(), commentID, mockExecutor.ID).Times(0)
+
+		err := commentUC.LikeComment(context.Background(), commentID, mockExecutor)
+		assert.Error(t, err)
+		assert.Equal(t, usecase.ErrAlreadyExists, err)
+	})
+
+	t.Run("RepoError", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(mockComment, nil)
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Return(false, nil)
+		mockRepo.EXPECT().LikeComment(gomock.Any(), commentID, mockExecutor.ID).Return(errors.New("repo error"))
+
+		err := commentUC.LikeComment(context.Background(), commentID, mockExecutor)
+		assert.Error(t, err)
+	})
+}
+
+func TestCommentUseCase_UnlikeComment(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockImageUC := usecaseMock.NewMockCommentImageUseCase(ctrl)
+	mockRepo := usecaseMock.NewMockCommentRepository(ctrl)
+	mockACL := usecaseMock.NewMockCommentAccessPolicy(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+
+	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
+
+	commentID := domain.ID(1)
+	mockExecutor := &domain.User{ID: 1, Permissions: int(domain.PermissionsAdmin)}
+
+	t.Run("SuccessUnlikeComment", func(t *testing.T) {
+		// TEMP: We can omit comment existence call, because if pair of commentID and userID doesn't exist, it returns ErrNotFound
+		// mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(mockComment, nil)
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Return(true, nil)
+		mockRepo.EXPECT().UnlikeComment(gomock.Any(), commentID, mockExecutor.ID).Return(nil)
+
+		err := commentUC.UnlikeComment(context.Background(), commentID, mockExecutor)
+		assert.NoError(t, err)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Return(false, nil)
+		mockRepo.EXPECT().UnlikeComment(gomock.Any(), commentID, mockExecutor).Times(0)
+
+		err := commentUC.UnlikeComment(context.Background(), commentID, mockExecutor)
+		assert.Error(t, err)
+		assert.Equal(t, err, usecase.ErrNotFound)
+	})
+
+	t.Run("RepoError", func(t *testing.T) {
+		mockRepo.EXPECT().HasUserLikedComment(gomock.Any(), commentID, mockExecutor.ID).Return(true, nil)
+		mockRepo.EXPECT().UnlikeComment(gomock.Any(), commentID, mockExecutor.ID).Return(errors.New("repo error"))
+
+		err := commentUC.UnlikeComment(context.Background(), commentID, mockExecutor)
+		assert.Error(t, err)
+	})
+}
+
+func TestCommentUseCase_GetReplies(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockImageUC := usecaseMock.NewMockCommentImageUseCase(ctrl)
+	mockRepo := usecaseMock.NewMockCommentRepository(ctrl)
+	mockACL := usecaseMock.NewMockCommentAccessPolicy(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+
+	commentUC := usecase.NewCommentUseCase(mockRepo, mockACL, mockImageUC, mockLog)
+
+	commentID := domain.ID(1)
+	executorID := new(domain.ID)
+
+	mockComment := &domain.Comment{ID: commentID}
+	mockComments := []domain.DetailedComment{
+		{
+			Comment: *mockComment,
+		},
+	}
+
+	t.Run("SuccessGetReplies", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(mockComment, nil)
+		mockRepo.EXPECT().GetReplies(gomock.Any(), commentID, executorID).Return(mockComments, nil)
+
+		cmts, err := commentUC.GetReplies(context.Background(), commentID, executorID)
+		assert.NoError(t, err)
+		assert.Equal(t, mockComments, cmts)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(nil, repository.ErrNotFound)
+		mockRepo.EXPECT().GetReplies(gomock.Any(), commentID, executorID).Times(0)
+
+		cmts, err := commentUC.GetReplies(context.Background(), commentID, executorID)
+		assert.Error(t, err)
+		assert.Equal(t, err, usecase.ErrNotFound)
+		assert.Nil(t, cmts)
+	})
+
+	t.Run("RepoError", func(t *testing.T) {
+		mockRepo.EXPECT().GetByID(gomock.Any(), commentID).Return(mockComment, nil)
+		mockRepo.EXPECT().GetReplies(gomock.Any(), commentID, executorID).Return(nil, errors.New("repo error"))
+
+		cmts, err := commentUC.GetReplies(context.Background(), commentID, executorID)
+		assert.Error(t, err)
+		assert.Nil(t, cmts)
+	})
+}

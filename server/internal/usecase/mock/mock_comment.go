@@ -99,6 +99,21 @@ func (mr *MockCommentRepositoryMockRecorder) GetByImageID(ctx, imageID, pagInput
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByImageID", reflect.TypeOf((*MockCommentRepository)(nil).GetByImageID), ctx, imageID, pagInput, sort)
 }
 
+// GetReplies mocks base method.
+func (m *MockCommentRepository) GetReplies(ctx context.Context, commentID domain.ID, userID *domain.ID) ([]domain.DetailedComment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReplies", ctx, commentID, userID)
+	ret0, _ := ret[0].([]domain.DetailedComment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReplies indicates an expected call of GetReplies.
+func (mr *MockCommentRepositoryMockRecorder) GetReplies(ctx, commentID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReplies", reflect.TypeOf((*MockCommentRepository)(nil).GetReplies), ctx, commentID, userID)
+}
+
 // HasUserCommented mocks base method.
 func (m *MockCommentRepository) HasUserCommented(ctx context.Context, commentID, userID domain.ID) (bool, error) {
 	m.ctrl.T.Helper()
@@ -112,6 +127,49 @@ func (m *MockCommentRepository) HasUserCommented(ctx context.Context, commentID,
 func (mr *MockCommentRepositoryMockRecorder) HasUserCommented(ctx, commentID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasUserCommented", reflect.TypeOf((*MockCommentRepository)(nil).HasUserCommented), ctx, commentID, userID)
+}
+
+// HasUserLikedComment mocks base method.
+func (m *MockCommentRepository) HasUserLikedComment(ctx context.Context, commentID, userID domain.ID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasUserLikedComment", ctx, commentID, userID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasUserLikedComment indicates an expected call of HasUserLikedComment.
+func (mr *MockCommentRepositoryMockRecorder) HasUserLikedComment(ctx, commentID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasUserLikedComment", reflect.TypeOf((*MockCommentRepository)(nil).HasUserLikedComment), ctx, commentID, userID)
+}
+
+// LikeComment mocks base method.
+func (m *MockCommentRepository) LikeComment(ctx context.Context, commentID, userID domain.ID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LikeComment", ctx, commentID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LikeComment indicates an expected call of LikeComment.
+func (mr *MockCommentRepositoryMockRecorder) LikeComment(ctx, commentID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LikeComment", reflect.TypeOf((*MockCommentRepository)(nil).LikeComment), ctx, commentID, userID)
+}
+
+// UnlikeComment mocks base method.
+func (m *MockCommentRepository) UnlikeComment(ctx context.Context, commentID, userID domain.ID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlikeComment", ctx, commentID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnlikeComment indicates an expected call of UnlikeComment.
+func (mr *MockCommentRepositoryMockRecorder) UnlikeComment(ctx, commentID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlikeComment", reflect.TypeOf((*MockCommentRepository)(nil).UnlikeComment), ctx, commentID, userID)
 }
 
 // Update mocks base method.

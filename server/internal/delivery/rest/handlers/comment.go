@@ -21,8 +21,12 @@ type CommentUseCase interface {
 		pagInput *domain.PaginationInput,
 		sort domain.CommentSortMethod,
 	) (*domain.Pagination[domain.DetailedComment], error)
+	GetReplies(ctx context.Context, commentID domain.ID, executorID *domain.ID) ([]domain.DetailedComment, error)
 	Update(ctx context.Context, commentID domain.ID, comment *domain.Comment, executor *domain.User) (*domain.Comment, error)
 	Delete(ctx context.Context, commentID domain.ID, executor *domain.User) error
+
+	LikeComment(ctx context.Context, commentID domain.ID, executor *domain.User) error
+	UnlikeComment(ctx context.Context, commentID domain.ID, executor *domain.User) error
 }
 
 type CommentHandlers struct {
@@ -171,6 +175,86 @@ func (h *CommentHandlers) Delete() echo.HandlerFunc {
 
 		if err := h.uc.Delete(ctx, commentID, user); err != nil {
 			return h.responseWithUseCaseErr(c, err, "Delete")
+		}
+
+		return c.JSON(http.StatusOK, true)
+	}
+}
+
+func (h *CommentHandlers) GetReplies() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		commentID, err := rest.PipeDomainIdentifier(c, "comment_id")
+		if err != nil {
+			c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
+		}
+
+		executorID := new(domain.ID)
+		user, err := GetContextUser(c)
+		if user != nil && err == nil {
+			executorID = &user.ID
+		}
+
+		comments, err := h.uc.GetReplies(ctx, commentID, executorID)
+		if err != nil {
+			h.responseWithUseCaseErr(c, err, "GetReplies")
+		}
+
+		return c.JSON(http.StatusOK, comments)
+	}
+}
+
+func (h *CommentHandlers) LikeComment() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		commentID, err := rest.PipeDomainIdentifier(c, "comment_id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
+		}
+
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		if err := h.uc.LikeComment(ctx, commentID, user); err != nil {
+			switch {
+			case errors.Is(err, usecase.ErrAlreadyExists):
+				return c.JSON(http.StatusOK, true)
+			default:
+				return h.responseWithUseCaseErr(c, err, "LikeComment")
+			}
+		}
+
+		return c.JSON(http.StatusOK, true)
+	}
+}
+
+func (h *CommentHandlers) UnlikeComment() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		commentID, err := rest.PipeDomainIdentifier(c, "comment_id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
+		}
+
+		user, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("GetContextUser: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		if err := h.uc.UnlikeComment(ctx, commentID, user); err != nil {
+			switch {
+			case errors.Is(err, usecase.ErrNotFound):
+				return c.JSON(http.StatusOK, true)
+			default:
+				return h.responseWithUseCaseErr(c, err, "UnlikeComment")
+			}
 		}
 
 		return c.JSON(http.StatusOK, true)

@@ -18,6 +18,11 @@ type CommentRepository interface {
 	Delete(ctx context.Context, commentID domain.ID) error
 	Update(ctx context.Context, commentID domain.ID, comment *domain.Comment) (*domain.Comment, error)
 	HasUserCommented(ctx context.Context, commentID domain.ID, userID domain.ID) (bool, error)
+	GetReplies(ctx context.Context, commentID domain.ID, userID *domain.ID) ([]domain.DetailedComment, error)
+
+	LikeComment(ctx context.Context, commentID domain.ID, userID domain.ID) error
+	UnlikeComment(ctx context.Context, commentID domain.ID, userID domain.ID) error
+	HasUserLikedComment(ctx context.Context, commentID domain.ID, userID domain.ID) (bool, error)
 }
 
 type CommentAccessPolicy interface {
@@ -123,4 +128,44 @@ func (uc *commentUseCase) Update(
 	}
 
 	return uc.repo.Update(ctx, commentID, comment)
+}
+
+func (uc *commentUseCase) GetReplies(ctx context.Context, commentID domain.ID, executorID *domain.ID) ([]domain.DetailedComment, error) {
+	// TODO: potentially omit comment existence check
+	if _, err := uc.GetByID(ctx, commentID); err != nil {
+		return nil, err
+	}
+
+	return uc.repo.GetReplies(ctx, commentID, executorID)
+}
+
+func (uc *commentUseCase) LikeComment(ctx context.Context, commentID domain.ID, executor *domain.User) error {
+	_, err := uc.GetByID(ctx, commentID)
+	if err != nil {
+		return err
+	}
+
+	liked, err := uc.repo.HasUserLikedComment(ctx, commentID, executor.ID)
+	if liked {
+		return ErrAlreadyExists
+	}
+
+	if err := uc.repo.LikeComment(ctx, commentID, executor.ID); err != nil {
+		return errors.Wrap(err, "commentUseCase.LikeComment")
+	}
+
+	return nil
+}
+
+func (uc *commentUseCase) UnlikeComment(ctx context.Context, commentID domain.ID, executor *domain.User) error {
+	liked, err := uc.repo.HasUserLikedComment(ctx, commentID, executor.ID)
+	if !liked || err != nil {
+		return ErrNotFound
+	}
+
+	if err := uc.repo.UnlikeComment(ctx, commentID, executor.ID); err != nil {
+		return errors.Wrap(err, "commentUseCase.UnlikeComment")
+	}
+
+	return nil
 }

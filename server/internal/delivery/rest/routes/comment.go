@@ -11,4 +11,8 @@ func MapCommentRoutes(g *echo.Group, h *handlers.CommentHandlers, mw *middleware
 	g.GET("/:image_id/comments", h.GetByImageID())
 	g.PUT("/comments/:comment_id", h.Update(), mw.OnlyAuth)
 	g.DELETE("/comments/:comment_id", h.Delete(), mw.OnlyAuth)
+	g.GET("/comments/:comment_id/replies", h.GetReplies())
+
+	g.POST("/comments/:comment_id/like", h.LikeComment(), mw.OnlyAuth)
+	g.DELETE("/comments/:comment_id/like", h.UnlikeComment(), mw.OnlyAuth)
 }
