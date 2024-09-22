@@ -16,10 +16,6 @@ type FollowingRepository interface {
 	) (*domain.FollowingStats, error)
 }
 
-type FollowingUserUseCase interface {
-	GetByID(ctx context.Context, userID domain.ID) (*domain.User, error)
-}
-
 type FollowingUseCase struct {
 	repo FollowingRepository
 }

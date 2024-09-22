@@ -135,3 +135,41 @@ func (mr *MockUserRepositoryMockRecorder) Update(ctx, id, user any) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), ctx, id, user)
 }
+
+// MockUserFollowingUseCase is a mock of UserFollowingUseCase interface.
+type MockUserFollowingUseCase struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserFollowingUseCaseMockRecorder
+}
+
+// MockUserFollowingUseCaseMockRecorder is the mock recorder for MockUserFollowingUseCase.
+type MockUserFollowingUseCaseMockRecorder struct {
+	mock *MockUserFollowingUseCase
+}
+
+// NewMockUserFollowingUseCase creates a new mock instance.
+func NewMockUserFollowingUseCase(ctrl *gomock.Controller) *MockUserFollowingUseCase {
+	mock := &MockUserFollowingUseCase{ctrl: ctrl}
+	mock.recorder = &MockUserFollowingUseCaseMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserFollowingUseCase) EXPECT() *MockUserFollowingUseCaseMockRecorder {
+	return m.recorder
+}
+
+// Stats mocks base method.
+func (m *MockUserFollowingUseCase) Stats(ctx context.Context, userID domain.ID, executorID *domain.ID) (*domain.FollowingStats, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stats", ctx, userID, executorID)
+	ret0, _ := ret[0].(*domain.FollowingStats)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Stats indicates an expected call of Stats.
+func (mr *MockUserFollowingUseCaseMockRecorder) Stats(ctx, userID, executorID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockUserFollowingUseCase)(nil).Stats), ctx, userID, executorID)
+}
