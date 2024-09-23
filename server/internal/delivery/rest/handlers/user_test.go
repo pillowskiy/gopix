@@ -20,6 +20,101 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestUserHandlers_GetDetailed(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUser, mockCtxUser := handlersMock.NewMockCtxUser()
+	mockUserUC := handlersMock.NewMockuserUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+	h := handlers.NewUserHandlers(mockUserUC, mockLog)
+
+	e := echo.New()
+
+	prepareGetDetailedQuery := func(username string) (echo.Context, *httptest.ResponseRecorder) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/:username", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("username")
+		c.SetParamValues(username)
+		return c, rec
+	}
+
+	validUsername := "username"
+	mockDetailedUser := &domain.DetailedUser{
+		User: domain.User{
+			ID:       handlersMock.DomainID(),
+			Username: validUsername,
+		},
+	}
+
+	t.Run("SuccessGetDetailed_Guest", func(t *testing.T) {
+		c, rec := prepareGetDetailedQuery(validUsername)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockUserUC.EXPECT().GetDetailed(ctx, validUsername, nil).Return(mockDetailedUser, nil)
+
+		assert.NoError(t, h.GetDetailed()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		actual := new(domain.DetailedUser)
+		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
+		assert.Equal(t, mockDetailedUser, actual)
+	})
+
+	t.Run("SuccessGetDetailed", func(t *testing.T) {
+		c, rec := prepareGetDetailedQuery(validUsername)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockUserUC.EXPECT().GetDetailed(ctx, validUsername, &mockUser.ID).Return(mockDetailedUser, nil)
+
+		assert.NoError(t, h.GetDetailed()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		actual := new(domain.DetailedUser)
+		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
+		assert.Equal(t, mockDetailedUser, actual)
+	})
+
+	t.Run("IncorrectUsername", func(t *testing.T) {
+		c, rec := prepareGetDetailedQuery("")
+
+		mockUserUC.EXPECT().GetDetailed(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.GetDetailed()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("UserNotFound", func(t *testing.T) {
+		c, rec := prepareGetDetailedQuery(validUsername)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockUserUC.EXPECT().GetDetailed(ctx, validUsername, &mockUser.ID).Return(nil, usecase.ErrNotFound)
+
+		assert.NoError(t, h.GetDetailed()(c))
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareGetDetailedQuery(validUsername)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockUserUC.EXPECT().GetDetailed(
+			ctx, validUsername, &mockUser.ID,
+		).Return(nil, errors.New("internal server error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.GetDetailed()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
+
 func TestUserHanlers_Update(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)

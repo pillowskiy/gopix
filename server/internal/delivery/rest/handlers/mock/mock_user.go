@@ -40,6 +40,21 @@ func (m *MockuserUseCase) EXPECT() *MockuserUseCaseMockRecorder {
 	return m.recorder
 }
 
+// GetDetailed mocks base method.
+func (m *MockuserUseCase) GetDetailed(ctx context.Context, username string, executorID *domain.ID) (*domain.DetailedUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDetailed", ctx, username, executorID)
+	ret0, _ := ret[0].(*domain.DetailedUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDetailed indicates an expected call of GetDetailed.
+func (mr *MockuserUseCaseMockRecorder) GetDetailed(ctx, username, executorID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDetailed", reflect.TypeOf((*MockuserUseCase)(nil).GetDetailed), ctx, username, executorID)
+}
+
 // OverwritePermissions mocks base method.
 func (m *MockuserUseCase) OverwritePermissions(ctx context.Context, id domain.ID, deny, allow domain.Permission) error {
 	m.ctrl.T.Helper()

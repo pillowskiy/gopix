@@ -22,8 +22,8 @@ type SubscriptionHandlers struct {
 	logger logger.Logger
 }
 
-func NewSubscriptionHandlers(uc SubscriptionUseCase) *SubscriptionHandlers {
-	return &SubscriptionHandlers{uc: uc}
+func NewSubscriptionHandlers(uc SubscriptionUseCase, logger logger.Logger) *SubscriptionHandlers {
+	return &SubscriptionHandlers{uc: uc, logger: logger}
 }
 
 func (h *SubscriptionHandlers) Follow() echo.HandlerFunc {
@@ -42,7 +42,12 @@ func (h *SubscriptionHandlers) Follow() echo.HandlerFunc {
 		}
 
 		if err := h.uc.Follow(ctx, id, user); err != nil {
-			return h.responseWithUseCaseErr(c, err, "Follow")
+			switch {
+			case errors.Is(err, usecase.ErrAlreadyExists):
+				return c.NoContent(http.StatusOK)
+			default:
+				return h.responseWithUseCaseErr(c, err, "Follow")
+			}
 		}
 
 		return c.NoContent(http.StatusOK)
@@ -65,7 +70,12 @@ func (h *SubscriptionHandlers) Unfollow() echo.HandlerFunc {
 		}
 
 		if err := h.uc.Unfollow(ctx, id, user); err != nil {
-			return h.responseWithUseCaseErr(c, err, "Unfollow")
+			switch {
+			case errors.Is(err, usecase.ErrNotFound):
+				return c.NoContent(http.StatusOK)
+			default:
+				return h.responseWithUseCaseErr(c, err, "Unfollow")
+			}
 		}
 
 		return c.NoContent(http.StatusOK)
@@ -77,12 +87,6 @@ func (h *SubscriptionHandlers) responseWithUseCaseErr(c echo.Context, err error,
 	switch {
 	case errors.Is(err, usecase.ErrIncorrectUserRef):
 		restErr = rest.NewBadRequestError("Incorrect user reference provided")
-		break
-	case errors.Is(err, usecase.ErrAlreadyExists):
-		restErr = rest.NewConflictError("You've already followed this user")
-		break
-	case errors.Is(err, usecase.ErrNotFound):
-		restErr = rest.NewNotFoundError("You don't follow this user")
 		break
 	default:
 		h.logger.Errorf("SubscriptionUseCase.%s: %v", trace, err)

@@ -38,7 +38,7 @@ func (h *UserHandlers) GetDetailed() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Username is invalid").Response())
 		}
 
-		executorID := new(domain.ID)
+		var executorID *domain.ID
 		executor, err := GetContextUser(c)
 		if err == nil && executor != nil {
 			executorID = &executor.ID

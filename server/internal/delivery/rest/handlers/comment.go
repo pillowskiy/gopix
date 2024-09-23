@@ -187,10 +187,10 @@ func (h *CommentHandlers) GetReplies() echo.HandlerFunc {
 
 		commentID, err := rest.PipeDomainIdentifier(c, "comment_id")
 		if err != nil {
-			c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
+			return c.JSON(rest.NewBadRequestError("Comment ID has incorrect type").Response())
 		}
 
-		executorID := new(domain.ID)
+		var executorID *domain.ID
 		user, err := GetContextUser(c)
 		if user != nil && err == nil {
 			executorID = &user.ID

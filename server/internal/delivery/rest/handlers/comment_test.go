@@ -585,3 +585,271 @@ func TestCommentHandlers_Delete(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, rec.Code)
 	})
 }
+
+func TestCommentHandlers_GetReplies(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCommentUC := handlersMock.NewMockCommentUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+	mockUser, mockCtxUser := handlersMock.NewMockCtxUser()
+	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
+
+	e := echo.New()
+
+	commentID := handlersMock.DomainID()
+	itoaCommentID := commentID.String()
+
+	prepareGetRepliesQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/comments/:comment_id", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("comment_id")
+		c.SetParamValues(id)
+		return c, rec
+	}
+
+	mockReplies := []domain.DetailedComment{
+		{
+			Comment: domain.Comment{ID: 1},
+		},
+	}
+
+	t.Run("SuccessGetReplies", func(t *testing.T) {
+		c, rec := prepareGetRepliesQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().GetReplies(
+			ctx, commentID, &mockUser.ID,
+		).Return(mockReplies, nil)
+
+		assert.NoError(t, h.GetReplies()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		actual := new([]domain.DetailedComment)
+		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
+		assert.Equal(t, mockReplies, *actual)
+	})
+
+	t.Run("SuccessGetReplies_Guest", func(t *testing.T) {
+		c, rec := prepareGetRepliesQuery(itoaCommentID)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().GetReplies(
+			ctx, commentID, nil,
+		).Return(mockReplies, nil)
+
+		assert.NoError(t, h.GetReplies()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		actual := new([]domain.DetailedComment)
+		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
+		assert.Equal(t, mockReplies, *actual)
+	})
+
+	t.Run("IncorrectCommentID", func(t *testing.T) {
+		c, rec := prepareGetRepliesQuery("")
+
+		mockCommentUC.EXPECT().GetReplies(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).Times(0)
+
+		assert.NoError(t, h.GetReplies()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		c, rec := prepareGetRepliesQuery(itoaCommentID)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().GetReplies(
+			ctx, commentID, nil,
+		).Return(nil, usecase.ErrNotFound)
+
+		assert.NoError(t, h.GetReplies()(c))
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareGetRepliesQuery(itoaCommentID)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().GetReplies(
+			ctx, commentID, nil,
+		).Return(nil, errors.New("internal server error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.GetReplies()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
+
+func TestCommentHandlers_LikeComment(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCommentUC := handlersMock.NewMockCommentUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+	mockUser, mockCtxUser := handlersMock.NewMockCtxUser()
+	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
+
+	e := echo.New()
+
+	commentID := handlersMock.DomainID()
+	itoaCommentID := commentID.String()
+
+	prepareLikeCommentQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/comments/:comment_id/like", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("comment_id")
+		c.SetParamValues(id)
+		return c, rec
+	}
+
+	t.Run("SuccessLikeComment", func(t *testing.T) {
+		c, rec := prepareLikeCommentQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().LikeComment(ctx, commentID, mockUser).Return(nil)
+
+		assert.NoError(t, h.LikeComment()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	// When like already exists, delivery should emulate it as success
+	t.Run("SuccessLikeComment_AlreadyExists", func(t *testing.T) {
+		c, rec := prepareLikeCommentQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().LikeComment(ctx, commentID, mockUser).Return(usecase.ErrAlreadyExists)
+
+		assert.NoError(t, h.LikeComment()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("IncorectUserContext", func(t *testing.T) {
+		c, rec := prepareLikeCommentQuery(itoaCommentID)
+
+		mockCommentUC.EXPECT().LikeComment(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.LikeComment()(c))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("IncorrectCommentID", func(t *testing.T) {
+		c, rec := prepareLikeCommentQuery("")
+
+		mockCommentUC.EXPECT().LikeComment(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.LikeComment()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareLikeCommentQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().LikeComment(
+			ctx, commentID, mockUser,
+		).Return(errors.New("internal server error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.LikeComment()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
+
+func TestCommentHandlers_UnlikeComment(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCommentUC := handlersMock.NewMockCommentUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+	mockUser, mockCtxUser := handlersMock.NewMockCtxUser()
+	h := handlers.NewCommentHandlers(mockCommentUC, mockLog)
+
+	e := echo.New()
+
+	commentID := handlersMock.DomainID()
+	itoaCommentID := commentID.String()
+
+	prepareUnlikeCommentQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/comments/:comment_id/like", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("comment_id")
+		c.SetParamValues(id)
+		return c, rec
+	}
+
+	t.Run("SuccessUnlikeComment", func(t *testing.T) {
+		c, rec := prepareUnlikeCommentQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().UnlikeComment(ctx, commentID, mockUser).Return(nil)
+
+		assert.NoError(t, h.UnlikeComment()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	// When like not found, delivery should emulate it as success
+	t.Run("SuccessUnlikeComment_NotFound", func(t *testing.T) {
+		c, rec := prepareUnlikeCommentQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().UnlikeComment(ctx, commentID, mockUser).Return(usecase.ErrNotFound)
+
+		assert.NoError(t, h.UnlikeComment()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("IncorectUserContext", func(t *testing.T) {
+		c, rec := prepareUnlikeCommentQuery(itoaCommentID)
+
+		mockCommentUC.EXPECT().UnlikeComment(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.UnlikeComment()(c))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("IncorrectCommentID", func(t *testing.T) {
+		c, rec := prepareUnlikeCommentQuery("")
+
+		mockCommentUC.EXPECT().UnlikeComment(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.UnlikeComment()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareUnlikeCommentQuery(itoaCommentID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockCommentUC.EXPECT().UnlikeComment(
+			ctx, commentID, mockUser,
+		).Return(errors.New("internal server error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.UnlikeComment()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}

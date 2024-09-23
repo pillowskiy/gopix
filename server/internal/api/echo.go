@@ -101,7 +101,7 @@ func (s *EchoServer) MapHandlers() error {
 	routes.MapUserRoutes(userGroup, userHandlers, guardMiddlewares)
 
 	subscriptionGroup := v1.Group("/subscriptions")
-	subscriptionHandlers := handlers.NewSubscriptionHandlers(subscriptionUC)
+	subscriptionHandlers := handlers.NewSubscriptionHandlers(subscriptionUC, s.logger)
 	routes.MapSubscriptionRoutes(subscriptionGroup, subscriptionHandlers, guardMiddlewares)
 
 	imagesGroup := v1.Group("/images")
