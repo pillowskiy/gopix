@@ -37,8 +37,7 @@ func DecodeEchoBody(c echo.Context, s interface{}) error {
 }
 
 func PipeDomainIdentifier(c echo.Context, param string) (domain.ID, error) {
-	idStr := c.Param(param)
-	id, err := domain.ParseID(idStr)
+	id, err := domain.ParseID(c.Param(param))
 	if err != nil {
 		return 0, err
 	}
