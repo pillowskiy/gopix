@@ -1,4 +1,5 @@
 Flask
+pymilvus
 torch
 torchvision
 Pillow
