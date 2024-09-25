@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   gopix-vectorization:
+    container_name: gopix-vectorization
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
@@ -9,8 +10,16 @@ services:
       - "8000:8000"
     mem_limit: 512m
     volumes:
-      - .:/app
       - ./venv:/app/venv
+      - ./models/:/app/models
+      - ./milvus_data/:/app/milvus_data
+    networks:
+      - gopix
     environment:
       FLASK_APP: app
       FLASK_ENV: development
+
+networks:
+  gopix:
+    external:
+      name: server_gopix
