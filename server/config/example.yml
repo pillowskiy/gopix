@@ -14,6 +14,9 @@ server:
     expire: 86400
     secret: secret
 
+vec_service:
+  url: http://gopix-vectorization:8000
+
 logger:
   mode: development
   disable_caller: false

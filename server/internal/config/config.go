@@ -11,11 +11,12 @@ import (
 )
 
 type Config struct {
-	Server   Server
-	Logger   Logger
-	Postgres Postgres
-	Redis    Redis
-	S3       S3
+	Server     Server     `mapstructure:"server"`
+	Logger     Logger     `mapstructure:"logger"`
+	Postgres   Postgres   `mapstructure:"postgres"`
+	Redis      Redis      `mapstructure:"redis"`
+	S3         S3         `mapstructure:"s3"`
+	VecService VecService `mapstructure:"vec_service"`
 }
 
 type Server struct {
@@ -35,6 +36,10 @@ type Cookie struct {
 	Expire   time.Duration `mapstructure:"expire"`
 	Secure   bool          `mapstructure:"secure"`
 	HttpOnly bool          `mapstructure:"http_only"`
+}
+
+type VecService struct {
+	URL string `mapstructure:"url"`
 }
 
 type Session struct {

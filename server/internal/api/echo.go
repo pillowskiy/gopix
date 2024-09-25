@@ -11,6 +11,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
 	"github.com/pillowskiy/gopix/internal/policy"
+	"github.com/pillowskiy/gopix/internal/respository/httprepo"
 	"github.com/pillowskiy/gopix/internal/respository/postgres"
 	"github.com/pillowskiy/gopix/internal/respository/redis"
 	"github.com/pillowskiy/gopix/internal/respository/s3"
@@ -24,27 +25,27 @@ import (
 
 type EchoServer struct {
 	echo   *echo.Echo
-	cfg    *config.Server
+	cfg    *config.Config
 	sh     *storage.StorageHolder
 	logger logger.Logger
 }
 
-func NewEchoServer(cfg *config.Server, sh *storage.StorageHolder, logger logger.Logger) *EchoServer {
+func NewEchoServer(cfg *config.Config, sh *storage.StorageHolder, logger logger.Logger) *EchoServer {
 	return &EchoServer{echo: echo.New(), cfg: cfg, sh: sh, logger: logger}
 }
 
 func (s *EchoServer) Listen() error {
 	server := &http.Server{
-		Addr:         s.cfg.Addr,
-		ReadTimeout:  time.Second * s.cfg.ReadTimeout,
-		WriteTimeout: time.Second * s.cfg.WriteTimeout,
+		Addr:         s.cfg.Server.Addr,
+		ReadTimeout:  time.Second * s.cfg.Server.ReadTimeout,
+		WriteTimeout: time.Second * s.cfg.Server.WriteTimeout,
 	}
 
 	if err := s.MapHandlers(); err != nil {
 		return err
 	}
 
-	s.logger.Infof("Server is listening on ADDR: %s", s.cfg.Addr)
+	s.logger.Infof("Server is listening on ADDR: %s", s.cfg.Server.Addr)
 	if err := s.echo.StartServer(server); err != nil {
 		return err
 	}
@@ -60,19 +61,22 @@ func (s *EchoServer) MapHandlers() error {
 	userRepo := postgres.NewUserRepository(s.sh.Postgres)
 
 	jwtTokenGen := token.NewJWTTokenGenerator(
-		s.cfg.Session.Secret,
-		s.cfg.Session.Expire*time.Second,
+		s.cfg.Server.Session.Secret,
+		s.cfg.Server.Session.Expire*time.Second,
 	)
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, followingUC, s.logger)
 
 	subscriptionUC := usecase.NewSubscriptionUseCase(followingUC, userUC)
 
+	vecRepo := httprepo.NewVectorizationRepository(s.cfg.VecService.URL)
 	imageCache := redis.NewImageCache(s.sh.Redis)
 	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
 	imageStorage := s3.NewImageStorage(s.sh.S3, s.sh.S3.PublicBucket)
 	imageACL := policy.NewImageAccessPolicy()
-	imageUC := usecase.NewImageUseCase(imageStorage, imageCache, imageRepo, imageACL, s.logger)
+	imageUC := usecase.NewImageUseCase(
+		imageStorage, imageCache, imageRepo, vecRepo, imageACL, s.logger,
+	)
 
 	commentRepo := postgres.NewCommentRepository(s.sh.Postgres)
 	commentACL := policy.NewCommentAccessPolicy()
@@ -87,13 +91,13 @@ func (s *EchoServer) MapHandlers() error {
 	tagUC := usecase.NewTagUseCase(tagRepo, tagACL, imageUC)
 
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
-	s.echo.Use(middlewares.CORSMiddleware(s.cfg.CORS))
+	s.echo.Use(middlewares.CORSMiddleware(s.cfg.Server.CORS))
 
 	v1 := s.echo.Group("/api/v1")
-	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Cookie)
+	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Server.Cookie)
 
 	authGroup := v1.Group("/auth")
-	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Cookie)
+	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Server.Cookie)
 	routes.MapAuthRoutes(authGroup, authHandlers, guardMiddlewares)
 
 	userGroup := v1.Group("/users")

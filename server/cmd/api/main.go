@@ -24,7 +24,7 @@ func main() {
 	}
 	defer sh.Close()
 
-	s := api.NewEchoServer(&cfg.Server, sh, logger)
+	s := api.NewEchoServer(cfg, sh, logger)
 	if err := s.Listen(); err != nil {
 		logger.Fatalf("ServerListen: %v", err)
 	}
