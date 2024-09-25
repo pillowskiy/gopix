@@ -244,6 +244,21 @@ func (mr *MockImageRepositoryMockRecorder) DoInTransaction(arg0, arg1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoInTransaction", reflect.TypeOf((*MockImageRepository)(nil).DoInTransaction), arg0, arg1)
 }
 
+// FindMany mocks base method.
+func (m *MockImageRepository) FindMany(ctx context.Context, ids []domain.ID) ([]domain.ImageWithAuthor, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindMany", ctx, ids)
+	ret0, _ := ret[0].([]domain.ImageWithAuthor)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindMany indicates an expected call of FindMany.
+func (mr *MockImageRepositoryMockRecorder) FindMany(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindMany", reflect.TypeOf((*MockImageRepository)(nil).FindMany), ctx, ids)
+}
+
 // GetByID mocks base method.
 func (m *MockImageRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Image, error) {
 	m.ctrl.T.Helper()
@@ -331,6 +346,72 @@ func (m *MockImageRepository) Update(ctx context.Context, id domain.ID, image *d
 func (mr *MockImageRepositoryMockRecorder) Update(ctx, id, image any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockImageRepository)(nil).Update), ctx, id, image)
+}
+
+// MockImageVecRepository is a mock of ImageVecRepository interface.
+type MockImageVecRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockImageVecRepositoryMockRecorder
+}
+
+// MockImageVecRepositoryMockRecorder is the mock recorder for MockImageVecRepository.
+type MockImageVecRepositoryMockRecorder struct {
+	mock *MockImageVecRepository
+}
+
+// NewMockImageVecRepository creates a new mock instance.
+func NewMockImageVecRepository(ctrl *gomock.Controller) *MockImageVecRepository {
+	mock := &MockImageVecRepository{ctrl: ctrl}
+	mock.recorder = &MockImageVecRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockImageVecRepository) EXPECT() *MockImageVecRepositoryMockRecorder {
+	return m.recorder
+}
+
+// DeleteFeatures mocks base method.
+func (m *MockImageVecRepository) DeleteFeatures(ctx context.Context, imageID domain.ID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFeatures", ctx, imageID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFeatures indicates an expected call of DeleteFeatures.
+func (mr *MockImageVecRepositoryMockRecorder) DeleteFeatures(ctx, imageID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFeatures", reflect.TypeOf((*MockImageVecRepository)(nil).DeleteFeatures), ctx, imageID)
+}
+
+// Features mocks base method.
+func (m *MockImageVecRepository) Features(ctx context.Context, imageID domain.ID, file *domain.FileNode) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Features", ctx, imageID, file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Features indicates an expected call of Features.
+func (mr *MockImageVecRepositoryMockRecorder) Features(ctx, imageID, file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Features", reflect.TypeOf((*MockImageVecRepository)(nil).Features), ctx, imageID, file)
+}
+
+// Similar mocks base method.
+func (m *MockImageVecRepository) Similar(ctx context.Context, imageID domain.ID) ([]domain.ID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Similar", ctx, imageID)
+	ret0, _ := ret[0].([]domain.ID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Similar indicates an expected call of Similar.
+func (mr *MockImageVecRepositoryMockRecorder) Similar(ctx, imageID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Similar", reflect.TypeOf((*MockImageVecRepository)(nil).Similar), ctx, imageID)
 }
 
 // MockImageAccessPolicy is a mock of ImageAccessPolicy interface.

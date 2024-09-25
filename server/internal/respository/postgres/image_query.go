@@ -12,17 +12,7 @@ const deleteImageQuery = `DELETE FROM images WHERE id = $1`
 
 const getDetailedImageQuery = `
 SELECT
-  i.id,
-  i.author_id,
-  i.path,
-  i.title,
-  i.description,
-  i.access_level,
-  i.ext,
-  i.mime,
-  i.expires_at,
-  i.uploaded_at,
-  i.updated_at,
+  i.*,
   u.id AS "author.id",
   u.username AS "author.username",
   u.avatar_url AS "author.avatar_url",
@@ -48,6 +38,17 @@ WHERE
   i.id = $1
 GROUP BY
   i.id, u.id, a.likes_count, a.views_count
+`
+
+const findManyImagesQuery = `
+SELECT
+  u.id AS "author.id",
+  u.username AS "author.username",
+  u.avatar_url AS "author.avatar_url",
+  i.*
+FROM images i
+INNER JOIN users u ON i.author_id = u.id
+WHERE i.id IN(?);
 `
 
 const updateImageQuery = `

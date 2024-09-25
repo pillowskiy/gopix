@@ -25,6 +25,7 @@ type ImageCache interface {
 type ImageRepository interface {
 	Create(ctx context.Context, image *domain.Image) (*domain.Image, error)
 	GetByID(ctx context.Context, id domain.ID) (*domain.Image, error)
+	FindMany(ctx context.Context, ids []domain.ID) ([]domain.ImageWithAuthor, error)
 	Delete(ctx context.Context, id domain.ID) error
 	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id domain.ID, image *domain.Image) (*domain.Image, error)
@@ -40,6 +41,12 @@ type ImageRepository interface {
 	repository.Transactional
 }
 
+type ImageVecRepository interface {
+	Similar(ctx context.Context, imageID domain.ID) ([]domain.ID, error)
+	Features(ctx context.Context, imageID domain.ID, file *domain.FileNode) error
+	DeleteFeatures(ctx context.Context, imageID domain.ID) error
+}
+
 type ImageAccessPolicy interface {
 	CanModify(user *domain.User, image *domain.Image) bool
 }
@@ -48,6 +55,7 @@ type imageUseCase struct {
 	storage ImageFileStorage
 	cache   ImageCache
 	repo    ImageRepository
+	vecRepo ImageVecRepository
 	logger  logger.Logger
 	acl     ImageAccessPolicy
 }
@@ -56,10 +64,18 @@ func NewImageUseCase(
 	storage ImageFileStorage,
 	cache ImageCache,
 	repo ImageRepository,
+	vecRepo ImageVecRepository,
 	acl ImageAccessPolicy,
 	logger logger.Logger,
 ) *imageUseCase {
-	return &imageUseCase{storage: storage, repo: repo, cache: cache, acl: acl, logger: logger}
+	return &imageUseCase{
+		storage: storage,
+		repo:    repo,
+		vecRepo: vecRepo,
+		cache:   cache,
+		acl:     acl,
+		logger:  logger,
+	}
 }
 
 func (uc *imageUseCase) Create(
@@ -72,6 +88,10 @@ func (uc *imageUseCase) Create(
 	err = uc.repo.DoInTransaction(ctx, func(ctx context.Context) error {
 		createdImg, err := uc.repo.Create(ctx, image)
 		if err != nil {
+			return err
+		}
+
+		if err := uc.vecRepo.Features(ctx, createdImg.ID, file); err != nil {
 			return err
 		}
 
@@ -88,6 +108,21 @@ func (uc *imageUseCase) Create(
 	}
 
 	return
+}
+
+func (uc *imageUseCase) Similar(
+	ctx context.Context, id domain.ID,
+) ([]domain.ImageWithAuthor, error) {
+	if _, err := uc.GetByID(ctx, id); err != nil {
+		return nil, err
+	}
+
+	ids, err := uc.vecRepo.Similar(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return uc.repo.FindMany(ctx, ids)
 }
 
 func (uc *imageUseCase) Delete(
@@ -111,6 +146,10 @@ func (uc *imageUseCase) Delete(
 
 		if err := uc.storage.Delete(ctx, img.Path); err != nil {
 			return err
+		}
+
+		if err := uc.vecRepo.DeleteFeatures(ctx, id); err != nil {
+			uc.logger.Errorf("Failed to delete features: %v", err)
 		}
 
 		return nil

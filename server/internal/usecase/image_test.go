@@ -23,10 +23,11 @@ func TestImageUseCase_Create(t *testing.T) {
 	mockRepo := usecaseMock.NewMockImageRepository(ctrl)
 	mockCache := usecaseMock.NewMockImageCache(ctrl)
 	mockStorage := usecaseMock.NewMockImageFileStorage(ctrl)
+	mockVecRepo := usecaseMock.NewMockImageVecRepository(ctrl)
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockVecRepo, mockACL, mockLog)
 
 	authorID := domain.ID(1)
 	fakePath := "fake.png"
@@ -54,6 +55,7 @@ func TestImageUseCase_Create(t *testing.T) {
 		ctx := context.Background()
 		expectedTxCall(ctx)
 		mockRepo.EXPECT().Create(ctx, gomock.Any()).Return(mockImage, nil)
+		mockVecRepo.EXPECT().Features(ctx, mockImage.ID, mockFile).Return(nil)
 		mockStorage.EXPECT().Put(ctx, mockFile).Return(nil)
 
 		createdImage, err := imageUC.Create(context.Background(), mockImage, mockFile)
@@ -67,6 +69,19 @@ func TestImageUseCase_Create(t *testing.T) {
 	t.Run("RepoError", func(t *testing.T) {
 		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, errors.New("repo error"))
+		mockVecRepo.EXPECT().Features(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		mockStorage.EXPECT().Put(gomock.Any(), mockFile).Times(0)
+		mockLog.EXPECT().Error(gomock.Any())
+
+		createdImage, err := imageUC.Create(context.Background(), mockImage, mockFile)
+		assert.Error(t, err)
+		assert.Nil(t, createdImage)
+	})
+
+	t.Run("VecRepoError", func(t *testing.T) {
+		expectedTxCall(context.Background())
+		mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(mockImage, nil)
+		mockVecRepo.EXPECT().Features(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("vecrepo error"))
 		mockStorage.EXPECT().Put(gomock.Any(), mockFile).Times(0)
 		mockLog.EXPECT().Error(gomock.Any())
 
@@ -78,6 +93,7 @@ func TestImageUseCase_Create(t *testing.T) {
 	t.Run("StorageError", func(t *testing.T) {
 		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(mockImage, nil)
+		mockVecRepo.EXPECT().Features(gomock.Any(), mockImage.ID, mockFile).Return(nil)
 		mockStorage.EXPECT().Put(gomock.Any(), mockFile).Return(errors.New("storage error"))
 		mockLog.EXPECT().Error(gomock.Any())
 
@@ -96,10 +112,11 @@ func TestImageUseCase_Delete(t *testing.T) {
 	mockRepo := usecaseMock.NewMockImageRepository(ctrl)
 	mockCache := usecaseMock.NewMockImageCache(ctrl)
 	mockStorage := usecaseMock.NewMockImageFileStorage(ctrl)
+	mockVecRepo := usecaseMock.NewMockImageVecRepository(ctrl)
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockVecRepo, mockACL, mockLog)
 
 	authorID := domain.ID(1)
 
@@ -135,6 +152,7 @@ func TestImageUseCase_Delete(t *testing.T) {
 		expectedTxCall(ctx)
 		mockRepo.EXPECT().Delete(ctx, mockImage.ID).Return(nil)
 		mockStorage.EXPECT().Delete(ctx, mockImage.Path).Return(nil)
+		mockVecRepo.EXPECT().DeleteFeatures(ctx, mockImage.ID).Return(nil)
 
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Return(nil)
 
@@ -152,6 +170,7 @@ func TestImageUseCase_Delete(t *testing.T) {
 		expectedTxCall(ctx)
 		mockRepo.EXPECT().Delete(ctx, mockImage.ID).Return(nil)
 		mockStorage.EXPECT().Delete(ctx, mockImage.Path).Return(nil)
+		mockVecRepo.EXPECT().DeleteFeatures(ctx, mockImage.ID).Return(nil)
 
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Return(nil)
 
@@ -167,6 +186,7 @@ func TestImageUseCase_Delete(t *testing.T) {
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Times(0)
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID.String()).Times(0)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Times(0)
+		mockVecRepo.EXPECT().DeleteFeatures(gomock.Any(), mockImage.ID).Times(0)
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Times(0)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
@@ -179,6 +199,7 @@ func TestImageUseCase_Delete(t *testing.T) {
 		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(false)
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Times(0)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Times(0)
+		mockVecRepo.EXPECT().DeleteFeatures(gomock.Any(), mockImage.ID).Times(0)
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Times(0)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
@@ -195,6 +216,7 @@ func TestImageUseCase_Delete(t *testing.T) {
 		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(repoError)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Times(0)
+		mockVecRepo.EXPECT().DeleteFeatures(gomock.Any(), mockImage.ID).Times(0)
 		mockLog.EXPECT().Error(gomock.Any())
 
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Times(0)
@@ -211,6 +233,7 @@ func TestImageUseCase_Delete(t *testing.T) {
 		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(nil)
+		mockVecRepo.EXPECT().DeleteFeatures(gomock.Any(), mockImage.ID).Return(nil)
 
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Return(errors.New("cache error"))
 		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
@@ -228,12 +251,31 @@ func TestImageUseCase_Delete(t *testing.T) {
 		expectedTxCall(context.Background())
 		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
 		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(storageError)
+		mockVecRepo.EXPECT().DeleteFeatures(gomock.Any(), mockImage.ID).Times(0)
 		mockLog.EXPECT().Error(gomock.Any())
 
 		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Times(0)
 
 		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
 		assert.Error(t, err)
+	})
+
+	t.Run("VecRepoError", func(t *testing.T) {
+		expectGetByIDCall_Cached()
+		vecRepoError := errors.New("vecrepo error")
+
+		mockACL.EXPECT().CanModify(mockUser, mockImage).Return(true)
+
+		expectedTxCall(context.Background())
+		mockRepo.EXPECT().Delete(gomock.Any(), mockImage.ID).Return(nil)
+		mockStorage.EXPECT().Delete(gomock.Any(), mockImage.Path).Return(nil)
+		mockVecRepo.EXPECT().DeleteFeatures(gomock.Any(), mockImage.ID).Return(vecRepoError)
+		mockLog.EXPECT().Errorf(gomock.Any(), vecRepoError)
+
+		mockCache.EXPECT().Del(gomock.Any(), mockImage.ID.String()).Return(nil)
+
+		err := imageUC.Delete(context.Background(), mockImage.ID, mockUser)
+		assert.NoError(t, err)
 	})
 }
 
@@ -249,7 +291,7 @@ func TestImageUseCase_GetDetailed(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	mockDetailedImage := &domain.DetailedImage{
 		ImageWithAuthor: domain.ImageWithAuthor{
@@ -285,6 +327,98 @@ func TestImageUseCase_GetDetailed(t *testing.T) {
 	})
 }
 
+func TestImageUseCase_Similar(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := usecaseMock.NewMockImageRepository(ctrl)
+	mockCache := usecaseMock.NewMockImageCache(ctrl)
+	mockStorage := usecaseMock.NewMockImageFileStorage(ctrl)
+	mockVecRepo := usecaseMock.NewMockImageVecRepository(ctrl)
+	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockVecRepo, mockACL, mockLog)
+
+	mockImageID := domain.ID(100)
+	mockImage := &domain.Image{ID: mockImageID}
+
+	mockSimilarIDs := []domain.ID{1, 2, 3}
+	mockSimilarImages := []domain.ImageWithAuthor{
+		{
+			Image: domain.Image{
+				ID: 1,
+			},
+		},
+	}
+
+	expectGetByIDCall_Repo := func() {
+		mockCache.EXPECT().Get(gomock.Any(), mockImage.ID.String()).Return(nil, nil)
+		mockRepo.EXPECT().GetByID(gomock.Any(), mockImage.ID).Return(mockImage, nil)
+		mockCache.EXPECT().Set(gomock.Any(), mockImage.ID.String(), mockImage, gomock.Any()).Return(nil)
+	}
+
+	expectGetByIDCall_Cached := func() {
+		mockCache.EXPECT().Get(gomock.Any(), mockImage.ID.String()).Return(mockImage, nil)
+		mockRepo.EXPECT().GetByID(gomock.Any(), mockImage.ID).Times(0)
+		mockCache.EXPECT().Set(gomock.Any(), mockImage.ID.String(), mockImage, gomock.Any()).Times(0)
+	}
+
+	t.Run("SuccessSimilar", func(t *testing.T) {
+		expectGetByIDCall_Repo()
+		mockVecRepo.EXPECT().Similar(gomock.Any(), gomock.Any()).Return(mockSimilarIDs, nil)
+		mockRepo.EXPECT().FindMany(gomock.Any(), mockSimilarIDs).Return(mockSimilarImages, nil)
+
+		similarImages, err := imageUC.Similar(context.Background(), mockImageID)
+		assert.NoError(t, err)
+		assert.Equal(t, mockSimilarImages, similarImages)
+	})
+
+	t.Run("SuccessSimilar_Cached", func(t *testing.T) {
+		expectGetByIDCall_Cached()
+		mockVecRepo.EXPECT().Similar(gomock.Any(), gomock.Any()).Return(mockSimilarIDs, nil)
+		mockRepo.EXPECT().FindMany(gomock.Any(), mockSimilarIDs).Return(mockSimilarImages, nil)
+
+		similarImages, err := imageUC.Similar(context.Background(), mockImageID)
+		assert.NoError(t, err)
+		assert.Equal(t, mockSimilarImages, similarImages)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		mockCache.EXPECT().Get(gomock.Any(), mockImage.ID.String()).Return(nil, nil)
+		mockRepo.EXPECT().GetByID(gomock.Any(), mockImage.ID).Return(nil, repository.ErrNotFound)
+		mockVecRepo.EXPECT().Similar(gomock.Any(), gomock.Any()).Times(0)
+		mockRepo.EXPECT().FindMany(gomock.Any(), mockSimilarIDs).Times(0)
+
+		similarImages, err := imageUC.Similar(context.Background(), mockImageID)
+		assert.Error(t, err)
+		assert.Equal(t, usecase.ErrNotFound, err)
+		assert.Nil(t, similarImages)
+	})
+
+	t.Run("VecRepoError", func(t *testing.T) {
+		expectGetByIDCall_Repo()
+		mockVecRepo.EXPECT().Similar(gomock.Any(), gomock.Any()).Return(nil, errors.New("vecrepo error"))
+		mockRepo.EXPECT().FindMany(gomock.Any(), mockSimilarIDs).Times(0)
+
+		similarImages, err := imageUC.Similar(context.Background(), mockImageID)
+		assert.Error(t, err)
+		assert.Nil(t, similarImages)
+	})
+
+	t.Run("RepoError", func(t *testing.T) {
+		expectGetByIDCall_Repo()
+		mockVecRepo.EXPECT().Similar(gomock.Any(), gomock.Any()).Return(mockSimilarIDs, nil)
+		mockRepo.EXPECT().FindMany(gomock.Any(), mockSimilarIDs).Return(nil, errors.New("repo error"))
+
+		similarImages, err := imageUC.Similar(context.Background(), mockImageID)
+		assert.Error(t, err)
+		assert.Nil(t, similarImages)
+	})
+}
+
 func TestImageUseCase_AddView(t *testing.T) {
 	t.Parallel()
 
@@ -297,7 +431,7 @@ func TestImageUseCase_AddView(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	imageID := domain.ID(1)
 	userID := domain.ID(2)
@@ -329,7 +463,7 @@ func TestImageUseCase_AddLike(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	imageID := domain.ID(1)
 	userID := domain.ID(2)
@@ -361,7 +495,7 @@ func TestImageUseCase_RemoveLike(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	imageID := domain.ID(1)
 	userID := domain.ID(2)
@@ -404,7 +538,7 @@ func TestImageUseCase_States(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	imageID := domain.ID(1)
 	userID := domain.ID(2)
@@ -443,7 +577,7 @@ func TestImageUseCase_Discover(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	sort := domain.ImagePopularSort
 
@@ -506,7 +640,7 @@ func TestImageUseCase_HasLike(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	imageID := domain.ID(1)
 	userID := domain.ID(2)
@@ -547,7 +681,7 @@ func TestImageUseCase_GetByID(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	imageID := domain.ID(1)
 	mockImage := &domain.Image{
@@ -631,7 +765,7 @@ func TestImageUseCase_Update(t *testing.T) {
 	mockACL := usecaseMock.NewMockImageAccessPolicy(ctrl)
 	mockLog := loggerMock.NewMockLogger(ctrl)
 
-	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, mockACL, mockLog)
+	imageUC := usecase.NewImageUseCase(mockStorage, mockCache, mockRepo, nil, mockACL, mockLog)
 
 	authorID := domain.ID(1)
 	imageID := domain.ID(2)

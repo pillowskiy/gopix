@@ -272,6 +272,81 @@ func TestImageHandlers_Delete(t *testing.T) {
 	})
 }
 
+func TestImageHandlers_Similar(t *testing.T) {
+
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockImageUC := handlersMock.NewMockimageUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+
+	h := handlers.NewImageHandlers(mockImageUC, mockLog)
+	e := echo.New()
+
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
+
+	prepareGetSimilarQuery := func(id string) (echo.Context, *httptest.ResponseRecorder) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/images/:id", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(id)
+		return c, rec
+	}
+
+	images := []domain.ImageWithAuthor{
+		{
+			Image: domain.Image{ID: 1, Path: "path.png"},
+		},
+	}
+
+	t.Run("SuccessGetSimilar", func(t *testing.T) {
+		c, rec := prepareGetSimilarQuery(itoaImageID)
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockImageUC.EXPECT().Similar(ctx, imageID).Return(images, nil)
+		assert.NoError(t, h.Similar()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		actual := &[]domain.ImageWithAuthor{}
+		assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), actual))
+		assert.Equal(t, images, *actual)
+	})
+
+	t.Run("IncorrectImageID", func(t *testing.T) {
+		c, rec := prepareGetSimilarQuery("abs")
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockImageUC.EXPECT().Similar(ctx, imageID).Times(0)
+		assert.NoError(t, h.Similar()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		c, rec := prepareGetSimilarQuery(itoaImageID)
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockImageUC.EXPECT().Similar(ctx, imageID).Return(nil, usecase.ErrNotFound)
+		assert.NoError(t, h.Similar()(c))
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareGetSimilarQuery(itoaImageID)
+		ctx := rest.GetEchoRequestCtx(c)
+
+		mockImageUC.EXPECT().Similar(ctx, imageID).Return(nil, errors.New("internal error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.Similar()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
+
 func TestImageHandlers_GetDetailed(t *testing.T) {
 	t.Parallel()
 

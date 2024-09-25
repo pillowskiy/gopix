@@ -141,6 +141,21 @@ func (mr *MockimageUseCaseMockRecorder) RemoveLike(ctx, imageID, userID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveLike", reflect.TypeOf((*MockimageUseCase)(nil).RemoveLike), ctx, imageID, userID)
 }
 
+// Similar mocks base method.
+func (m *MockimageUseCase) Similar(ctx context.Context, id domain.ID) ([]domain.ImageWithAuthor, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Similar", ctx, id)
+	ret0, _ := ret[0].([]domain.ImageWithAuthor)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Similar indicates an expected call of Similar.
+func (mr *MockimageUseCaseMockRecorder) Similar(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Similar", reflect.TypeOf((*MockimageUseCase)(nil).Similar), ctx, id)
+}
+
 // States mocks base method.
 func (m *MockimageUseCase) States(ctx context.Context, imageID, userID domain.ID) (*domain.ImageStates, error) {
 	m.ctrl.T.Helper()

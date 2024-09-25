@@ -22,6 +22,7 @@ func MapImageRoutes(g *echo.Group, h *handlers.ImageHandlers, mw *middlewares.Gu
 	g.DELETE("/:id", h.Delete(), mw.OnlyAuth)
 	g.PUT("/:id", h.Update(), mw.OnlyAuth)
 	g.GET("/:id", h.GetDetailed(), mw.OptionalAuth)
+	g.GET("/:id/similar", h.Similar())
 
 	g.GET("/:id/states", h.GetStates(), mw.OnlyAuth)
 

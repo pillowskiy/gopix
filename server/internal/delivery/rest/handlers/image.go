@@ -19,6 +19,7 @@ import (
 type imageUseCase interface {
 	Create(ctx context.Context, image *domain.Image, file *domain.FileNode) (*domain.Image, error)
 	Delete(ctx context.Context, id domain.ID, executor *domain.User) error
+	Similar(ctx context.Context, id domain.ID) ([]domain.ImageWithAuthor, error)
 	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id domain.ID, image *domain.Image, executor *domain.User) (*domain.Image, error)
 	AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error
@@ -123,6 +124,24 @@ func (h *ImageHandlers) Delete() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, true)
+	}
+}
+
+func (h *ImageHandlers) Similar() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		id, err := rest.PipeDomainIdentifier(c, "id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
+		}
+
+		images, err := h.uc.Similar(ctx, id)
+		if err != nil {
+			return h.responseWithUseCaseErr(c, err, "Similar")
+		}
+
+		return c.JSON(http.StatusOK, images)
 	}
 }
 

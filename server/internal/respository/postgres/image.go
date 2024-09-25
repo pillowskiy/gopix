@@ -75,6 +75,28 @@ func (r *imageRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Im
 	return img, nil
 }
 
+func (r *imageRepository) FindMany(
+	ctx context.Context, ids []domain.ID,
+) ([]domain.ImageWithAuthor, error) {
+	query, args, err := sqlx.In(findManyImagesQuery, ids)
+	if err != nil {
+		return nil, errors.Wrap(err, "ImageRepository.FindMany.In")
+	}
+	query = r.db.Rebind(query)
+
+	rows, err := r.ext(ctx).QueryxContext(ctx, query, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "ImageRepository.FindMany.QueryxContext")
+	}
+
+	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "ImageRepository.FindMany.scanToStructSliceOf")
+	}
+
+	return images, nil
+}
+
 func (r *imageRepository) Delete(ctx context.Context, id domain.ID) error {
 	if _, err := r.ext(ctx).ExecContext(ctx, deleteImageQuery, id); err != nil {
 		return err
