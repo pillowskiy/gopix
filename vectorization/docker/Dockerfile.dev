@@ -8,7 +8,7 @@ COPY requirements.txt requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./app requirements.txt ./models ./run.py ./
+COPY ./src ./
 
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="/app/venv/bin:$PATH"

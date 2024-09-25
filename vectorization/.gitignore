@@ -4,6 +4,7 @@
 *.pyd
 __pycache__/
 *.db
+*.db.lock
 *.sqlite3
 
 # Virtual environment
@@ -24,4 +25,5 @@ docker-compose.override.yml
 # Windows specific
 Thumbs.db
 
-./milvus_data/
+hub/
+.milvus_data

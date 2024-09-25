@@ -4,8 +4,6 @@ import numpy as np
 from pymilvus import CollectionSchema, DataType, FieldSchema
 from pymilvus import MilvusClient as MC
 
-MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
-MILVUS_PORT = os.getenv("MILVUS_PORT", "19530")
 MILVUS_FILE = os.getenv("MILVUS_FILE", "./milvus_data/milvus.db")
 
 
@@ -55,20 +53,8 @@ class MilvusClient:
             collection_name=self.collection_name,
             data=data,
         )
-        print(f"Inserted vector with ID {target_id}.")
 
-    def search_neighbors_by_id(self, id_value: int, limit: int = 10):
-        query_result = self.client.query(
-            collection_name=self.collection_name,
-            filter=f"id == {id_value}",
-            output_fields=["vector"],
-        )
-
-        if not query_result:
-            raise ValueError(f"No vector found with ID {id_value}")
-
-        vector = query_result[0]["vector"]
-
+    def search_neighbors(self, vector: np.ndarray, limit: int = 20):
         results = self.client.search(
             collection_name=self.collection_name,
             anns_field="vector",
@@ -80,3 +66,31 @@ class MilvusClient:
         )
 
         return results[0]
+
+    def delete(self, id_value: int):
+        self.client.delete(
+            collection_name=self.collection_name,
+            expr=f"id == {id_value}",
+        )
+
+    def get_by_id(self, id_value: int):
+        query_result = self.client.query(
+            collection_name=self.collection_name,
+            filter=f"id == {id_value}",
+            output_fields=["vector"],
+        )
+
+        if not query_result:
+            raise ValueError(f"No vector found with ID {id_value}")
+
+        vector = query_result[0]["vector"]
+        return vector
+
+    def exists(self, id_value: int):
+        query_result = self.client.query(
+            collection_name=self.collection_name,
+            filter=f"id == {id_value}",
+            output_fields=["id"],
+        )
+
+        return bool(query_result)
