@@ -17,6 +17,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/respository/s3"
 	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
+	"github.com/pillowskiy/gopix/pkg/metric"
 	"github.com/pillowskiy/gopix/pkg/storage"
 	"github.com/pillowskiy/gopix/pkg/token"
 
@@ -90,6 +91,12 @@ func (s *EchoServer) MapHandlers() error {
 	tagACL := policy.NewTagAccessPolicy()
 	tagUC := usecase.NewTagUseCase(tagRepo, tagACL, imageUC)
 
+	metrics, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.Name)
+	if err != nil {
+		s.logger.Error("CreateMetrics", err.Error())
+	}
+
+	s.echo.Use(middlewares.MetricsMiddleware(metrics))
 	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
 	s.echo.Use(middlewares.CORSMiddleware(s.cfg.Server.CORS))
 

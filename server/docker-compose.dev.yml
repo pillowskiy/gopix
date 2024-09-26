@@ -11,6 +11,7 @@ services:
       driver: "none"
     ports:
       - "8080:8080"
+      - "7070:7070"
     environment:
       - PORT=8080
       - CONFIG_PATH=./config/development
@@ -45,6 +46,38 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    networks:
+      - gopix
+
+  prometheus:
+    container_name: gopix-prometheus
+    image: prom/prometheus
+    volumes:
+      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:Z
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention=20d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    networks:
+      - gopix
+
+  node_exporter:
+    container_name: gopix-node-exporter
+    image: prom/node-exporter
+    ports:
+      - "9101:9100"
+    networks:
+      - gopix
+
+  grafana:
+    container_name: gopix-grafana
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
     networks:
       - gopix
 

@@ -17,6 +17,10 @@ server:
 vec_service:
   url: http://gopix-vectorization:8000
 
+metrics:
+  url: 0.0.0.0:7070
+  name: api
+
 logger:
   mode: development
   disable_caller: false

@@ -17,6 +17,7 @@ type Config struct {
 	Redis      Redis      `mapstructure:"redis"`
 	S3         S3         `mapstructure:"s3"`
 	VecService VecService `mapstructure:"vec_service"`
+	Metrics    Metrics    `mapstructure:"metrics"`
 }
 
 type Server struct {
@@ -36,10 +37,6 @@ type Cookie struct {
 	Expire   time.Duration `mapstructure:"expire"`
 	Secure   bool          `mapstructure:"secure"`
 	HttpOnly bool          `mapstructure:"http_only"`
-}
-
-type VecService struct {
-	URL string `mapstructure:"url"`
 }
 
 type Session struct {
@@ -92,6 +89,15 @@ type S3 struct {
 	// The buffer size for file uploads, including multipart uploads, in megabytes.
 	UploadBufferSizeMB   int   `mapstructure:"upload_buffer_size_mb"`
 	MultipartChunkSizeMB int64 `mapstructure:"multipart_chunk_size_mb"`
+}
+
+type VecService struct {
+	URL string `mapstructure:"url"`
+}
+
+type Metrics struct {
+	URL  string `mapstructure:"url"`
+	Name string `mapstructure:"name"`
 }
 
 func FetchAndLoadConfig() (*Config, error) {
