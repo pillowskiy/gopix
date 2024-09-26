@@ -33,8 +33,10 @@ func (repo *tagRepository) Create(ctx context.Context, tag *domain.Tag) (*domain
 	return createdTag, nil
 }
 
-func (repo *tagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error {
-	relationQuery := `INSERT INTO images_to_tags(image_id, tag_id) VALUES($1, $2)`
+func (repo *tagRepository) UpsertImageTags(
+	ctx context.Context, tag *domain.Tag, imageID domain.ID,
+) error {
+	relationQuery := `INSERT INTO images_to_tags(image_id, tag_id) VALUES($1, $2) ON CONFLICT DO NOTHING`
 
 	err := repo.DoInTransaction(ctx, func(ctx context.Context) error {
 		upTag, err := repo.GetByName(ctx, tag.Name)
@@ -55,6 +57,13 @@ func (repo *tagRepository) UpsertImageTags(ctx context.Context, tag *domain.Tag,
 		return nil
 	})
 
+	return err
+}
+
+func (repo *tagRepository) DeleteImageTag(ctx context.Context, tagID, imageID domain.ID) error {
+	q := `DELETE FROM images_to_tags WHERE image_id = $1 AND tag_id = $2`
+
+	_, err := repo.ext(ctx).ExecContext(ctx, q, imageID, tagID)
 	return err
 }
 

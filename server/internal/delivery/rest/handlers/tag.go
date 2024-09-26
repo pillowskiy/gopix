@@ -16,6 +16,7 @@ import (
 type TagUseCase interface {
 	Create(ctx context.Context, tag *domain.Tag) (*domain.Tag, error)
 	UpsertImageTag(ctx context.Context, tag *domain.Tag, imageID domain.ID, executor *domain.User) error
+	DeleteImageTag(ctx context.Context, tagID domain.ID, imageID domain.ID, executor *domain.User) error
 	Search(ctx context.Context, query string) ([]domain.Tag, error)
 	Delete(ctx context.Context, tagID domain.ID) error
 }
@@ -92,6 +93,34 @@ func (h *TagHandlers) UpsertImageTag() echo.HandlerFunc {
 		tag := &domain.Tag{Name: tagInput.Name}
 		if err := h.uc.UpsertImageTag(ctx, tag, imageID, user); err != nil {
 			return h.responseWithUseCaseErr(c, err, "UpsertImageTag")
+		}
+
+		return c.JSON(http.StatusOK, true)
+	}
+}
+
+func (h *TagHandlers) DeleteImageTag() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		executor, err := GetContextUser(c)
+		if err != nil {
+			h.logger.Errorf("TagHandlers.DeleteImageTag: %v", err)
+			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+		}
+
+		imageID, err := rest.PipeDomainIdentifier(c, "image_id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid image ID").Response())
+		}
+
+		tagID, err := rest.PipeDomainIdentifier(c, "tag_id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid tag ID").Response())
+		}
+
+		if err := h.uc.DeleteImageTag(ctx, tagID, imageID, executor); err != nil {
+			return h.responseWithUseCaseErr(c, err, "DeleteImageTag")
 		}
 
 		return c.JSON(http.StatusOK, true)

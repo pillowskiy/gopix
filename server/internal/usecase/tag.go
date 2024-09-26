@@ -11,6 +11,7 @@ import (
 type TagRepository interface {
 	Create(ctx context.Context, tag *domain.Tag) (*domain.Tag, error)
 	UpsertImageTags(ctx context.Context, tag *domain.Tag, imageID domain.ID) error
+	DeleteImageTag(ctx context.Context, imageID domain.ID, tagID domain.ID) error
 	GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error)
 	GetByName(ctx context.Context, name string) (*domain.Tag, error)
 	Search(ctx context.Context, name string) ([]domain.Tag, error)
@@ -57,6 +58,21 @@ func (uc *tagUseCase) UpsertImageTag(
 	}
 
 	return uc.repo.UpsertImageTags(ctx, tag, imageID)
+}
+
+func (uc *tagUseCase) DeleteImageTag(
+	ctx context.Context, tagID domain.ID, imageID domain.ID, executor *domain.User,
+) error {
+	image, err := uc.imageUC.GetByID(ctx, imageID)
+	if err != nil {
+		return ErrIncorrectImageRef
+	}
+
+	if !uc.acl.CanModifyImageTags(executor, image) {
+		return ErrForbidden
+	}
+
+	return uc.repo.DeleteImageTag(ctx, imageID, tagID)
 }
 
 func (uc *tagUseCase) Search(ctx context.Context, query string) ([]domain.Tag, error) {
