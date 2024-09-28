@@ -21,6 +21,7 @@ type User struct {
 	Permissions  int       `json:"permissions" db:"permissions"`
 	AvatarURL    string    `json:"avatarURL" db:"avatar_url"`
 	PasswordHash string    `json:"-" db:"password_hash"`
+	External     bool      `json:"-" db:"external"`
 	CreatedAt    time.Time `json:"-" db:"created_at"`
 	UpdatedAt    time.Time `json:"-" db:"updated_at"`
 }
