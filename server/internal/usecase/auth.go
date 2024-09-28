@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pillowskiy/gopix/internal/domain"
+	repository "github.com/pillowskiy/gopix/internal/respository"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/token"
 )
@@ -15,6 +16,8 @@ type AuthRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetUnique(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetByID(ctx context.Context, id domain.ID) (*domain.User, error)
+
+	repository.Transactional
 }
 
 type AuthCache interface {
@@ -54,7 +57,7 @@ func (uc *AuthUseCase) Register(ctx context.Context, user *domain.User) (*domain
 	}
 	newUser.HidePassword()
 
-	t, err := uc.generateToken(newUser)
+	t, err := uc.GenerateToken(newUser)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +69,12 @@ func (uc *AuthUseCase) Register(ctx context.Context, user *domain.User) (*domain
 }
 
 func (uc *AuthUseCase) Login(ctx context.Context, user *domain.User) (*domain.UserWithToken, error) {
-	uniqueUser, err := uc.repo.GetUnique(ctx, user)
-	if uniqueUser == nil || err != nil {
+	uniqueUser, err := uc.GetUnique(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if uniqueUser.External {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -76,7 +83,7 @@ func (uc *AuthUseCase) Login(ctx context.Context, user *domain.User) (*domain.Us
 	}
 	uniqueUser.HidePassword()
 
-	t, err := uc.generateToken(uniqueUser)
+	t, err := uc.GenerateToken(uniqueUser)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +92,15 @@ func (uc *AuthUseCase) Login(ctx context.Context, user *domain.User) (*domain.Us
 		User:  uniqueUser,
 		Token: t,
 	}, nil
+}
+
+func (uc *AuthUseCase) GetUnique(ctx context.Context, user *domain.User) (*domain.User, error) {
+	uniqueUser, err := uc.repo.GetUnique(ctx, user)
+	if uniqueUser == nil || err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return uniqueUser, nil
 }
 
 func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, error) {
@@ -114,7 +130,7 @@ func (uc *AuthUseCase) Verify(ctx context.Context, token string) (*domain.User, 
 	return user, nil
 }
 
-func (uc *AuthUseCase) generateToken(user *domain.User) (string, error) {
+func (uc *AuthUseCase) GenerateToken(user *domain.User) (string, error) {
 	t, err := uc.tokenGen.Generate(&domain.UserPayload{
 		ID:       user.ID,
 		Username: user.Username,

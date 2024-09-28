@@ -93,6 +93,10 @@ func (r *PostgresRepository) ext(ctx context.Context) Ext {
 func (r *PostgresRepository) DoInTransaction(
 	ctx context.Context, call repository.InTransactionalCall,
 ) (err error) {
+	if tx := ctx.Value(txKey{}); tx != nil {
+		return call(ctx)
+	}
+
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return err

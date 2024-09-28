@@ -12,18 +12,22 @@ import (
 )
 
 type userRepository struct {
-	db *sqlx.DB
+	PostgresRepository
 }
 
 func NewUserRepository(db *sqlx.DB) *userRepository {
-	return &userRepository{db: db}
+	return &userRepository{
+		PostgresRepository: PostgresRepository{db},
+	}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
-	q := `INSERT INTO users (username, email, password_hash) VALUES($1, $2, $3) RETURNING *`
+	q := `INSERT INTO users (username, email, external, password_hash, avatar_url) VALUES($1, $2, $3, $4, $5) RETURNING *`
 
 	u := new(domain.User)
-	rowx := r.db.QueryRowxContext(ctx, q, user.Username, user.Email, user.PasswordHash)
+	rowx := r.ext(ctx).QueryRowxContext(
+		ctx, q, user.Username, user.Email, user.External, user.PasswordHash, user.AvatarURL,
+	)
 	if err := rowx.StructScan(u); err != nil {
 		return nil, fmt.Errorf("UserRepository.Register.StructScan: %v", err)
 	}
@@ -35,7 +39,7 @@ func (r *userRepository) GetUnique(ctx context.Context, user *domain.User) (*dom
 	q := `SELECT * FROM users WHERE username = $1 OR email = $2`
 
 	u := new(domain.User)
-	rowx := r.db.QueryRowxContext(ctx, q, user.Username, user.Email)
+	rowx := r.ext(ctx).QueryRowxContext(ctx, q, user.Username, user.Email)
 	if err := rowx.StructScan(u); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
@@ -50,7 +54,7 @@ func (r *userRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Use
 	q := `SELECT * FROM users WHERE id = $1`
 
 	u := new(domain.User)
-	rowx := r.db.QueryRowxContext(ctx, q, id)
+	rowx := r.ext(ctx).QueryRowxContext(ctx, q, id)
 	if err := rowx.StructScan(u); err != nil {
 		return nil, fmt.Errorf("UserRepository.GetById.StructScan: %v", err)
 	}
@@ -66,7 +70,7 @@ func (r *userRepository) Update(ctx context.Context, id domain.ID, user *domain.
   WHERE id = $1 RETURNING *`
 
 	u := new(domain.User)
-	rowx := r.db.QueryRowxContext(
+	rowx := r.ext(ctx).QueryRowxContext(
 		ctx, q, id,
 		user.Username,
 		user.Email,
@@ -82,7 +86,7 @@ func (r *userRepository) Update(ctx context.Context, id domain.ID, user *domain.
 func (r *userRepository) SetPermissions(ctx context.Context, id domain.ID, permissions int) error {
 	q := `UPDATE users SET permissions = $1 WHERE id = $2`
 
-	_, err := r.db.ExecContext(ctx, q, permissions, id)
+	_, err := r.ext(ctx).ExecContext(ctx, q, permissions, id)
 	if err != nil {
 		return err
 	}
