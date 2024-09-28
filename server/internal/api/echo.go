@@ -68,6 +68,10 @@ func (s *EchoServer) MapHandlers() error {
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, followingUC, s.logger)
 
+	oauthRepo := postgres.NewOAuthRepository(s.sh.Postgres)
+	oauthClient := httprepo.NewOAuthClient(&s.cfg.OAuth)
+	oauthUC := usecase.NewOAuthUseCase(oauthRepo, authUC, oauthClient)
+
 	subscriptionUC := usecase.NewSubscriptionUseCase(followingUC, userUC)
 
 	vecRepo := httprepo.NewVectorizationRepository(s.cfg.VecService.URL)
@@ -106,6 +110,9 @@ func (s *EchoServer) MapHandlers() error {
 	authGroup := v1.Group("/auth")
 	authHandlers := handlers.NewAuthHandlers(authUC, s.logger, s.cfg.Server.Cookie)
 	routes.MapAuthRoutes(authGroup, authHandlers, guardMiddlewares)
+
+	oauthHandlers := handlers.NewOAuthHandlers(oauthUC, s.cfg.Server.Cookie, s.logger)
+	routes.MapOAuthRoutes(authGroup, oauthHandlers)
 
 	userGroup := v1.Group("/users")
 	userHandlers := handlers.NewUserHandlers(userUC, s.logger)

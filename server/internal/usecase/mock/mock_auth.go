@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	domain "github.com/pillowskiy/gopix/internal/domain"
+	repository "github.com/pillowskiy/gopix/internal/respository"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -53,6 +54,20 @@ func (m *MockAuthRepository) Create(ctx context.Context, user *domain.User) (*do
 func (mr *MockAuthRepositoryMockRecorder) Create(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockAuthRepository)(nil).Create), ctx, user)
+}
+
+// DoInTransaction mocks base method.
+func (m *MockAuthRepository) DoInTransaction(arg0 context.Context, arg1 repository.InTransactionalCall) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DoInTransaction", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DoInTransaction indicates an expected call of DoInTransaction.
+func (mr *MockAuthRepositoryMockRecorder) DoInTransaction(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoInTransaction", reflect.TypeOf((*MockAuthRepository)(nil).DoInTransaction), arg0, arg1)
 }
 
 // GetByID mocks base method.
