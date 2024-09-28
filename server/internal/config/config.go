@@ -18,6 +18,7 @@ type Config struct {
 	S3         S3         `mapstructure:"s3"`
 	VecService VecService `mapstructure:"vec_service"`
 	Metrics    Metrics    `mapstructure:"metrics"`
+	OAuth      OAuth      `mapstructure:"oauth"`
 }
 
 type Server struct {
@@ -89,6 +90,16 @@ type S3 struct {
 	// The buffer size for file uploads, including multipart uploads, in megabytes.
 	UploadBufferSizeMB   int   `mapstructure:"upload_buffer_size_mb"`
 	MultipartChunkSizeMB int64 `mapstructure:"multipart_chunk_size_mb"`
+}
+
+type OAuth struct {
+	Google *OAuthGoogle `mapstructure:"google"`
+}
+
+type OAuthGoogle struct {
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
+	RedirectURL  string `mapstructure:"redirect_url"`
 }
 
 type VecService struct {

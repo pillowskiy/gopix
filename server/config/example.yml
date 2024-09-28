@@ -55,3 +55,9 @@ s3:
   force_path_style: true
   upload_buffer_size_mb: 25
   multipart_chunk_size_mb: 25
+
+oauth:
+  google:
+    client_id: client_id
+    client_secret: client_secret
+    redirect_url: redirect_url
