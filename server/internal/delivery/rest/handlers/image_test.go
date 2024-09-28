@@ -273,7 +273,6 @@ func TestImageHandlers_Delete(t *testing.T) {
 }
 
 func TestImageHandlers_Similar(t *testing.T) {
-
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)

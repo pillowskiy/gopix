@@ -69,6 +69,20 @@ func (mr *MockTagUseCaseMockRecorder) Delete(ctx, tagID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTagUseCase)(nil).Delete), ctx, tagID)
 }
 
+// DeleteImageTag mocks base method.
+func (m *MockTagUseCase) DeleteImageTag(ctx context.Context, tagID, imageID domain.ID, executor *domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteImageTag", ctx, tagID, imageID, executor)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteImageTag indicates an expected call of DeleteImageTag.
+func (mr *MockTagUseCaseMockRecorder) DeleteImageTag(ctx, tagID, imageID, executor any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteImageTag", reflect.TypeOf((*MockTagUseCase)(nil).DeleteImageTag), ctx, tagID, imageID, executor)
+}
+
 // Search mocks base method.
 func (m *MockTagUseCase) Search(ctx context.Context, query string) ([]domain.Tag, error) {
 	m.ctrl.T.Helper()

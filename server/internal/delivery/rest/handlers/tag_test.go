@@ -243,6 +243,125 @@ func TestTagHandlers_UpsertImageTag(t *testing.T) {
 	})
 }
 
+func TestTagHandlers_DeleteImageTag(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockTagUC := handlersMock.NewMockTagUseCase(ctrl)
+	mockLog := loggerMock.NewMockLogger(ctrl)
+	ctxUser, mockCtxUser := handlersMock.NewMockCtxUser()
+
+	h := handlers.NewTagHandlers(mockTagUC, mockLog)
+
+	e := echo.New()
+
+	imageID := handlersMock.DomainID()
+	itoaImageID := imageID.String()
+
+	tagID := handlersMock.DomainID()
+	itoaTagID := tagID.String()
+
+	prepareDeleteImageTagQuery := func(
+		imageID, tagID string,
+	) (echo.Context, *httptest.ResponseRecorder) {
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/images/:image_id/tags/:tag_id", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("image_id", "tag_id")
+		c.SetParamValues(imageID, tagID)
+
+		return c, rec
+	}
+
+	t.Run("SuccessDeleteTag", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery(itoaImageID, itoaTagID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(ctx, tagID, imageID, ctxUser).Return(nil)
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("InvalidUserContext", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery(itoaImageID, itoaTagID)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
+
+	t.Run("InvalidImageID", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery("abs", itoaTagID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("InvalidTagID", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery(itoaImageID, "abs")
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery(itoaImageID, itoaTagID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(
+			ctx, gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(usecase.ErrForbidden)
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusForbidden, rec.Code)
+	})
+
+	t.Run("IncorrectImageRef", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery(itoaImageID, itoaTagID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(
+			ctx, gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(usecase.ErrIncorrectImageRef)
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		c, rec := prepareDeleteImageTagQuery(itoaImageID, itoaTagID)
+		mockCtxUser(c)
+
+		ctx := rest.GetEchoRequestCtx(c)
+		mockTagUC.EXPECT().DeleteImageTag(
+			ctx, gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(errors.New("internal error"))
+		mockLog.EXPECT().Errorf(gomock.Any(), gomock.Any())
+
+		assert.NoError(t, h.DeleteImageTag()(c))
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
+
 func TestTagHandlers_Seacrh(t *testing.T) {
 	t.Parallel()
 

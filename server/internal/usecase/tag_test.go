@@ -108,6 +108,64 @@ func TestTagUseCase_UpsertImageTag(t *testing.T) {
 	})
 }
 
+func TestTagUseCase_DeleteImageTag(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockImageUC := usecaseMock.NewMockTagImageUseCase(ctrl)
+	mockRepo := usecaseMock.NewMockTagRepository(ctrl)
+	mockACL := usecaseMock.NewMockTagAccessPolicy(ctrl)
+
+	tagUC := usecase.NewTagUseCase(mockRepo, mockACL, mockImageUC)
+
+	tagID := domain.ID(1)
+	imageID := domain.ID(2)
+
+	mockUser := &domain.User{ID: 1, Permissions: int(domain.PermissionsAdmin)}
+	mockImage := &domain.Image{ID: imageID}
+
+	t.Run("SuccessDeleteImageTag", func(t *testing.T) {
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(mockImage, nil)
+		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Return(true)
+		mockRepo.EXPECT().DeleteImageTag(gomock.Any(), imageID, tagID).Return(nil)
+
+		err := tagUC.DeleteImageTag(context.Background(), tagID, imageID, mockUser)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("IncorrectImageRef", func(t *testing.T) {
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(nil, usecase.ErrNotFound)
+		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Times(0)
+		mockRepo.EXPECT().DeleteImageTag(gomock.Any(), imageID, tagID).Times(0)
+
+		err := tagUC.DeleteImageTag(context.Background(), tagID, imageID, mockUser)
+		assert.Error(t, err)
+		assert.Equal(t, err, usecase.ErrIncorrectImageRef)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(mockImage, nil)
+		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Return(false)
+		mockRepo.EXPECT().DeleteImageTag(gomock.Any(), imageID, tagID).Times(0)
+
+		err := tagUC.DeleteImageTag(context.Background(), tagID, imageID, mockUser)
+		assert.Error(t, err)
+		assert.Equal(t, err, usecase.ErrForbidden)
+	})
+
+	t.Run("RepoError", func(t *testing.T) {
+		mockImageUC.EXPECT().GetByID(gomock.Any(), imageID).Return(mockImage, nil)
+		mockACL.EXPECT().CanModifyImageTags(mockUser, mockImage).Return(true)
+		mockRepo.EXPECT().DeleteImageTag(gomock.Any(), imageID, tagID).Return(errors.New("repo error"))
+
+		err := tagUC.DeleteImageTag(context.Background(), tagID, imageID, mockUser)
+		assert.Error(t, err)
+	})
+}
+
 func TestTagUseCase_Search(t *testing.T) {
 	t.Parallel()
 

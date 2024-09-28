@@ -103,7 +103,7 @@ func (h *TagHandlers) DeleteImageTag() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := rest.GetEchoRequestCtx(c)
 
-		executor, err := GetContextUser(c)
+		user, err := GetContextUser(c)
 		if err != nil {
 			h.logger.Errorf("TagHandlers.DeleteImageTag: %v", err)
 			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
@@ -119,7 +119,7 @@ func (h *TagHandlers) DeleteImageTag() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid tag ID").Response())
 		}
 
-		if err := h.uc.DeleteImageTag(ctx, tagID, imageID, executor); err != nil {
+		if err := h.uc.DeleteImageTag(ctx, tagID, imageID, user); err != nil {
 			return h.responseWithUseCaseErr(c, err, "DeleteImageTag")
 		}
 

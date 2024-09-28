@@ -69,6 +69,20 @@ func (mr *MockTagRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTagRepository)(nil).Delete), ctx, id)
 }
 
+// DeleteImageTag mocks base method.
+func (m *MockTagRepository) DeleteImageTag(ctx context.Context, imageID, tagID domain.ID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteImageTag", ctx, imageID, tagID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteImageTag indicates an expected call of DeleteImageTag.
+func (mr *MockTagRepositoryMockRecorder) DeleteImageTag(ctx, imageID, tagID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteImageTag", reflect.TypeOf((*MockTagRepository)(nil).DeleteImageTag), ctx, imageID, tagID)
+}
+
 // GetByID mocks base method.
 func (m *MockTagRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Tag, error) {
 	m.ctrl.T.Helper()
