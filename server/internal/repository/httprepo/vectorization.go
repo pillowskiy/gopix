@@ -51,6 +51,7 @@ func (repo *vectorRepository) Features(
 	writer.Close()
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, &body)
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	resp, err := repo.client.Do(req)
@@ -59,13 +60,8 @@ func (repo *vectorRepository) Features(
 	}
 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	data := make(map[string]interface{})
-	if err := json.Unmarshal(b, &data); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return fmt.Errorf("failed to unmarshal response body: %w", err)
 	}
 
@@ -90,14 +86,10 @@ func (repo *vectorRepository) Similar(
 	}
 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
+	decoder := json.NewDecoder(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		data := make(map[string]interface{})
-		if err := json.Unmarshal(b, &data); err != nil {
+		if err := decoder.Decode(&data); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
 		}
 
@@ -107,7 +99,7 @@ func (repo *vectorRepository) Similar(
 	}
 
 	var data []similarResponse
-	if err := json.Unmarshal(b, &data); err != nil {
+	if err := decoder.Decode(&data); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
 	}
 
@@ -131,14 +123,9 @@ func (repo *vectorRepository) DeleteFeatures(ctx context.Context, imageID domain
 	}
 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		data := make(map[string]interface{})
-		if err := json.Unmarshal(b, &data); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 			return fmt.Errorf("failed to unmarshal response body: %w", err)
 		}
 

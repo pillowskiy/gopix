@@ -1,15 +1,21 @@
-package httprepo
+package oauth
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/pillowskiy/gopix/internal/config"
 	"github.com/pillowskiy/gopix/internal/domain"
 )
 
+var (
+	ErrIncorrectCode = errors.New("incorrect code")
+	UnknownService   = errors.New("unknown service")
+)
+
 type OAuthProvider interface {
 	GetUserInfo(ctx context.Context, code string) (*domain.OAuthUser, error)
+	GetAuthURL() string
 }
 
 type OAuthClient struct {
@@ -29,6 +35,15 @@ func (client *OAuthClient) GetUserInfo(ctx context.Context, code string, service
 	case domain.OAuthServiceGoogle:
 		return client.google.GetUserInfo(ctx, code)
 	default:
-		return nil, fmt.Errorf("OAuthRepository.GetUserInfo: invalid oauth service %s", service)
+		return nil, UnknownService
+	}
+}
+
+func (client *OAuthClient) GetAuthURL(service domain.OAuthService) (string, error) {
+	switch service {
+	case domain.OAuthServiceGoogle:
+		return client.google.GetAuthURL(), nil
+	default:
+		return "", UnknownService
 	}
 }

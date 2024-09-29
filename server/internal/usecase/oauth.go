@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/pillowskiy/gopix/internal/domain"
-	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pillowskiy/gopix/internal/infrastructure/oauth"
+	"github.com/pillowskiy/gopix/internal/repository"
 	"github.com/pkg/errors"
 )
 
@@ -25,6 +26,7 @@ type OAuthAuthUC interface {
 
 type OAuthClient interface {
 	GetUserInfo(ctx context.Context, code string, sevice domain.OAuthService) (*domain.OAuthUser, error)
+	GetAuthURL(service domain.OAuthService) (string, error)
 }
 
 type oAuthUseCase struct {
@@ -37,10 +39,14 @@ func NewOAuthUseCase(repo OAuthRepository, authUC OAuthAuthUC, client OAuthClien
 	return &oAuthUseCase{repo: repo, authUC: authUC, client: client}
 }
 
+func (uc *oAuthUseCase) GetAuthURL(ctx context.Context, service domain.OAuthService) (string, error) {
+	return uc.client.GetAuthURL(service)
+}
+
 func (uc *oAuthUseCase) Authenticate(ctx context.Context, code string, service domain.OAuthService) (*domain.UserWithToken, error) {
 	extUser, err := uc.client.GetUserInfo(ctx, code, service)
 	if err != nil {
-		if errors.Is(err, repository.ErrIncorrectInput) {
+		if errors.Is(err, oauth.ErrIncorrectCode) {
 			return nil, ErrUnprocessable
 		}
 		return nil, errors.Wrap(err, "OAuthUseCase.Authenticate.GetUserInfo")

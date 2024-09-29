@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
-	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pillowskiy/gopix/internal/repository"
 	"github.com/pkg/errors"
 )
 

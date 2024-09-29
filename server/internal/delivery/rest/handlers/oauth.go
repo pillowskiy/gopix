@@ -16,6 +16,7 @@ import (
 
 type OAuthUseCase interface {
 	Authenticate(ctx context.Context, code string, service domain.OAuthService) (*domain.UserWithToken, error)
+	GetAuthURL(ctx context.Context, service domain.OAuthService) (string, error)
 }
 
 type OAuthHandlers struct {
@@ -28,7 +29,7 @@ func NewOAuthHandlers(uc OAuthUseCase, cfg *config.Cookie, logger logger.Logger)
 	return &OAuthHandlers{uc: uc, cfg: cfg, logger: logger}
 }
 
-func (h *OAuthHandlers) CallbackGoogle() echo.HandlerFunc {
+func (h *OAuthHandlers) Callback(service domain.OAuthService) echo.HandlerFunc {
 	type callbackDTO struct {
 		Code string `query:"code" validate:"required,gte=1"`
 	}
@@ -45,7 +46,7 @@ func (h *OAuthHandlers) CallbackGoogle() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Invalid Request Query").Response())
 		}
 
-		authUser, err := h.uc.Authenticate(ctx, dto.Code, domain.OAuthServiceGoogle)
+		authUser, err := h.uc.Authenticate(ctx, dto.Code, service)
 		if err != nil {
 			switch err {
 			case usecase.ErrInvalidCredentials:
@@ -60,6 +61,19 @@ func (h *OAuthHandlers) CallbackGoogle() echo.HandlerFunc {
 
 		h.storeToken(c, authUser.Token)
 		return c.JSON(http.StatusOK, authUser.User)
+	}
+}
+
+func (h *OAuthHandlers) AuthRedirect(service domain.OAuthService) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		redirectURL, err := h.uc.GetAuthURL(context.Background(), service)
+
+		if err != nil {
+			h.logger.Errorf("OAuthHandlers.GetAuthURL: %v (service: %s)", err, service)
+			return c.JSON(rest.NewInternalServerError().Response())
+		}
+
+		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 	}
 }
 

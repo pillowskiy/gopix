@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	domain "github.com/pillowskiy/gopix/internal/domain"
-	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pillowskiy/gopix/internal/repository"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -8,7 +8,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/pillowskiy/gopix/internal/domain"
-	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pillowskiy/gopix/internal/repository"
 	"github.com/pillowskiy/gopix/internal/usecase"
 	usecaseMock "github.com/pillowskiy/gopix/internal/usecase/mock"
 	loggerMock "github.com/pillowskiy/gopix/pkg/logger/mock"

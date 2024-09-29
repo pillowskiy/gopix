@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/pillowskiy/gopix/internal/domain"
-	repository "github.com/pillowskiy/gopix/internal/respository"
+	"github.com/pillowskiy/gopix/internal/repository"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pkg/errors"
 )

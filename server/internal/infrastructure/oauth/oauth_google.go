@@ -1,4 +1,4 @@
-package httprepo
+package oauth
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/pillowskiy/gopix/internal/config"
 	"github.com/pillowskiy/gopix/internal/domain"
-	"github.com/pillowskiy/gopix/internal/repository"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -24,17 +23,16 @@ func NewOAuthGoogleProvider(cfg *config.OAuthGoogle) *OAuthGoogleProvider {
 		Scopes:       []string{"email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
-	fmt.Printf("Google OAuth URL: %s", oAuthCfg.AuthCodeURL(""))
 	return &OAuthGoogleProvider{cfg: oAuthCfg}
 }
 
-func (o *OAuthGoogleProvider) GetUserInfo(ctx context.Context, code string) (*domain.OAuthUser, error) {
-	token, err := o.cfg.Exchange(ctx, code)
+func (p *OAuthGoogleProvider) GetUserInfo(ctx context.Context, code string) (*domain.OAuthUser, error) {
+	token, err := p.cfg.Exchange(ctx, code)
 	if err != nil {
-		return nil, repository.ErrIncorrectInput
+		return nil, ErrIncorrectCode
 	}
 
-	client := o.cfg.Client(ctx, token)
+	client := p.cfg.Client(ctx, token)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
@@ -47,4 +45,9 @@ func (o *OAuthGoogleProvider) GetUserInfo(ctx context.Context, code string) (*do
 	}
 
 	return oauthUser, nil
+}
+
+func (p *OAuthGoogleProvider) GetAuthURL() string {
+	// WARNING: Unsafe. Add CSRF Protection
+	return p.cfg.AuthCodeURL("")
 }

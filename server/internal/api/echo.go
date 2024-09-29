@@ -10,11 +10,12 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
+	"github.com/pillowskiy/gopix/internal/infrastructure/oauth"
 	"github.com/pillowskiy/gopix/internal/policy"
-	"github.com/pillowskiy/gopix/internal/respository/httprepo"
-	"github.com/pillowskiy/gopix/internal/respository/postgres"
-	"github.com/pillowskiy/gopix/internal/respository/redis"
-	"github.com/pillowskiy/gopix/internal/respository/s3"
+	"github.com/pillowskiy/gopix/internal/repository/httprepo"
+	"github.com/pillowskiy/gopix/internal/repository/postgres"
+	"github.com/pillowskiy/gopix/internal/repository/redis"
+	"github.com/pillowskiy/gopix/internal/repository/s3"
 	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/metric"
@@ -69,7 +70,7 @@ func (s *EchoServer) MapHandlers() error {
 	userUC := usecase.NewUserUseCase(userRepo, userCache, followingUC, s.logger)
 
 	oauthRepo := postgres.NewOAuthRepository(s.sh.Postgres)
-	oauthClient := httprepo.NewOAuthClient(&s.cfg.OAuth)
+	oauthClient := oauth.NewOAuthClient(&s.cfg.OAuth)
 	oauthUC := usecase.NewOAuthUseCase(oauthRepo, authUC, oauthClient)
 
 	subscriptionUC := usecase.NewSubscriptionUseCase(followingUC, userUC)
