@@ -1,20 +1,24 @@
+import logging
+import time
 from flask import Blueprint, jsonify, request
 
-from .milvus import MilvusClient
-from .model import extract_features
+from .repository.milvus import MilvusRepository
+from .model.clip import ClipModel
+from .service.utils import ServiceError
+from .service.vectorization import VectorizationService
 
 main = Blueprint("main", __name__)
-milvus_client = MilvusClient(collection_name="l2")
 
+model = ClipModel()
+repo = MilvusRepository("clip_collection", 512)
+service = VectorizationService(model, repo)
 
 @main.route("/features", methods=["POST"])
 def extract_features_endpoint():
     try:
-        id_str = request.form.get("id")
-        if id_str is None:
-            return jsonify({"error": "ID not provided"}), 400
-
         try:
+            id_str = request.form.get("id")
+            if id_str is None: raise ValueError("invalid")
             target_id = int(id_str)
         except ValueError:
             return jsonify({"error": "Invalid ID format"}), 400
@@ -22,29 +26,40 @@ def extract_features_endpoint():
         if "image" not in request.files:
             return jsonify({"error": "No file provided"}), 400
 
-        if milvus_client.exists(target_id):
-            return jsonify({"error": "Vector with the same ID already exists"}), 409
-
         file = request.files["image"]
-        vector = extract_features(file)
-        milvus_client.insert_vector(target_id=target_id, vector=vector)
 
-        return jsonify({"vector": vector.tolist(), "id": target_id})
+        start = time.perf_counter()
+        service.insert(file, target_id)
+        took = f"Featurize and insert took: {(time.perf_counter() - start)*1000:2f}ms"
+
+        return jsonify({ "message": took }), 201
+    except ServiceError as e:
+        return e.to_flask_res()
     except Exception as e:
-        raise e
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"message": str(e)}), 500
+
 
 
 @main.route("/similar/<int:id>", methods=["GET"])
-def search_neighbors_endpoint(id):
+def get_similar_endpoint(id):
     try:
         limit = int(request.args.get("limit", 20))
-        vector = milvus_client.get_by_id(id)
-        neighbors = milvus_client.search_neighbors(vector, limit)
+        results = service.search_similar(id, limit)
 
-        results = [
-            {"id": result["id"], "distance": result["distance"]} for result in neighbors
-        ]
+        return jsonify(results), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/search", methods=["GET"])
+def search_by_text_endpoint():
+    try:
+        limit = int(request.args.get("limit", 20))
+        text = request.args.get("query")
+        results = service.search_by_text(text, limit)
+
         return jsonify(results), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -55,12 +70,11 @@ def search_neighbors_endpoint(id):
 @main.route("/features/<int:id>", methods=["DELETE"])
 def delete_by_id_endpoint(id):
     try:
-        if not milvus_client.exists(id):
-            return jsonify({"error": "Vector not found"}), 404
-
-        milvus_client.delete(id)
+        service.delete(id)
         return jsonify({"success": True}), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except ServiceError as e:
+        return e.to_flask_res()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
