@@ -8,18 +8,23 @@ services:
       dockerfile: docker/Dockerfile.dev
     ports:
       - "8000:8000"
-    mem_limit: 512m
+    mem_limit: 2gb
     volumes:
       - ./venv:/app/venv
       - ./models/:/app/models
       - ./milvus_data/:/app/milvus_data
     networks:
       - gopix
+      - milvus
     environment:
       FLASK_APP: app
       FLASK_ENV: development
+      MILVUS_HOST: standalone
 
 networks:
   gopix:
     external:
       name: server_gopix
+  milvus:
+    external:
+      name: vectorization_milvus
