@@ -1,0 +1,68 @@
+.top {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  background-position: 35% top;
+  background-repeat: no-repeat;
+
+  @media (min-width: 640px) {
+    background-position: 38% top;
+  }
+
+  @media (min-width: 768px) {
+    background-position: 40% top;
+  }
+
+  @media (min-width: 1024px) {
+    background-position: 44% top;
+  }
+
+  @media (min-width: 1280px) {
+    background-position: top;
+  }
+
+  &:focus-visible {
+    display: none;
+  }
+}
+
+.bottom {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  background-position: 35% bottom;
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;
+
+  @media (min-width: 640px) {
+    background-position: 38% bottom;
+  }
+
+  @media (min-width: 768px) {
+    background-position: 40% bottom;
+  }
+
+  @media (min-width: 1024px) {
+    background-position: 44% bottom;
+  }
+
+  @media (min-width: 1280px) {
+    background-position: bottom;
+  }
+
+  &:focus-visible {
+    display: none;
+  }
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  background-position: top;
+  opacity: 0.1;
+
+  &:focus-visible {
+    display: none;
+  }
+}

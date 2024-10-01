@@ -1,0 +1,36 @@
+@import 'src/styles/mixins.scss';
+
+.header {
+  @include container;
+  padding: 64px 8px;
+
+  &Title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-wrap: pretty;
+    line-height: 1.25;
+
+    @media (min-width: 640px) {
+      font-size: clamp(2rem, 3.75vw, 3rem);
+      line-height: 1.25;
+    }
+  }
+}
+
+.wrapper {
+  border-radius: 32px;
+  background: rgba(0, 0, 0, 0.7);
+  height: 100%;
+  padding: 64px 16px;
+  min-height: 100svh;
+}
+
+.container {
+  @include container;
+
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+  gap: 32px 56px;
+}
