@@ -1,0 +1,18 @@
+@import 'src/styles/mixins.scss';
+
+.header {
+  @include container;
+
+  &Content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 8px;
+    height: 32px;
+
+    &Title {
+      margin: 0;
+      font-size: 24px;
+    }
+  }
+}

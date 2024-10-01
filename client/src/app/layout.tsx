@@ -1,9 +1,13 @@
-import type { Metadata } from 'next';
+import Header from '@/components/header';
 import '@/styles/globals.scss';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
 export const metadata: Metadata = {
 	title: 'Gopix'
 };
+
+const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
 	children
@@ -12,7 +16,12 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='en'>
-			<body>{children}</body>
+			<body className={inter.className}>
+				<div>
+					<Header />
+					{children}
+				</div>
+			</body>
 		</html>
 	);
 }
