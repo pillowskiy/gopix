@@ -1,0 +1,59 @@
+.switch {
+  --headless-switch-size: 1.75rem;
+  --headless-switch-padding: 0.25rem;
+
+  position: relative;
+  display: flex;
+  height: var(--headless-switch-size);
+  width: calc(var(--headless-switch-size) * 2);
+  cursor: pointer;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: var(--headless-switch-padding);
+  transition: background-color 200ms ease-in-out;
+  border: none;
+  outline: none;
+
+  &:focus {
+    outline-width: 1px;
+    outline-color: white;
+  }
+
+  &[data-checked] {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  &Circle {
+    pointer-events: none;
+    display: inline-block;
+    aspect-ratio: 1/1;
+    height: 100%;
+    width: auto;
+    transform: translateX(0);
+    border-radius: 9999px;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 200ms ease-in-out;
+
+    .switch[data-checked] & {
+      transform: translateX(var(--headless-switch-size));
+    }
+  }
+
+  &Size {
+    &Small {
+      --headless-switch-size: 1rem;
+      --headless-switch-padding: 0.125rem;
+    }
+
+    &Medium {
+      --headless-switch-size: 1.5rem;
+      --headless-switch-padding: 0.25rem;
+    }
+
+    &Large {
+      --headless-switch-size: 1.75rem;
+      --headless-switch-padding: 0.25rem;
+    }
+  }
+}
