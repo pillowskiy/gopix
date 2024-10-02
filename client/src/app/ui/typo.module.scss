@@ -1,29 +1,33 @@
 @import 'src/styles/mixins.scss';
+@import 'src/styles/variables.scss';
 
 .header {
   @include container;
-  padding: 64px 8px;
 
   &Title {
-    font-size: 1rem;
+    margin: 96px 0;
+    font-size: 1.25rem;
     font-weight: 600;
     color: #ffffff;
     text-wrap: pretty;
     line-height: 1.25;
 
-    @media (min-width: 640px) {
-      font-size: clamp(2rem, 3.75vw, 3rem);
-      line-height: 1.25;
+    @media (min-width: $screen-sm) {
+      font-size: clamp(2rem, 3.25vw, 3rem);
     }
   }
 }
 
 .wrapper {
   border-radius: 32px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   height: 100%;
-  padding: 64px 16px;
+  padding: 64px 24px;
   min-height: 100svh;
+
+  @media(max-width: $screen-sm) {
+    padding: 64px 0;
+  }
 }
 
 .container {
@@ -33,4 +37,16 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 16px;
   gap: 32px 56px;
+
+  @media (max-width: $screen-lg) {
+    gap: 32px 32px;
+  }
+
+  @media (max-width: $screen-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media(max-width: $screen-sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

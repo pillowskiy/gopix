@@ -10,9 +10,10 @@
   border-radius: 9999px;
   background-color: rgba(255, 255, 255, 0.1);
   padding: var(--headless-switch-padding);
-  transition: background-color 200ms ease-in-out;
+  transition: background-color 128ms ease-in-out;
   border: none;
   outline: none;
+
 
   &:focus {
     outline-width: 1px;
@@ -24,6 +25,7 @@
   }
 
   &Circle {
+    position: relative;
     pointer-events: none;
     display: inline-block;
     aspect-ratio: 1/1;
@@ -33,10 +35,28 @@
     border-radius: 9999px;
     background-color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 200ms ease-in-out;
+    transition: transform 196ms ease-in-out;
+
+    .switchSizeMedium &::after,
+    .switchSizeLarge &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 9999px;
+      transform: scale(0.5);
+      transition: transform 128ms ease-in-out;
+      transition-delay: 64ms;
+
+      background: rgba(255, 255, 255, 0.9);
+      filter: blur(4px);
+    }
 
     .switch[data-checked] & {
       transform: translateX(var(--headless-switch-size));
+    }
+
+    .switch[data-checked] &::after {
+      transform: scale(1);
     }
   }
 

@@ -1,0 +1,41 @@
+@import 'src/styles/variables';
+@import 'src/styles/mixins';
+
+.input {
+  @include font-small;
+  display: block;
+  color: $foreground;
+  border-radius: 9999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px 14px;
+}
+
+.input[data-focus] {
+  outline: rgba(255, 255, 255, 0.25) solid 2px;
+  outline-offset: -2px;
+}
+
+.detailed {
+  &Input {
+    width: 100%;
+  }
+
+  &Container {
+    padding: 8px 0;
+  }
+
+  &Label {
+    @include font-small;
+    line-height: 1.25;
+    font-weight: 500;
+    color: $foreground;
+    margin-bottom: 8px;
+  }
+
+  &Description {
+    @include font-small;
+    color: $grey;
+    margin-bottom: 12px;
+  }
+}

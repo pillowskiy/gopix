@@ -1,0 +1,68 @@
+@import 'src/styles/variables';
+
+.checkbox {
+  --headless-checkbox-size: 1.5rem;
+  --headless-checkbox-rounded: 0.25rem;
+
+  width: var(--headless-checkbox-size);
+  height: var(--headless-checkbox-size);
+  position: relative;
+  border-radius: var(--headless-checkbox-rounded);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 128ms ease-out;
+
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &::after {
+    content: '';
+    background: $foreground;
+    position: absolute;
+    inset: 0;
+    border-radius: var(--headless-checkbox-rounded);
+    transform: scale(0.5);
+    opacity: 0;
+    transition: all 128ms ease-in-out;
+  }
+
+  &[data-checked]::after {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  &Checkmark {
+    position: relative;
+    color: $background;
+    z-index: 10;
+    stroke-dashoffset: 20;
+    stroke-dasharray: 20;
+    transition: stroke-dashoffset 128ms ease-in;
+    transition-delay: 196ms;
+    opacity: 0;
+
+    .checkbox[data-checked] & {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  &Size {
+    &Small {
+      --headless-checkbox-size: 1rem;
+    }
+
+    &Medium {
+      --headless-switch-size: 1.5rem;
+    }
+
+    &Large {
+      --headless-switch-size: 1.75rem;
+    }
+  }
+}

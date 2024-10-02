@@ -1,0 +1,25 @@
+@import 'src/styles/variables';
+@import 'src/styles/mixins';
+
+.link {
+  color: $blue;
+  text-decoration: underline;
+  transition: all 128ms ease-in-out;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: $darkblue;
+  }
+
+  &Small {
+    @include font-small;
+  }
+
+  &Base {
+    @include font-base;
+  }
+
+  &Large {
+    @include font-large;
+  }
+}

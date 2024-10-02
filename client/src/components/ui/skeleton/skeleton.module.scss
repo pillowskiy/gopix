@@ -1,0 +1,41 @@
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  transition: background 300ms;
+  border-radius: 0.5rem;
+
+  &::before {
+    content: '';
+    opacity: 1;
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
+  }
+
+  &[data-loaded="true"] {
+    pointer-events: auto;
+    overflow: visible;
+    background-color: transparent;
+
+    &::before {
+      opacity: 0;
+      z-index: -10;
+      animation: none;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
