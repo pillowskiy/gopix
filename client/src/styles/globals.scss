@@ -2,16 +2,20 @@
 @import "./_variables.scss";
 @import "./_mixins.scss";
 
-html {
-  height: 100%;
-  background: $background;
-  color: $foreground;
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  background: $background;
+  color: $foreground;
+
   position: relative;
-  min-height: 100%;
+  min-height: 100svh;
+  max-width: 100%;
 }

@@ -1,3 +1,4 @@
+import { NoiseBackground } from '@/components/backdroung-texture';
 import Header from '@/components/header';
 import '@/styles/globals.scss';
 import type { Metadata } from 'next';
@@ -17,10 +18,9 @@ export default function RootLayout({
 	return (
 		<html lang='en'>
 			<body className={inter.className}>
-				<div>
-					<Header />
-					{children}
-				</div>
+				<Header />
+				<NoiseBackground />
+				{children}
 			</body>
 		</html>
 	);

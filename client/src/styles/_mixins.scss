@@ -1,12 +1,37 @@
+@import 'src/styles/variables.scss';
+
 @mixin container {
-  width: 100%;
-  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 64px;
+  max-width: 1440px;
+
+  @media (max-width: $screen-md) {
+    padding: 0 1.5rem;
+  }
 }
 
 @mixin space-y($spacing) {
   >*+* {
     margin-top: $spacing;
   }
+}
+
+@mixin font-small {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@mixin font-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+@mixin font-large {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+@mixin font-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
 }
