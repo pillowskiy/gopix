@@ -34,7 +34,6 @@
 
   &Ghost {
     background-color: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(4px);
 
     &[data-hover],
     &[data-open] {
@@ -44,7 +43,6 @@
 
   &Secondary {
     background-color: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(6px);
 
     &[data-hover],
     &[data-open] {
@@ -56,5 +54,49 @@
     &[data-active] {
       transform: scale(0.97);
     }
+  }
+}
+
+.attentionBtn {
+  background: $background;
+  backdrop-filter: blur(24px);
+  transition: all 128ms ease;
+  font-weight: 600;
+  outline-offset: 1px;
+  outline-width: 2px;
+
+  &[data-hover],
+  &[data-open] {
+    transform: none;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  &Spinner {
+    position: absolute;
+    inset: -300%;
+    animation: spin 3s linear infinite;
+    background: conic-gradient(from 90deg at 50% 50%, #F54180 0%, #338EF7 50%, #F54180 100%);
+  }
+
+  &Wrapper {
+    padding: 2px;
+    border-radius: 9999px;
+    position: relative;
+    overflow: hidden;
+    transition: all 128ms ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

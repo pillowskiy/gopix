@@ -1,5 +1,5 @@
 import { PresentCard } from '@/components/present-card';
-import { Button } from '@/components/ui/button';
+import { Button, AttentionButton } from '@/components/ui/button';
 import styles from './typo.module.scss';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input/input';
@@ -8,6 +8,15 @@ import { BackgroundGradient } from '@/components/backdroung-texture';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Link } from '@/components/ui/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+	Dialog,
+	DialogOverlay,
+	DialogTrigger,
+	DialogPanel,
+	DialogTitle,
+	DialogClose
+} from '@/components/ui/dialog';
+import { ArrowUpTrayIcon } from '@heroicons/react/16/solid';
 
 export default function TypoPage() {
 	return (
@@ -19,7 +28,7 @@ export default function TypoPage() {
 					blending innovation with flexibility.
 				</h1>
 			</div>
-			<div className={styles.wrapper} style={{}}>
+			<div className={styles.wrapper}>
 				<div className={styles.container}>
 					<PresentCard title='Button Accent (default)'>
 						<Button>Save changes</Button>
@@ -31,6 +40,12 @@ export default function TypoPage() {
 
 					<PresentCard title='Button Secondary'>
 						<Button variant='secondary'>Save changes</Button>
+					</PresentCard>
+
+					<PresentCard title='Attention Button'>
+						<AttentionButton style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							Upload <ArrowUpTrayIcon style={{ height: '16px', width: '16px' }} />
+						</AttentionButton>
 					</PresentCard>
 
 					<PresentCard title='Switch'>
@@ -85,6 +100,42 @@ export default function TypoPage() {
 								<Skeleton style={{ width: '80%', height: '12px', borderRadius: '9999px' }} />
 							</div>
 						</div>
+					</PresentCard>
+
+					<PresentCard title='Dialog'>
+						<Dialog>
+							<DialogTrigger>Open Dialog</DialogTrigger>
+							<DialogOverlay>
+								<DialogPanel>
+									<DialogTitle
+										as='h3'
+										style={{
+											fontSize: '18px',
+											lineHeight: '26px',
+											fontWeight: '600'
+										}}
+									>
+										Payment successful
+									</DialogTitle>
+
+									<p
+										style={{
+											marginTop: '10px',
+											fontSize: '14px',
+											lineHeight: '22px',
+											color: 'rgba(255, 255, 255, 0.6)'
+										}}
+									>
+										Your payment has been successfully submitted. We’ve sent you an email with all
+										of the details of your order.
+									</p>
+
+									<div style={{ marginTop: '16px' }}>
+										<DialogClose>Got it, thanks!</DialogClose>
+									</div>
+								</DialogPanel>
+							</DialogOverlay>
+						</Dialog>
 					</PresentCard>
 				</div>
 			</div>
