@@ -1,0 +1,83 @@
+@import 'src/styles/variables';
+
+.dialog {
+  position: relative;
+  z-index: 10;
+
+  &:focus {
+    outline: none;
+  }
+
+  &Backdrop {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(0deg,
+        transparent 20%,
+        rgba(0, 0, 0, 0.8) 100%);
+    transition: all 256ms ease-out;
+
+    &[data-closed] {
+      opacity: 0;
+    }
+  }
+
+  &Wrapper {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+
+    display: flex;
+    min-height: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  &Panel {
+    max-width: 448px;
+    width: 100%;
+
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 24px;
+    backdrop-filter: blur(40px);
+    z-index: 10;
+    transition: all 128ms ease-out;
+
+    &[data-closed] {
+      transform: scale(80%);
+      opacity: 0;
+    }
+
+    &X {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      padding: 6px;
+
+      border: none;
+      outline: none;
+      color: $foreground;
+      background-color: transparent;
+
+      transition: all 128ms ease-out;
+
+      &[data-hover] {
+        background: rgba(0, 0, 0, 0.15);
+      }
+
+      &[data-active] {
+        outline: none;
+        background: rgba(0, 0, 0, 0.3)
+      }
+
+      &[data-focus] {
+        outline: $grey solid 1px;
+      }
+    }
+  }
+}
