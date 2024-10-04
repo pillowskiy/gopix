@@ -1,0 +1,71 @@
+@import 'src/styles/mixins';
+@import 'src/styles/variables';
+
+.disclosure {
+  --headless-disclosure-width: 448px;
+
+  max-width: var(--headless-disclosure-width);
+  width: 100%;
+  border-top: 1px rgba(255, 255, 255, 0.05) solid;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+
+  &Item {
+    padding: 20px;
+
+    &:not(:last-child) {
+      border-bottom: 1px rgba(255, 255, 255, 0.05) solid;
+    }
+  }
+
+  &Trigger {
+    display: flex;
+    color: $foreground;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    &Text {
+      @include font-base;
+      font-weight: 500;
+
+      .disclosureTrigger[data-hover] & {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    &Icon {
+      width: 20px;
+      height: 20px;
+      fill: rgba(255, 255, 255, 0.6);
+      transition: all 256ms ease-in-out;
+
+      .disclosureTrigger[data-open] & {
+        fill: rgba(255, 255, 255, 0.5);
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &Panel {
+    @include font-small;
+
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 8px;
+    transform-origin: top;
+    transition: all 128ms ease-out;
+
+    &[data-closed] {
+      transform: translateY(-24px);
+      opacity: 0;
+    }
+
+    &Wrapper {
+      overflow: hidden;
+    }
+  }
+}
