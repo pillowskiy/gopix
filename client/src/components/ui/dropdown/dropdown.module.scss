@@ -1,0 +1,67 @@
+@import 'src/styles/mixins';
+@import 'src/styles/variables';
+
+.dropdown {
+  &Trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &Icon {
+      width: 16px;
+      height: 16px;
+      fill: rgba(255, 255, 255, 0.6);
+      transition: 256ms ease-out;
+
+      .dropdownTrigger[data-open] & {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &Items {
+    --anchor-gap: 4px;
+    @include font-small;
+
+    transform-origin: top right;
+    border-radius: 12px;
+    border: 1px rgba(255, 255, 255, 0.1) solid;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    backdrop-filter: blur(40px);
+
+    transition: transform 128ms ease-out, opacity 256ms ease;
+
+    &:focus {
+      outline: none;
+    }
+
+    &[data-closed] {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+  }
+
+  &Item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    font-weight: 500;
+    color: $foreground;
+
+    &[data-focus] {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  &Separator {
+    margin: 4px 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
