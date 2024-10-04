@@ -39,6 +39,7 @@
 
     border-radius: 0.75rem;
     background: rgba(255, 255, 255, 0.05);
+    border: 1px rgba(255, 255, 255, 0.1) solid;
     padding: 24px;
     backdrop-filter: blur(40px);
     z-index: 10;
@@ -67,12 +68,12 @@
       transition: all 128ms ease-out;
 
       &[data-hover] {
-        background: rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.1);
       }
 
       &[data-active] {
         outline: none;
-        background: rgba(0, 0, 0, 0.3)
+        background: rgba(255, 255, 255, 0.15);
       }
 
       &[data-focus] {
