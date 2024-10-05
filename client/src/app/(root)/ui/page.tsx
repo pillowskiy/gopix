@@ -16,7 +16,26 @@ import {
 	DialogTitle,
 	DialogClose
 } from '@/components/ui/dialog';
-import { ArrowUpTrayIcon } from '@heroicons/react/16/solid';
+import {
+	ArchiveBoxXMarkIcon,
+	ArrowUpTrayIcon,
+	PencilIcon,
+	Square2StackIcon,
+	TrashIcon
+} from '@heroicons/react/16/solid';
+import {
+	DropdownMenu,
+	DropdownMenuItem,
+	DropdownMenuItems,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger
+} from '@/components/ui/dropdown';
+import {
+	Disclosure,
+	DisclosureItem,
+	DisclosureTrigger,
+	DisclosurePanel
+} from '@/components/ui/disclosure';
 
 export default function TypoPage() {
 	return (
@@ -136,6 +155,52 @@ export default function TypoPage() {
 								</DialogPanel>
 							</DialogOverlay>
 						</Dialog>
+					</PresentCard>
+
+					<PresentCard title='Dropdown Menu'>
+						<DropdownMenu>
+							<DropdownMenuTrigger>Options</DropdownMenuTrigger>
+
+							<DropdownMenuItems anchor='bottom' style={{ width: '206px' }}>
+								<DropdownMenuItem>
+									<PencilIcon className='icon' />
+									Edit
+								</DropdownMenuItem>
+
+								<DropdownMenuItem>
+									<Square2StackIcon className='icon' />
+									Dublicate
+								</DropdownMenuItem>
+
+								<DropdownMenuSeparator />
+
+								<DropdownMenuItem>
+									<ArchiveBoxXMarkIcon className='icon' />
+									Archive
+								</DropdownMenuItem>
+
+								<DropdownMenuItem>
+									<TrashIcon className='icon' />
+									Delete
+								</DropdownMenuItem>
+							</DropdownMenuItems>
+						</DropdownMenu>
+					</PresentCard>
+
+					<PresentCard title='Disclosure'>
+						<Disclosure>
+							<DisclosureItem>
+								<DisclosureTrigger>What is your refund policy?</DisclosureTrigger>
+								<DisclosurePanel>
+									If you're unhappy with your purchase, we'll refund you in full.
+								</DisclosurePanel>
+							</DisclosureItem>
+
+							<DisclosureItem>
+								<DisclosureTrigger>Do you offer technical support?</DisclosureTrigger>
+								<DisclosurePanel>No.</DisclosurePanel>
+							</DisclosureItem>
+						</Disclosure>
 					</PresentCard>
 				</div>
 			</div>

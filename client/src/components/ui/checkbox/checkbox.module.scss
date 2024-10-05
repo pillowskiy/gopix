@@ -4,12 +4,16 @@
   --headless-checkbox-size: 1.5rem;
   --headless-checkbox-rounded: 0.25rem;
 
+  position: relative;
+  min-width: var(--headless-checkbox-size);
+  min-height: var(--headless-checkbox-size);
   width: var(--headless-checkbox-size);
   height: var(--headless-checkbox-size);
+
   position: relative;
   border-radius: var(--headless-checkbox-rounded);
   background: rgba(255, 255, 255, 0.1);
-  padding: 4px;
+  padding: 2px;
   overflow: hidden;
   cursor: pointer;
   transition: all 128ms ease-out;
@@ -40,6 +44,7 @@
     position: relative;
     color: $background;
     z-index: 10;
+
     stroke-dashoffset: 20;
     stroke-dasharray: 20;
     transition: stroke-dashoffset 128ms ease-in;
@@ -54,15 +59,15 @@
 
   &Size {
     &Small {
-      --headless-checkbox-size: 1rem;
+      --headless-checkbox-size: 1.25rem;
     }
 
     &Medium {
-      --headless-switch-size: 1.5rem;
+      --headless-checkbox-size: 1.5rem;
     }
 
     &Large {
-      --headless-switch-size: 1.75rem;
+      --headless-checkbox-size: 1.75rem;
     }
   }
 }

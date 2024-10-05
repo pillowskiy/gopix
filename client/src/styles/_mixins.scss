@@ -16,6 +16,11 @@
   }
 }
 
+@mixin font-micro {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
 @mixin font-small {
   font-size: 0.875rem;
   line-height: 1.25rem;
