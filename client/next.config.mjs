@@ -1,21 +1,17 @@
+import bundleAnalyzer from '@next/bundle-analyzer';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	reactStrictMode: true,
-	standalone: true,
-	bundlePagesRouterDependencies: true,
-	optimizePackageImports: ['@headlessui/react'],
+	output: 'standalone',
 	swcMinify: true,
-	webpack: (config, { isServer }) => {
-		if (!isServer) {
-			Object.assign(config.resolve.alias, {
-				'react/jsx-runtime.js': 'preact/compat/jsx-runtime',
-				react: 'preact/compat',
-				'react-dom/test-utils': 'preact/test-utils',
-				'react-dom': 'preact/compat'
-			});
-		}
-		return config;
+	experimental: {
+		optimizePackageImports: ['package-name']
 	}
 };
 
-export default nextConfig;
+const withBundleAnalyzer = bundleAnalyzer({
+	enabled: process.env.ANALYZE === 'true'
+});
+
+export default withBundleAnalyzer(nextConfig);
