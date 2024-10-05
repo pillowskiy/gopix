@@ -1,24 +1,32 @@
 'use client';
 
-import * as Headless from '@headlessui/react';
+import {
+	Menu as HeadlessMenu,
+	MenuButton as HeadlessMenuButton,
+	MenuItems as HeadlessMenuItems,
+	MenuItem as HeadlessMenuItem,
+	type MenuButtonProps,
+	type MenuItemsProps,
+	type ButtonProps as HeadlessButtonProps
+} from '@headlessui/react';
 import cc from 'classcat';
 import styles from './dropdown.module.scss';
 import { forwardRef } from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { ChevronDownIcon } from '@heroicons/react/16/solid';
 
-export const DropdownMenu = Headless.Menu;
+export const DropdownMenu = HeadlessMenu;
 
-export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, Headless.MenuButtonProps>(
+export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, MenuButtonProps>(
 	({ children, className, as = DropdownDefaultTrigger, ...props }, ref) => (
-		<Headless.MenuButton
+		<HeadlessMenuButton
 			ref={ref}
 			className={cc([styles.dropdownTrigger, className])}
 			as={as}
 			{...props}
 		>
 			{children}
-		</Headless.MenuButton>
+		</HeadlessMenuButton>
 	)
 );
 
@@ -31,9 +39,9 @@ const DropdownDefaultTrigger = forwardRef<HTMLButtonElement, Omit<ButtonProps, '
 	)
 );
 
-export const DropdownMenuItems = forwardRef<HTMLDivElement, Headless.MenuItemsProps>(
+export const DropdownMenuItems = forwardRef<HTMLDivElement, MenuItemsProps>(
 	({ className, transition = true, ...props }, ref) => (
-		<Headless.MenuItems
+		<HeadlessMenuItems
 			ref={ref}
 			className={cc([styles.dropdownItems, className])}
 			transition={transition}
@@ -44,11 +52,11 @@ export const DropdownMenuItems = forwardRef<HTMLDivElement, Headless.MenuItemsPr
 
 export const DropdownMenuItem = forwardRef<
 	HTMLButtonElement,
-	React.PropsWithChildren<Headless.ButtonProps>
+	React.PropsWithChildren<HeadlessButtonProps>
 >(({ children, className, as: Component = 'button', ...props }, ref) => (
-	<Headless.MenuItem ref={ref} {...props}>
+	<HeadlessMenuItem ref={ref} {...props}>
 		<Component className={cc([styles.dropdownItem, className])}>{children}</Component>
-	</Headless.MenuItem>
+	</HeadlessMenuItem>
 ));
 
 export const DropdownMenuSeparator = forwardRef<

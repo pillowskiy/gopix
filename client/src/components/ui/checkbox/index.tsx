@@ -1,7 +1,10 @@
-import * as Headless from '@headlessui/react';
-import styles from './checkbox.module.scss';
+import {
+	Checkbox as HeadlessCheckbox,
+	type CheckboxProps as HeadlessCheckboxProps
+} from '@headlessui/react';
 import cc from 'classcat';
 import { forwardRef } from 'react';
+import styles from './checkbox.module.scss';
 
 const checkboxSizesStyles = {
 	small: styles.checkboxSizeSmall,
@@ -9,13 +12,13 @@ const checkboxSizesStyles = {
 	large: styles.checkboxSizeLarge
 } as const;
 
-interface CheckboxProps extends Headless.CheckboxProps {
+interface CheckboxProps extends HeadlessCheckboxProps {
 	size?: keyof typeof checkboxSizesStyles;
 }
 
 export const Checkbox = forwardRef<HTMLSpanElement, CheckboxProps>(
 	({ className, size = 'medium', ...props }, ref) => (
-		<Headless.Checkbox
+		<HeadlessCheckbox
 			ref={ref}
 			className={cc([styles.checkbox, checkboxSizesStyles[size], className])}
 			{...props}
@@ -31,6 +34,6 @@ export const Checkbox = forwardRef<HTMLSpanElement, CheckboxProps>(
 					strokeLinejoin='round'
 				/>
 			</svg>
-		</Headless.Checkbox>
+		</HeadlessCheckbox>
 	)
 );

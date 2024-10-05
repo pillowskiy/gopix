@@ -1,8 +1,8 @@
 'use client';
 
-import { forwardRef } from 'react';
-import { Button as HeadlessButton, ButtonProps } from '@headlessui/react';
+import { ButtonProps, Button as HeadlessButton } from '@headlessui/react';
 import cc from 'classcat';
+import { forwardRef } from 'react';
 import styles from './button.module.scss';
 
 export const AttentionButton = forwardRef<HTMLButtonElement, ButtonProps>(

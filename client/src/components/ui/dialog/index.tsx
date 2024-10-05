@@ -1,10 +1,18 @@
 'use client';
 
-import * as Headless from '@headlessui/react';
-import { forwardRef, createContext, useState, useContext, useCallback } from 'react';
-import { Button, type ButtonProps } from '../button';
+import {
+	Dialog as HeadlessDialog,
+	DialogBackdrop as HeadlessDialogBackdrop,
+	DialogPanel as HeadlessDialogPanel,
+	DialogTitle as HeadlessDialogTitle,
+	Button as HeadlessButton,
+	type DialogProps,
+	type DialogPanelProps
+} from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import cc from 'classcat';
+import { createContext, forwardRef, useCallback, useContext, useState } from 'react';
+import { Button, type ButtonProps } from '../button';
 import styles from './dialog.module.scss';
 
 interface DialogContextState {
@@ -40,12 +48,12 @@ export const Dialog = ({
 
 export const DialogOverlay = forwardRef<
 	HTMLDivElement,
-	React.PropsWithChildren<Omit<Headless.DialogProps, 'onClose'>>
+	React.PropsWithChildren<Omit<DialogProps, 'onClose'>>
 >(({ className, children, ...props }, ref) => {
 	const dialog = useDialog();
 
 	return (
-		<Headless.Dialog
+		<HeadlessDialog
 			ref={ref}
 			as='div'
 			open={dialog.isOpen}
@@ -53,9 +61,9 @@ export const DialogOverlay = forwardRef<
 			className={cc([styles.dialog, className])}
 			{...props}
 		>
-			<Headless.DialogBackdrop transition className={styles.dialogBackdrop} />
+			<HeadlessDialogBackdrop transition className={styles.dialogBackdrop} />
 			<div className={styles.dialogWrapper}>{children}</div>
-		</Headless.Dialog>
+		</HeadlessDialog>
 	);
 });
 
@@ -65,32 +73,31 @@ export const DialogTrigger = forwardRef<HTMLButtonElement, ButtonProps>((props, 
 	return <Button ref={ref} onClick={dialog.open} {...props} />;
 });
 
-export const DialogPanel = forwardRef<
-	HTMLDivElement,
-	React.PropsWithChildren<Headless.DialogPanelProps>
->(({ className, transition = true, children, ...props }, ref) => {
-	const dialog = useDialog();
-	return (
-		<Headless.DialogPanel
-			ref={ref}
-			className={cc([styles.dialogPanel, className])}
-			transition={transition}
-			{...props}
-		>
-			<Headless.Button
-				type='button'
-				aria-label='Close dialog button'
-				className={styles.dialogPanelX}
-				onClick={dialog.close}
+export const DialogPanel = forwardRef<HTMLDivElement, React.PropsWithChildren<DialogPanelProps>>(
+	({ className, transition = true, children, ...props }, ref) => {
+		const dialog = useDialog();
+		return (
+			<HeadlessDialogPanel
+				ref={ref}
+				className={cc([styles.dialogPanel, className])}
+				transition={transition}
+				{...props}
 			>
-				<XMarkIcon />
-			</Headless.Button>
-			{children}
-		</Headless.DialogPanel>
-	);
-});
+				<HeadlessButton
+					type='button'
+					aria-label='Close dialog button'
+					className={styles.dialogPanelX}
+					onClick={dialog.close}
+				>
+					<XMarkIcon />
+				</HeadlessButton>
+				{children}
+			</HeadlessDialogPanel>
+		);
+	}
+);
 
-export const DialogTitle = Headless.DialogTitle;
+export const DialogTitle = HeadlessDialogTitle;
 
 export const DialogClose = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
 	const dialog = useDialog();

@@ -2,7 +2,14 @@
 
 import cc from 'classcat';
 import styles from './disclosure.module.scss';
-import * as Headless from '@headlessui/react';
+import {
+	Disclosure as HeadlessDisclosure,
+	DisclosureButton as HeadlessDisclosureButton,
+	DisclosurePanel as HeadlessDisclosurePanel,
+	type DisclosureProps,
+	type DisclosureButtonProps,
+	type DisclosurePanelProps
+} from '@headlessui/react';
 import { forwardRef } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/16/solid';
 
@@ -16,44 +23,44 @@ export const Disclosure = forwardRef<HTMLDivElement, React.ComponentPropsWithout
 
 export const DisclosureItem = forwardRef<
 	HTMLDivElement,
-	React.PropsWithChildren<Headless.DisclosureProps & React.ComponentProps<'div'>>
+	React.PropsWithChildren<DisclosureProps & React.ComponentProps<'div'>>
 >(({ className, children, ...props }, ref) => (
-	<Headless.Disclosure
+	<HeadlessDisclosure
 		as='div'
 		className={cc([styles.disclosureItem, className])}
 		ref={ref}
 		{...props}
 	>
 		{children}
-	</Headless.Disclosure>
+	</HeadlessDisclosure>
 ));
 
 export const DisclosureTrigger = forwardRef<
 	HTMLButtonElement,
-	React.PropsWithChildren<Headless.DisclosureButtonProps>
+	React.PropsWithChildren<DisclosureButtonProps>
 >(({ className, children, ...props }, ref) => (
-	<Headless.DisclosureButton
+	<HeadlessDisclosureButton
 		className={cc([styles.disclosureTrigger, className])}
 		ref={ref}
 		{...props}
 	>
 		<span className={styles.disclosureTriggerText}>{children}</span>
 		<ChevronDownIcon className={styles.disclosureTriggerIcon} />
-	</Headless.DisclosureButton>
+	</HeadlessDisclosureButton>
 ));
 
 export const DisclosurePanel = forwardRef<
 	HTMLDivElement,
-	React.PropsWithChildren<Headless.DisclosurePanelProps & React.ComponentProps<'div'>>
+	React.PropsWithChildren<DisclosurePanelProps & React.ComponentProps<'div'>>
 >(({ className, transition = true, children, ...props }, ref) => (
 	<div className={styles.disclosurePanelWrapper}>
-		<Headless.DisclosurePanel
+		<HeadlessDisclosurePanel
 			ref={ref}
 			className={cc([styles.disclosurePanel, className])}
 			transition={transition}
 			{...props}
 		>
 			{children}
-		</Headless.DisclosurePanel>
+		</HeadlessDisclosurePanel>
 	</div>
 ));

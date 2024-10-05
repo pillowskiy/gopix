@@ -1,12 +1,17 @@
 'use client';
 
 import { forwardRef } from 'react';
-import * as Headless from '@headlessui/react';
+import {
+	Field as HeadlessField,
+	Label as HeadlessLabel,
+	Description as HeadlessDescription,
+	type InputProps as HeadlessInputProps
+} from '@headlessui/react';
 import { Input } from './input';
 import cc from 'classcat';
 import styles from './input.module.scss';
 
-interface DetailedInputProps extends Headless.InputProps {
+interface DetailedInputProps extends HeadlessInputProps {
 	title?: string;
 	description?: string;
 }
@@ -14,15 +19,15 @@ interface DetailedInputProps extends Headless.InputProps {
 export const DetailedInput = forwardRef<HTMLInputElement, DetailedInputProps>(
 	({ title, description, className, style, ...props }, ref) => (
 		<div className={cc([styles.detailedContainer, className])} style={style}>
-			<Headless.Field>
-				{title && <Headless.Label className={styles.detailedLabel}>{title}</Headless.Label>}
+			<HeadlessField>
+				{title && <HeadlessLabel className={styles.detailedLabel}>{title}</HeadlessLabel>}
 				{description && (
-					<Headless.Description className={styles.detailedDescription}>
+					<HeadlessDescription className={styles.detailedDescription}>
 						{description}
-					</Headless.Description>
+					</HeadlessDescription>
 				)}
 				<Input className={styles.detailedInput} ref={ref} {...props} />
-			</Headless.Field>
+			</HeadlessField>
 		</div>
 	)
 );
