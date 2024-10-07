@@ -48,10 +48,10 @@ export default function AuthTabs({ defaultActive = 0 }: AuthTabsProps) {
 	};
 
 	return (
-		<div className={styles.loginTabs}>
+		<div className={styles.authTabs}>
 			{backdropSettings && (
 				<div
-					className={styles.loginTabsBackdrop}
+					className={styles.authTabsBackdrop}
 					style={{
 						transform: `translateX(${backdropSettings.translateX}px)`,
 						width: backdropSettings.width
@@ -65,7 +65,7 @@ export default function AuthTabs({ defaultActive = 0 }: AuthTabsProps) {
 					href={tab.href}
 					onClick={onTabClick}
 					ref={defaultActive === i ? targetRef : null}
-					className={styles.loginTabsItem}
+					className={styles.authTabsItem}
 				>
 					{tab.title}
 				</Link>

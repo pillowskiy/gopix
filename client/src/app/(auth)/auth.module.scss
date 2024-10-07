@@ -156,7 +156,7 @@
   font-size: 24px;
 }
 
-.login {
+.auth {
   &Container {
     position: relative;
     max-width: 325px;
@@ -170,6 +170,13 @@
       border-radius: 9999px;
       background: rgba(255, 255, 255, 0.15);
       filter: blur(24px);
+    }
+
+    &OAuth {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
   }
 
@@ -234,13 +241,10 @@
       color: rgba(255, 255, 255, 0.6);
       text-wrap: pretty;
       font-weight: 500;
-    }
-  }
 
-  &OAuth {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+      &[data-error] {
+        color: $destructive;
+      }
+    }
   }
 }
