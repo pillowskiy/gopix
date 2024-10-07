@@ -16,13 +16,14 @@
   outline-offset: -2px;
 }
 
+.input[data-error] {
+  outline: $destructive solid 1px;
+  outline-offset: -2px;
+}
+
 .detailed {
   &Input {
     width: 100%;
-  }
-
-  &Container {
-    padding: 8px 0;
   }
 
   &Label {
@@ -37,5 +38,12 @@
     @include font-small;
     color: $grey;
     margin-bottom: 12px;
+  }
+
+  &Error {
+    @include font-micro;
+    font-weight: 500;
+    line-height: 1.5;
+    color: $destructive;
   }
 }
