@@ -1,8 +1,11 @@
 'use client';
 
-import { Button as HeadlessButton } from '@headlessui/react';
-import cc from 'classcat';
 import { forwardRef } from 'react';
+import {
+	Button as HeadlessButton,
+	type ButtonProps as HeadlessButtonProps
+} from '@headlessui/react';
+import cc from 'classcat';
 import styles from './button.module.scss';
 
 const buttonVariantsStyles = {
@@ -11,7 +14,7 @@ const buttonVariantsStyles = {
 	secondary: styles.btnSecondary
 } as const;
 
-export interface ButtonProps extends React.ComponentProps<'button'> {
+export interface ButtonProps extends HeadlessButtonProps {
 	variant?: keyof typeof buttonVariantsStyles;
 }
 
