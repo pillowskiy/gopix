@@ -10,11 +10,14 @@ export default function AuthLayout({ children }: React.PropsWithChildren) {
 					<ArrowUturnLeftIcon className={styles.homeAnchorIcon} />
 				</Link>
 
-				<span className={styles.logo}>G</span>
-				<p className={styles.description}>Welcome back</p>
+				<div className={styles.containerContent}>
+					<span className={styles.logo}>G</span>
+					<p className={styles.description}>Welcome back</p>
 
-				{children}
+					{children}
+				</div>
 			</div>
+
 			<div className={styles.previewContainer}>
 				<div className={styles.previewAuthor}>
 					<div className={styles.previewAuthorAvatar}></div>
