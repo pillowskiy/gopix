@@ -32,9 +32,9 @@ func NewAuthHandlers(uc authUseCase, logger logger.Logger, cfg *config.Cookie) *
 
 func (h *AuthHandlers) Register() echo.HandlerFunc {
 	type registerDTO struct {
-		Username string `json:"username" validate:"required,gte=6,lte=60"`
-		Email    string `json:"email" validate:"required,lte=60,email"`
-		Password string `json:"password" validate:"required,gte=6"`
+		Username string `json:"username" validate:"required,gte=2,lte=48"`
+		Email    string `json:"email" validate:"required,lte=256,email"`
+		Password string `json:"password" validate:"required,gte=6,lte=48"`
 	}
 
 	return func(c echo.Context) error {
@@ -127,6 +127,6 @@ func (h *AuthHandlers) storeToken(c echo.Context, token string) {
 		HttpOnly: h.cfg.HttpOnly,
 		Path:     "/",
 		MaxAge:   int((h.cfg.Expire * time.Second).Seconds()),
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteStrictMode,
 	})
 }

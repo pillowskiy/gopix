@@ -5,11 +5,20 @@ server:
   write_timeout: 5
   ctx_timeout: 10
   debug: false
+  cors:
+    allow_credentials: true
+    allow_headers:
+      - "*"
+    allow_methods:
+      - "*"
+    allow_origins:
+      - http://localhost:3000
   cookie:
     name: token
     expire: 86400
     secure: false
     http_only: true
+    origin: http://localhost:3000
   session:
     expire: 86400
     secret: secret

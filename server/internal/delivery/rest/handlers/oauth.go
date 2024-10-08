@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -60,7 +61,15 @@ func (h *OAuthHandlers) Callback(service domain.OAuthService) echo.HandlerFunc {
 		}
 
 		h.storeToken(c, authUser.Token)
-		return c.JSON(http.StatusOK, authUser.User)
+		// See https://stackoverflow.com/questions/42216700/how-can-i-redirect-after-oauth2-with-samesite-strict-and-still-get-my-cookies
+		return c.HTML(
+			http.StatusOK,
+			fmt.Sprintf(`<html>
+      <head>
+      <meta http-equiv="refresh" content="0;URL='%s'"/>
+      </head>
+      </html>`, h.cfg.Origin),
+		)
 	}
 }
 
@@ -85,6 +94,6 @@ func (h *OAuthHandlers) storeToken(c echo.Context, token string) {
 		HttpOnly: h.cfg.HttpOnly,
 		Path:     "/",
 		MaxAge:   int((h.cfg.Expire * time.Second).Seconds()),
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteStrictMode,
 	})
 }

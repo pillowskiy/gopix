@@ -38,6 +38,7 @@ type Cookie struct {
 	Expire   time.Duration `mapstructure:"expire"`
 	Secure   bool          `mapstructure:"secure"`
 	HttpOnly bool          `mapstructure:"http_only"`
+	Origin   string        `mapstructure:"origin"`
 }
 
 type Session struct {
