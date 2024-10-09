@@ -6,6 +6,7 @@ import type { User } from "@/types/users";
 import { drillCookies } from "@/utils/common/next";
 import { FetchError } from "@/utils/fetch";
 import { prettifyZodErrors } from "@/utils/validation";
+import { redirect } from "next/navigation";
 import z from "zod";
 
 const signupSchema = z
@@ -51,21 +52,23 @@ export async function signup(
     };
   }
 
-  const { data } = parsedInput;
-  const res = await $api.post("auth/register", {
-    json: {
-      username: data.username,
-      email: data.email,
-      password: data.password,
-    },
-  });
-
   try {
-    const body = await res.json<User>();
+    const { data } = parsedInput;
+    const res = await $api.post("auth/register", {
+      json: {
+        username: data.username,
+        email: data.email,
+        password: data.password,
+      },
+    });
     drillCookies(res);
-    return { success: true, data: body };
   } catch (err) {
-    const fetchErr = await FetchError.fromKy(err);
-    return { success: false, message: fetchErr.error };
+    const fetchError = await FetchError.fromKy(err);
+    return {
+      success: false,
+      message: fetchError.error,
+    };
   }
+
+  redirect("/");
 }
