@@ -18,11 +18,11 @@ import { ChevronDownIcon } from '@heroicons/react/16/solid';
 export const DropdownMenu = HeadlessMenu;
 
 export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, MenuButtonProps>(
-	({ children, className, as = DropdownDefaultTrigger, ...props }, ref) => (
+	({ children, className, as, ...props }, ref) => (
 		<HeadlessMenuButton
 			ref={ref}
 			className={cc([styles.dropdownTrigger, className])}
-			as={as}
+			as={as ?? DropdownDefaultTrigger}
 			{...props}
 		>
 			{children}
@@ -30,14 +30,15 @@ export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, MenuButtonProps
 	)
 );
 
-const DropdownDefaultTrigger = forwardRef<HTMLButtonElement, Omit<ButtonProps, 'as'>>(
-	({ children, className, ...props }, ref) => (
-		<Button ref={ref} className={cc([styles.dropdownTrigger, className])} {...props}>
-			{children}
-			<ChevronDownIcon className={styles.dropdownTriggerIcon} />
-		</Button>
-	)
-);
+const DropdownDefaultTrigger = forwardRef<
+	HTMLButtonElement,
+	Omit<React.PropsWithChildren<ButtonProps>, 'as'>
+>(({ children, className, ...props }, ref) => (
+	<Button ref={ref} className={cc([styles.dropdownTrigger, className])} {...props}>
+		{children}
+		<ChevronDownIcon className={styles.dropdownTriggerIcon} />
+	</Button>
+));
 
 export const DropdownMenuItems = forwardRef<HTMLDivElement, MenuItemsProps>(
 	({ className, transition = true, ...props }, ref) => (
@@ -51,7 +52,7 @@ export const DropdownMenuItems = forwardRef<HTMLDivElement, MenuItemsProps>(
 );
 
 export const DropdownMenuItem = forwardRef<
-	HTMLButtonElement,
+	HTMLElement,
 	React.PropsWithChildren<HeadlessButtonProps>
 >(({ children, className, as: Component = 'button', ...props }, ref) => (
 	<HeadlessMenuItem ref={ref} {...props}>

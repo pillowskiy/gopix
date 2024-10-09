@@ -1,0 +1,24 @@
+@import 'src/styles/variables';
+@import 'src/styles/mixins';
+
+.dropdown {
+  &Trigger {
+    @include font-base;
+    font-weight: 500;
+    color: $foreground;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    cursor: pointer;
+
+    &Image {
+      width: 36px;
+      height: 36px;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+  }
+}
