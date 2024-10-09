@@ -1,18 +1,38 @@
-@import 'src/styles/mixins.scss';
+@import 'src/styles/mixins';
+@import 'src/styles/variables';
 
 .header {
-  @include container;
+  background: rgba(0, 0, 0, 0.8);
+  position: sticky;
+  top: 0;
 
   &Content {
+    @include container;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 0;
-    height: 32px;
+    padding: 12px 64px;
+    height: fit-content;
+  }
 
-    &Title {
-      margin: 0;
-      font-size: 24px;
-    }
+  &Section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &Actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 16px;
+  }
+
+  &Logo {
+    font-weight: 800;
+    letter-spacing: 0.05rem;
+    text-transform: uppercase;
+    margin-right: 16px;
+    font-size: 24px;
   }
 }
