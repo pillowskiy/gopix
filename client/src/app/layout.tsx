@@ -1,5 +1,5 @@
 import { NoiseBackground } from '@/components/backdroung-texture';
-import Header from '@/components/header';
+import AuthClientWrapper from '@/providers/auth';
 import '@/styles/globals.scss';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -19,7 +19,7 @@ export default function RootLayout({
 		<html lang='en'>
 			<body className={inter.className}>
 				<NoiseBackground />
-				{children}
+				<AuthClientWrapper>{children}</AuthClientWrapper>
 			</body>
 		</html>
 	);

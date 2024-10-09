@@ -15,11 +15,11 @@ export function drillCookies(res: Response) {
     cookies().set(key, value, {
       maxAge: cookieOptions["Max-Age"] ? Number(cookieOptions["Max-Age"]) : 0,
       // biome-ignore lint/complexity/useLiteralKeys: <explanation>
-      httpOnly: cookieOptions["HttpOnly"] === "true",
-      // biome-ignore lint/complexity/useLiteralKeys: <explanation>
       path: cookieOptions["Path"] || "/",
       // biome-ignore lint/complexity/useLiteralKeys: <explanation>
       secure: cookieOptions["Secure"] === "true",
+      sameSite: "strict",
+      httpOnly: true,
     });
   }
 }
