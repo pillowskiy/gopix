@@ -1,7 +1,6 @@
 'use client';
 
 import { useUserStore } from '@/providers/auth/store';
-import { ArrowRightEndOnRectangleIcon } from '@heroicons/react/20/solid';
 import {
 	DropdownMenu,
 	DropdownMenuItem,
@@ -19,16 +18,16 @@ import {
 } from '@heroicons/react/16/solid';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button, ButtonProps } from '@headlessui/react';
+import { Button as HeadlessButton, ButtonProps as HeadlessButtonProps } from '@headlessui/react';
 import { forwardRef } from 'react';
 import { User } from '@/types/users';
 import styles from './user.module.scss';
+import { Button } from '../ui/button';
 
-const UserDropdownTrigger = forwardRef<HTMLButtonElement, ButtonProps & { user: User }>(
+const UserDropdownTrigger = forwardRef<HTMLButtonElement, HeadlessButtonProps & { user: User }>(
 	({ user, ...props }, ref) => {
 		return (
-			<Button ref={ref} aria-label='User Dropdown' {...props}>
-				<span>{user.username}</span>
+			<HeadlessButton ref={ref} aria-label='User Dropdown' {...props}>
 				<Image
 					className={styles.dropdownTriggerImage}
 					src='/photo.jpg'
@@ -36,7 +35,7 @@ const UserDropdownTrigger = forwardRef<HTMLButtonElement, ButtonProps & { user: 
 					width={48}
 					height={48}
 				/>
-			</Button>
+			</HeadlessButton>
 		);
 	}
 );
@@ -46,9 +45,11 @@ export default function UserDropdown() {
 
 	if (!user) {
 		return (
-			<a aria-label='Login' href='/login'>
-				<ArrowRightEndOnRectangleIcon />
-			</a>
+			<Link href='/login' passHref legacyBehavior>
+				<Button size='small' as='a'>
+					Log in
+				</Button>
+			</Link>
 		);
 	}
 
@@ -60,7 +61,7 @@ export default function UserDropdown() {
 				as={UserDropdownTrigger}
 			/>
 			<DropdownMenuItems anchor='bottom end' style={{ width: '206px' }}>
-				<div style={{ padding: '16px' }}>
+				<div style={{ padding: '12px' }}>
 					<h5 style={{ fontSize: '16px' }}>{user.username}</h5>
 					<p style={{ fontSize: '14px' }}>{user.email}</p>
 				</div>

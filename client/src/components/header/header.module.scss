@@ -1,8 +1,11 @@
 @import 'src/styles/mixins';
 @import 'src/styles/variables';
+@import 'src/styles/utils';
 
 .header {
-  background: rgba(0, 0, 0, 0.8);
+  background: primary(0.8);
+  backdrop-filter: blur(6px);
+  z-index: 30;
   position: sticky;
   top: 0;
 
@@ -11,7 +14,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 64px;
+    padding: 18px 32px;
     height: fit-content;
   }
 
@@ -25,14 +28,43 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-right: 16px;
+    margin-right: 12px;
   }
 
   &Logo {
     font-weight: 800;
     letter-spacing: 0.05rem;
     text-transform: uppercase;
-    margin-right: 16px;
+    margin-right: 12px;
     font-size: 24px;
+  }
+}
+
+.nav {
+  gap: 32px;
+  text-transform: lowercase;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+
+  &Item {
+    @include font-xl;
+    font-weight: 500;
+    color: $grey;
+    letter-spacing: -0.04rem;
+    user-select: none;
+    transition: color 128ms ease-in-out;
+
+    &[data-active] {
+      color: $foreground;
+    }
+
+    @media(hover:hover) {
+      &:hover {
+        color: $foreground;
+      }
+    }
   }
 }

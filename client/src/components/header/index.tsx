@@ -1,9 +1,10 @@
 import { ArrowUpTrayIcon } from '@heroicons/react/16/solid';
 import { AttentionButton, Button } from '../ui/button';
 import UserDropdown from '../user/user-dropdown';
-import styles from './header.module.scss';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { CursorArrowRaysIcon } from '@heroicons/react/20/solid';
+import styles from './header.module.scss';
+import HeaderNav from './header-nav';
 
 export default function Header() {
 	return (
@@ -15,6 +16,8 @@ export default function Header() {
 						Upload <ArrowUpTrayIcon style={{ height: '16px', width: '16px' }} />
 					</AttentionButton>
 				</div>
+
+				<HeaderNav />
 
 				<div className={styles.headerSection}>
 					<div className={styles.headerActions}>

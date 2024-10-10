@@ -40,3 +40,8 @@
   font-size: 1.25rem;
   line-height: 1.75rem;
 }
+
+@mixin font-huge {
+  font-size: 2rem;
+  line-height: 2.25rem;
+}
