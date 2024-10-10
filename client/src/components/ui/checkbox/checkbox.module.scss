@@ -1,4 +1,5 @@
 @import 'src/styles/variables';
+@import 'src/styles/utils';
 
 .checkbox {
   --headless-checkbox-size: 1.5rem;
@@ -12,13 +13,13 @@
 
   position: relative;
   border-radius: var(--headless-checkbox-rounded);
-  background: rgba(255, 255, 255, 0.1);
+  background: foreground(0.1);
   padding: 2px;
   overflow: hidden;
   cursor: pointer;
   transition: all 128ms ease-out;
 
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 1px foreground(0.15);
 
   &:active {
     transform: scale(0.95);

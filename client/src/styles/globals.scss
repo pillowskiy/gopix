@@ -1,5 +1,6 @@
 @import "./_normalize.scss";
 @import "./_variables.scss";
+@import './_utils.scss';
 @import "./_mixins.scss";
 
 * {
@@ -24,7 +25,7 @@ body {
 .icon {
   width: 16px;
   height: 16px;
-  fill: rgba(255, 255, 255, 0.3);
+  fill: foreground(0.4);
 }
 
 .section {
@@ -34,24 +35,15 @@ body {
 
   &__wrapper {
     min-height: calc(100svh - 60px);
-    padding: 0 16px;
-  }
 
-  &__rounded {
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: 32px;
+    background: primary(0.8);
+    border-radius: 32px 32px 0 0;
     padding: 64px 16px;
+    margin-top: 16px;
 
     @media(max-width: $screen-sm) {
       padding: 64px 0;
     }
-  }
-
-  &__backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: -1;
   }
 }
 

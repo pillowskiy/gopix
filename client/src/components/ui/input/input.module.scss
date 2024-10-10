@@ -1,18 +1,19 @@
 @import 'src/styles/variables';
 @import 'src/styles/mixins';
+@import 'src/styles/utils';
 
 .input {
   @include font-small;
   display: block;
   color: $foreground;
-  border-radius: 9999px;
+  border-radius: $rounded-global;
   border: none;
-  background: rgba(255, 255, 255, 0.05);
+  background: foreground(0.05);
   padding: 10px 14px;
 }
 
 .input[data-focus] {
-  outline: rgba(255, 255, 255, 0.25) solid 2px;
+  outline: foreground(0.03) solid 2px;
   outline-offset: -2px;
 }
 

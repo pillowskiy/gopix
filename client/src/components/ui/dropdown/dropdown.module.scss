@@ -1,5 +1,6 @@
 @import 'src/styles/mixins';
 @import 'src/styles/variables';
+@import 'src/styles/utils';
 
 .dropdown {
   &Trigger {
@@ -10,7 +11,7 @@
     &Icon {
       width: 16px;
       height: 16px;
-      fill: rgba(255, 255, 255, 0.6);
+      fill: primary(0.8);
       transition: 256ms ease-out;
 
       .dropdownTrigger[data-open] & {
@@ -25,10 +26,11 @@
 
     transform-origin: top right;
     border-radius: 12px;
-    border: 1px rgba(255, 255, 255, 0.1) solid;
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px foreground(0.1) solid;
+    background: foreground(0.05);
     padding: 4px;
     backdrop-filter: blur(40px);
+    z-index: 40;
 
     transition: transform 128ms ease-out, opacity 256ms ease;
 
@@ -56,13 +58,13 @@
     color: $foreground;
 
     &[data-focus] {
-      background: rgba(255, 255, 255, 0.1);
+      background: foreground(0.1);
     }
   }
 
   &Separator {
     margin: 4px 0;
     height: 1px;
-    background: rgba(255, 255, 255, 0.05);
+    background: foreground(0.05);
   }
 }

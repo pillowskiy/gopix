@@ -1,5 +1,6 @@
 @import 'src/styles/variables';
 @import 'src/styles/mixins';
+@import 'src/styles/utils';
 
 .wrapper {
   display: flex;
@@ -37,8 +38,8 @@
     padding: 8px;
     border-radius: 12px;
     backdrop-filter: blur(40px);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: primary(0.1);
+    border: 1px solid foreground(0.2);
     display: flex;
     gap: 8px;
     align-items: center;
@@ -62,7 +63,7 @@
 
     &Title {
       @include font-small;
-      color: rgba(255, 255, 255, 0.6);
+      color: foreground(0.6);
       line-height: 110%;
     }
   }
@@ -101,10 +102,10 @@
       inset: 0;
       z-index: -1;
       content: '';
-      background: rgba(0, 0, 0, 0.7);
+      background: primary(0.7);
 
       @media (max-width: $screen-sm) {
-        background: rgba(0, 0, 0, 0.8);
+        background: primary(0.8);
       }
     }
   }
@@ -124,7 +125,7 @@
   transition: all 128ms ease-in-out;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: foreground(0.05);
   }
 
   &Icon {
@@ -150,7 +151,7 @@
     content: '';
     position: absolute;
     inset: 10%;
-    background: rgba(255, 255, 255, 0.9);
+    background: foreground(0.9);
     border-radius: 9999px;
     filter: blur(40px);
     z-index: -1;
@@ -174,7 +175,7 @@
       inset: 25%;
       top: 0;
       border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.15);
+      background: foreground(0.15);
       filter: blur(24px);
     }
 
@@ -196,7 +197,7 @@
     text-align: center;
     margin: 16px 0;
     width: 100%;
-    background: rgba(255, 255, 255, 0.1);
+    background: foreground(0.1);
     border-radius: 9999px;
     gap: 4px;
     align-items: center;
@@ -207,7 +208,7 @@
       border-radius: inherit;
       height: 100%;
       left: 0;
-      background: rgba(255, 255, 255, 0.5);
+      background: foreground(0.5);
       z-index: -1;
       transition: width 384ms ease-out,
         transform 384ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -244,7 +245,7 @@
       @include font-micro;
       max-width: 320px;
       margin: 0 auto;
-      color: rgba(255, 255, 255, 0.6);
+      color: foreground(0.6);
       text-wrap: pretty;
       font-weight: 500;
 

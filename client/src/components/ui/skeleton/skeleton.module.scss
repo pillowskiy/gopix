@@ -1,7 +1,9 @@
+@import 'src/styles/utils';
+
 .skeleton {
   position: relative;
   overflow: hidden;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: foreground(0.1);
   pointer-events: none;
   transition: background 300ms;
   border-radius: 0.5rem;
@@ -13,8 +15,8 @@
     inset: 0;
     transform: translateX(-100%);
     animation: shimmer 2s infinite;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
+    border-top: 1px solid foreground(0.1);
+    background: linear-gradient(to right, transparent, foreground(0.05), transparent);
   }
 
   &[data-loaded="true"] {

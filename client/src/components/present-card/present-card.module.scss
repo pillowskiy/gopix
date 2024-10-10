@@ -1,4 +1,5 @@
-@import 'src/styles/mixins.scss';
+@import 'src/styles/mixins';
+@import 'src/styles/utils';
 
 .container {
   @include space-y(1rem);
@@ -9,13 +10,13 @@
   height: 256px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.04);
+  background: foreground(0.05);
   transition: background-color 128ms ease;
   padding: 20px;
 
   &:hover,
   &:focus {
-    background-color: rgba(255, 255, 255, 0.06);
+    background: foreground(0.06);
   }
 
   &Highlight {
@@ -23,7 +24,7 @@
     position: absolute;
     inset: 25%;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.15);
+    background: foreground(0.15);
     filter: blur(24px);
   }
 

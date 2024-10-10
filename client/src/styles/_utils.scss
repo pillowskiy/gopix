@@ -1,0 +1,13 @@
+@import 'src/styles/variables';
+
+@function primary($opacity) {
+  @return rgba($primary, $opacity);
+}
+
+@function foreground($opacity) {
+  @return rgba($foreground, $opacity);
+}
+
+@function color-opacity($color, $opacity) {
+  @return rgba($color, $opacity);
+}

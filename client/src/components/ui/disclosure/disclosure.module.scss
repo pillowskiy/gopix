@@ -1,20 +1,21 @@
 @import 'src/styles/mixins';
 @import 'src/styles/variables';
+@import 'src/styles/utils';
 
 .disclosure {
   --headless-disclosure-width: 448px;
 
   max-width: var(--headless-disclosure-width);
   width: 100%;
-  border-top: 1px rgba(255, 255, 255, 0.05) solid;
+  border-top: 1px foreground(0.05) solid;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: foreground(0.05);
 
   &Item {
     padding: 20px;
 
     &:not(:last-child) {
-      border-bottom: 1px rgba(255, 255, 255, 0.05) solid;
+      border-bottom: 1px foreground(0.05) solid;
     }
   }
 
@@ -34,18 +35,18 @@
       font-weight: 500;
 
       .disclosureTrigger[data-hover] & {
-        color: rgba(255, 255, 255, 0.8);
+        color: foreground(0.8);
       }
     }
 
     &Icon {
       width: 20px;
       height: 20px;
-      fill: rgba(255, 255, 255, 0.6);
+      fill: foreground(0.6);
       transition: all 256ms ease-in-out;
 
       .disclosureTrigger[data-open] & {
-        fill: rgba(255, 255, 255, 0.5);
+        fill: foreground(0.5);
         transform: rotate(180deg);
       }
     }
@@ -54,7 +55,7 @@
   &Panel {
     @include font-small;
 
-    color: rgba(255, 255, 255, 0.6);
+    color: foreground(0.6);
     margin-top: 8px;
     transform-origin: top;
     transition: all 128ms ease-out;
