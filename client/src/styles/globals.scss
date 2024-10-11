@@ -14,7 +14,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  background: $background;
+  background: $primary;
   color: $foreground;
 
   position: relative;
@@ -38,11 +38,11 @@ body {
 
     background: primary(0.8);
     border-radius: 32px 32px 0 0;
-    padding: 64px 16px;
+    padding: 32px 16px;
     margin-top: 16px;
 
-    @media(max-width: $screen-sm) {
-      padding: 64px 0;
+    @media screen and (max-width: $screen-md) {
+      padding: 32px 0;
     }
   }
 }

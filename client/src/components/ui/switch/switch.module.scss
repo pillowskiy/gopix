@@ -36,8 +36,8 @@
     width: auto;
     transform: translateX(0);
     border-radius: 9999px;
-    background-color: $foreground;
-    box-shadow: 0 4px 6px primaru(0.1);
+    background-color: $light;
+    box-shadow: 0 4px 6px rgba($light, 0.2);
     transition: transform 196ms ease-in-out;
 
     .switchSizeMedium &::after,
@@ -50,7 +50,7 @@
       transition: transform 128ms ease-in-out;
       transition-delay: 64ms;
 
-      background: foreground(0.9);
+      background: rgba($light, 0.9);
       filter: blur(4px);
     }
 

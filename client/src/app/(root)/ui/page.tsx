@@ -1,10 +1,9 @@
 import { PresentCard } from '@/components/present-card';
 import { Button, AttentionButton } from '@/components/ui/button';
-import styles from './typo.module.scss';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input/input';
 import { DetailedInput } from '@/components/ui/input/detailed-input';
-import { BackgroundGradient, LightGradient } from '@/components/backdroung-texture';
+import { LightGradient } from '@/components/backdroung-texture';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Link } from '@/components/ui/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,24 +36,25 @@ import {
 	DisclosurePanel
 } from '@/components/ui/disclosure';
 import Section from '@/components/section';
+import styles from './typo.module.scss';
 
 export default function TypoPage() {
 	return (
 		<>
-			<LightGradient />
 			<div className={styles.header}>
 				<h1 className={styles.headerTitle}>
 					Gopix UI brings headless UI components to life, inspired by HeadlessUI, seamlessly
 					blending innovation with flexibility.
 				</h1>
 			</div>
-			<Section className={styles.container} variant='rounded'>
+			<LightGradient />
+			<Section className={styles.container} variant='default'>
 				<PresentCard title='Button Accent (default)'>
 					<Button>Save changes</Button>
 				</PresentCard>
 
 				<PresentCard title='Button Ghost'>
-					<Button variant='ghost'>Save changes</Button>
+					<Button variant='ghost'>Save changes</Button>{' '}
 				</PresentCard>
 
 				<PresentCard title='Button Secondary'>
@@ -139,8 +139,7 @@ export default function TypoPage() {
 									style={{
 										marginTop: '10px',
 										fontSize: '14px',
-										lineHeight: '22px',
-										color: 'rgba(255, 255, 255, 0.6)'
+										lineHeight: '22px'
 									}}
 								>
 									Your payment has been successfully submitted. We’ve sent you an email with all of

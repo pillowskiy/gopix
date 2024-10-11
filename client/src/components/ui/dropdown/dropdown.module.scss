@@ -26,8 +26,8 @@
 
     transform-origin: top right;
     border-radius: 12px;
-    border: 1px foreground(0.1) solid;
-    background: foreground(0.05);
+    border: 1px solid foreground(0.1);
+    background: rgba($light, 0.05);
     padding: 4px;
     backdrop-filter: blur(40px);
     z-index: 40;
@@ -65,6 +65,6 @@
   &Separator {
     margin: 4px 0;
     height: 1px;
-    background: foreground(0.05);
+    background: foreground(0.1);
   }
 }

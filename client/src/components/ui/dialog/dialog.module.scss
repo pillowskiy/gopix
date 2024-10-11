@@ -12,7 +12,7 @@
   &Backdrop {
     position: fixed;
     inset: 0;
-    background: linear-gradient(0deg, transparent 20%, primary(0.8) 100%);
+    background: linear-gradient(180deg, transparent 20%, rgba($dark, 0.8) 100%);
     transition: all 256ms ease-out;
 
     &[data-closed] {
@@ -37,7 +37,7 @@
     width: 100%;
 
     border-radius: 0.75rem;
-    background: foreground(0.05);
+    background: rgba($light, 0.1);
     border: 1px foreground(0.1) solid;
     padding: 24px;
     backdrop-filter: blur(40px);

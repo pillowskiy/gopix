@@ -14,8 +14,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 32px;
+    padding: 18px 32px !important;
     height: fit-content;
+
+    @media screen and (max-width: $screen-md) {
+      padding: 18px 20px !important;
+    }
   }
 
   &Section {
