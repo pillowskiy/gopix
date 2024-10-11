@@ -217,6 +217,46 @@ func (r *imageRepository) Discover(
 	return pagination, nil
 }
 
+func (r *imageRepository) Favorites(
+	ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
+) (*domain.Pagination[domain.ImageWithAuthor], error) {
+	q := `
+  SELECT
+    i.*,
+    u.id AS "author.id",
+    u.username AS "author.username",
+    u.avatar_url AS "author.avatar_url"
+  FROM images_to_likes il 
+  LEFT JOIN images i ON il.image_id = i.id
+  LEFT JOIN users u ON i.author_id = u.id
+  JOIN images_analytics a ON a.image_id = i.id
+  WHERE user_id = $1 AND access_level = 'public'::access_level
+  LIMIT $2 OFFSET $3
+  `
+
+	limit := pagInput.PerPage
+	rowx, err := r.ext(ctx).QueryxContext(ctx, q, userID, limit, (pagInput.Page-1)*limit)
+	if err != nil {
+		return nil, errors.Wrap(err, "imageRepository.Favorites.Queryx")
+	}
+	defer rowx.Close()
+
+	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	if err != nil {
+		return nil, errors.Wrap(err, "imageRepository.Favorites.Scan")
+	}
+
+	pagination := &domain.Pagination[domain.ImageWithAuthor]{
+		PaginationInput: *pagInput,
+		Items:           images,
+	}
+
+	countQuery := `SELECT COUNT(1) FROM images_to_likes WHERE user_id = $1`
+	_ = r.ext(ctx).QueryRowxContext(ctx, countQuery, userID).Scan(&pagination.Total)
+
+	return pagination, nil
+}
+
 func (r *imageRepository) States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error) {
 	states := new(domain.ImageStates)
 	rowx := r.ext(ctx).QueryRowxContext(ctx, statesImageQuery, imageID, userID)

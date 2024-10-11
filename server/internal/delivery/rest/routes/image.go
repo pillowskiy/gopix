@@ -11,6 +11,7 @@ import (
 
 func MapImageRoutes(g *echo.Group, h *handlers.ImageHandlers, mw *middlewares.GuardMiddlewares) {
 	g.GET("/", h.GetDiscover())
+	g.GET("/favorites/:user_id", h.Favorites())
 
 	g.POST("/",
 		h.Upload(),

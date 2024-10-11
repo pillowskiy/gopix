@@ -37,6 +37,9 @@ type ImageRepository interface {
 	HasLike(ctx context.Context, imageID domain.ID, userID domain.ID) (bool, error)
 	AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
 	RemoveLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
+	Favorites(
+		ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
+	) (*domain.Pagination[domain.ImageWithAuthor], error)
 
 	repository.Transactional
 }
@@ -208,6 +211,19 @@ func (uc *imageUseCase) Discover(
 	sort domain.ImageSortMethod,
 ) (*domain.Pagination[domain.ImageWithAuthor], error) {
 	pag, err := uc.repo.Discover(ctx, pagInput, sort)
+	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
+		return nil, ErrUnprocessable
+	}
+
+	return pag, err
+}
+
+func (uc *imageUseCase) Favorites(
+	ctx context.Context,
+	userID domain.ID,
+	pagInput *domain.PaginationInput,
+) (*domain.Pagination[domain.ImageWithAuthor], error) {
+	pag, err := uc.repo.Favorites(ctx, userID, pagInput)
 	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
 		return nil, ErrUnprocessable
 	}

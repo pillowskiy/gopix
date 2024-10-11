@@ -26,6 +26,9 @@ type imageUseCase interface {
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
 	) (*domain.Pagination[domain.ImageWithAuthor], error)
+	Favorites(
+		ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
+	) (*domain.Pagination[domain.ImageWithAuthor], error)
 
 	States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error)
 	AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
@@ -268,6 +271,44 @@ func (h *ImageHandlers) GetDiscover() echo.HandlerFunc {
 				return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
 			}
 			return h.responseWithUseCaseErr(c, err, "GetDiscover")
+		}
+
+		return c.JSON(http.StatusOK, images)
+	}
+}
+
+func (h *ImageHandlers) Favorites() echo.HandlerFunc {
+	type discoverQuery struct {
+		Limit int    `query:"limit" validate:"required,gte=1,lte=100"`
+		Page  int    `query:"page" validate:"required,gte=1"`
+		Sort  string `query:"sort" validate:"oneof=newest oldest popular mostViewed"`
+	}
+
+	return func(c echo.Context) error {
+		ctx := rest.GetEchoRequestCtx(c)
+
+		userId, err := rest.PipeDomainIdentifier(c, "user_id")
+		if err != nil {
+			return c.JSON(rest.NewBadRequestError("Invalid user ID").Response())
+		}
+
+		query := new(discoverQuery)
+		if err := rest.DecodeEchoBody(c, query); err != nil {
+			h.logger.Errorf("GetDiscover.DecodeQuery: %v", err)
+			return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
+		}
+
+		if err := validator.ValidateStruct(ctx, query); err != nil {
+			return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
+		}
+
+		pagInput := &domain.PaginationInput{Page: query.Page, PerPage: query.Limit}
+		images, err := h.uc.Favorites(ctx, userId, pagInput)
+		if err != nil {
+			if errors.Is(err, usecase.ErrUnprocessable) {
+				return c.JSON(rest.NewBadRequestError("Discover query has incorrect type").Response())
+			}
+			return h.responseWithUseCaseErr(c, err, "GetFavorites")
 		}
 
 		return c.JSON(http.StatusOK, images)
