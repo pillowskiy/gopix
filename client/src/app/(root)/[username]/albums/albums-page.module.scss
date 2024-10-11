@@ -1,0 +1,19 @@
+@import 'src/styles/variables';
+
+.section {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+
+  @media screen and (max-width: $screen-xl) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media screen and (max-width: $screen-md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media screen and (max-width: $screen-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

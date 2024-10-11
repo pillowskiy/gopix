@@ -1,0 +1,81 @@
+@import 'src/styles/mixins';
+@import 'src/styles/utils';
+@import 'src/styles/variables';
+
+.card {
+  &Wrapper {
+    @include space-y(20px);
+    display: block;
+    position: relative;
+    color: $foreground;
+    width: 100%;
+
+    &:after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: primary(0.2);
+      opacity: 0;
+      transition: 256ms ease-in-out;
+    }
+
+    &:active {
+      transform: translateY(2px);
+    }
+
+    @media (hover: hover) {
+      &:hover:after {
+        opacity: 1;
+      }
+    }
+  }
+
+  &Cover {
+    display: grid;
+    gap: 4px;
+    aspect-ratio: 1;
+    width: 100%;
+    height: auto;
+    grid-template-columns: 1fr 1fr;
+
+    &Single {
+      grid-template-columns: 1fr;
+    }
+
+    &Double>* {
+      grid-column: span 2;
+    }
+
+    &Triple> :last-child {
+      grid-column: span 2;
+    }
+
+    &Image {
+      width: 100%;
+      height: 100%;
+      border-radius: $rounded-global;
+      overflow: hidden;
+
+      &>img {
+        aspect-ratio: 1;
+        width: 100%;
+        height: auto;
+        object-position: center;
+        object-fit: cover;
+      }
+    }
+  }
+
+  &Details {
+    @include space-y(4px);
+
+    &Title {
+      @include font-xl;
+    }
+
+    &Description {
+      @include font-small;
+      color: foreground(0.5);
+    }
+  }
+}

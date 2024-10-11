@@ -1,0 +1,122 @@
+@import 'src/styles/variables';
+@import 'src/styles/mixins';
+@import 'src/styles/utils';
+
+.userCard {
+  &Container {
+    max-width: 375px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 0;
+
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+  }
+
+  &Avatar {
+    border-radius: 9999px;
+    border: 1px solid primary(0.1);
+    aspect-ratio: 1;
+    margin: 0 auto;
+    width: 108px;
+    height: 108px;
+    overflow: hidden;
+  }
+
+  &Info {
+    @include space-y(12px);
+  }
+
+  &Name {
+    @include font-huge;
+    line-height: 1;
+    user-select: none;
+    text-transform: capitalize;
+  }
+
+  &Details {
+    @include font-small;
+    color: $grey;
+  }
+
+  &Subscription {
+    line-height: 1;
+    font-weight: 500;
+  }
+}
+
+.section {
+  &Albums {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+
+    @media screen and (max-width: $screen-xl) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media screen and (max-width: $screen-md) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media screen and (max-width: $screen-sm) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &NothingHere {
+    @include space-y(64px);
+    padding: 32px 0;
+    display: grid;
+    place-items: center;
+
+    &Text {
+      @include font-base;
+      color: foreground(0.6);
+    }
+  }
+}
+
+.tabs {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  margin-bottom: 32px;
+
+  &Content {
+    max-width: 325px;
+    width: 100%;
+
+    font-weight: 500;
+    display: flex;
+    gap: 4px;
+
+    background: foreground(0.1);
+    border-radius: $rounded-full;
+  }
+
+  &Item {
+    @include font-small;
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 10px 14px;
+    border-radius: inherit;
+    color: $foreground;
+    text-decoration: none;
+    transition: 128ms ease-out;
+
+    &[data-active] {
+      background: foreground(0.1) !important;
+    }
+
+    &:hover {
+      background: foreground(0.05);
+    }
+  }
+}

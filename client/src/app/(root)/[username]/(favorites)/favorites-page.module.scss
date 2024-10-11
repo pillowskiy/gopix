@@ -1,0 +1,16 @@
+@import 'src/styles/mixins';
+@import 'src/styles/utils';
+
+.empty {
+  &Section {
+    @include space-y(64px);
+    padding: 32px 0;
+    display: grid;
+    place-items: center;
+  }
+
+  &Text {
+    @include font-base;
+    color: foreground(0.6);
+  }
+}
