@@ -45,11 +45,9 @@ export default function UserDropdown() {
 
 	if (!user) {
 		return (
-			<Link href='/login' passHref legacyBehavior>
-				<Button size='small' as='a'>
-					Log in
-				</Button>
-			</Link>
+			<Button size='small' href='/login' as={Link}>
+				Log in
+			</Button>
 		);
 	}
 
@@ -68,33 +66,25 @@ export default function UserDropdown() {
 
 				<DropdownMenuSeparator />
 
-				<Link href={`/${user.username}`} passHref legacyBehavior>
-					<DropdownMenuItem as='a'>
-						<UserIcon className='icon' />
-						Your Profile
-					</DropdownMenuItem>
-				</Link>
+				<DropdownMenuItem as={Link} href={`/${user.username}`}>
+					<UserIcon className='icon' />
+					Your Profile
+				</DropdownMenuItem>
 
-				<Link href={`/${user.username}/albums`} passHref legacyBehavior>
-					<DropdownMenuItem as='a'>
-						<FolderIcon className='icon' />
-						Your Albums
-					</DropdownMenuItem>
-				</Link>
+				<DropdownMenuItem as={Link} href={`/${user.username}/albums`}>
+					<FolderIcon className='icon' />
+					Your Albums
+				</DropdownMenuItem>
 
-				<Link href='/account/favorites' passHref legacyBehavior>
-					<DropdownMenuItem as='a'>
-						<HeartIcon className='icon' />
-						Your Favorites
-					</DropdownMenuItem>
-				</Link>
+				<DropdownMenuItem as={Link} href='/account/favorites'>
+					<HeartIcon className='icon' />
+					Your Favorites
+				</DropdownMenuItem>
 
-				<Link href='/account/favorites' passHref legacyBehavior>
-					<DropdownMenuItem as='a'>
-						<Cog6ToothIcon className='icon' />
-						Settings
-					</DropdownMenuItem>
-				</Link>
+				<DropdownMenuItem as={Link} href='/account/settings'>
+					<Cog6ToothIcon className='icon' />
+					Settings
+				</DropdownMenuItem>
 
 				<DropdownMenuSeparator />
 				<DropdownMenuItem>

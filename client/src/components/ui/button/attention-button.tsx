@@ -21,3 +21,4 @@ export const AttentionButton = forwardRef<HTMLButtonElement, ButtonProps>(
 		);
 	}
 );
+AttentionButton.displayName = 'AttentionButton';

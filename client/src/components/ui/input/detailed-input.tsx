@@ -31,3 +31,4 @@ export const DetailedInput = forwardRef<HTMLInputElement, DetailedInputProps>(
 		</div>
 	)
 );
+DetailedInput.displayName = 'DetailedInput';

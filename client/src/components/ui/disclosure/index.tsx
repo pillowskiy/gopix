@@ -20,6 +20,7 @@ export const Disclosure = forwardRef<HTMLDivElement, React.ComponentPropsWithout
 		</div>
 	)
 );
+Disclosure.displayName = 'Disclosure';
 
 export const DisclosureItem = forwardRef<
 	HTMLDivElement,
@@ -34,6 +35,7 @@ export const DisclosureItem = forwardRef<
 		{children}
 	</HeadlessDisclosure>
 ));
+DisclosureItem.displayName = 'DisclosureItem';
 
 export const DisclosureTrigger = forwardRef<
 	HTMLButtonElement,
@@ -48,6 +50,7 @@ export const DisclosureTrigger = forwardRef<
 		<ChevronDownIcon className={styles.disclosureTriggerIcon} />
 	</HeadlessDisclosureButton>
 ));
+DisclosureTrigger.displayName = 'DisclosureTrigger';
 
 export const DisclosurePanel = forwardRef<
 	HTMLDivElement,
@@ -64,3 +67,4 @@ export const DisclosurePanel = forwardRef<
 		</HeadlessDisclosurePanel>
 	</div>
 ));
+DisclosurePanel.displayName = 'DisclosurePanel';

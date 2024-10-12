@@ -1,6 +1,5 @@
 'use client';
 
-import { forwardRef } from 'react';
 import {
 	Button as HeadlessButton,
 	type ButtonProps as HeadlessButtonProps
@@ -22,26 +21,30 @@ const buttonSizesStyles = {
 	icon: styles.btnSizeIcon
 } as const;
 
-export interface ButtonProps extends HeadlessButtonProps {
+export interface ButtonProps {
 	variant?: keyof typeof buttonVariantsStyles;
 	size?: keyof typeof buttonSizesStyles;
+	className?: string;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-	({ children, variant = 'accent', size = 'medium', className, ...props }, ref) => {
-		return (
-			<HeadlessButton
-				ref={ref}
-				className={cc([
-					styles.btn,
-					buttonVariantsStyles[variant],
-					buttonSizesStyles[size],
-					className
-				])}
-				{...props}
-			>
-				{children}
-			</HeadlessButton>
-		);
-	}
-);
+export function Button<E extends React.ElementType = 'button'>({
+	children,
+	variant = 'accent',
+	size = 'medium',
+	className,
+	...props
+}: HeadlessButtonProps<E> & ButtonProps) {
+	return (
+		<HeadlessButton
+			className={cc([
+				styles.btn,
+				buttonVariantsStyles[variant],
+				buttonSizesStyles[size],
+				className
+			])}
+			{...props}
+		>
+			{children}
+		</HeadlessButton>
+	);
+}

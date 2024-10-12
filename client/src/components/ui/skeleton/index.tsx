@@ -13,3 +13,4 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
 		<div ref={ref} className={cc([styles.skeleton, className])} data-loaded={loaded} {...props} />
 	)
 );
+Skeleton.displayName = 'Skeleton';

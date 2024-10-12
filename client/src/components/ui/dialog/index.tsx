@@ -1,13 +1,13 @@
 'use client';
 
 import {
+	Button as HeadlessButton,
 	Dialog as HeadlessDialog,
 	DialogBackdrop as HeadlessDialogBackdrop,
 	DialogPanel as HeadlessDialogPanel,
 	DialogTitle as HeadlessDialogTitle,
-	Button as HeadlessButton,
-	type DialogProps,
-	type DialogPanelProps
+	type DialogPanelProps,
+	type DialogProps
 } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import cc from 'classcat';
@@ -32,10 +32,10 @@ const useDialog = (): DialogContextState => {
 	return ctx;
 };
 
-export const Dialog = ({
+export function Dialog({
 	open: defaultOpen = false,
 	children
-}: React.PropsWithChildren<{ open?: boolean }>) => {
+}: React.PropsWithChildren<{ open?: boolean }>) {
 	const [isOpen, setIsOpen] = useState(defaultOpen);
 
 	const close = useCallback(() => setIsOpen(false), []);
@@ -44,7 +44,7 @@ export const Dialog = ({
 	return (
 		<DialogContext.Provider value={{ open, close, isOpen }}>{children}</DialogContext.Provider>
 	);
-};
+}
 
 export const DialogOverlay = forwardRef<
 	HTMLDivElement,
@@ -66,12 +66,13 @@ export const DialogOverlay = forwardRef<
 		</HeadlessDialog>
 	);
 });
+DialogOverlay.displayName = 'DialogOverlay';
 
-export const DialogTrigger = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+export function DialogTrigger(props: Omit<React.PropsWithChildren<ButtonProps>, 'as'>) {
 	const dialog = useDialog();
 
-	return <Button ref={ref} onClick={dialog.open} {...props} />;
-});
+	return <Button onClick={dialog.open} {...props} />;
+}
 
 export const DialogPanel = forwardRef<HTMLDivElement, React.PropsWithChildren<DialogPanelProps>>(
 	({ className, transition = true, children, ...props }, ref) => {
@@ -96,10 +97,12 @@ export const DialogPanel = forwardRef<HTMLDivElement, React.PropsWithChildren<Di
 		);
 	}
 );
+DialogPanel.displayName = 'DialogPanel';
 
 export const DialogTitle = HeadlessDialogTitle;
+DialogTitle.displayName = 'DialogTitle';
 
-export const DialogClose = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+export function DialogClose(props: React.PropsWithChildren<ButtonProps>) {
 	const dialog = useDialog();
-	return <Button ref={ref} onClick={dialog.close} {...props} />;
-});
+	return <Button onClick={dialog.close} {...props} />;
+}

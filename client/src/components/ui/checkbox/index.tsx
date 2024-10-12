@@ -29,7 +29,7 @@ export const Checkbox = forwardRef<HTMLSpanElement, CheckboxProps>(
 				<path
 					d='M3 8L6 11L11 3.5'
 					stroke='currentColor'
-					strokeWidth={2}
+					strokeWidth={1.3}
 					strokeLinecap='round'
 					strokeLinejoin='round'
 				/>
@@ -37,3 +37,4 @@ export const Checkbox = forwardRef<HTMLSpanElement, CheckboxProps>(
 		</HeadlessCheckbox>
 	)
 );
+Checkbox.displayName = 'Checkbox';

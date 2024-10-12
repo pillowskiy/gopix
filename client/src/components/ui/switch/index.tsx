@@ -29,3 +29,4 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
 		</HeadlessSwitch>
 	)
 );
+Switch.displayName = 'Switch';

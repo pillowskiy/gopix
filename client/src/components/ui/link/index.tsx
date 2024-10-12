@@ -28,3 +28,4 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 		</NextLink>
 	)
 );
+Link.displayName = 'Link';

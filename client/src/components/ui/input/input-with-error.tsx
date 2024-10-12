@@ -23,3 +23,4 @@ export const InputWithError = forwardRef<HTMLInputElement, InputWithErrorProps>(
 		</div>
 	)
 );
+InputWithError.displayName = 'InputWithError';

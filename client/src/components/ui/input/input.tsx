@@ -10,3 +10,4 @@ export const Input = forwardRef<HTMLInputElement, HeadlessInputProps>(
 		<HeadlessInput ref={ref} className={cc([styles.input, className])} {...props} />
 	)
 );
+Input.displayName = 'Input';
