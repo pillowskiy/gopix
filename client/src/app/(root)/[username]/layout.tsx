@@ -1,4 +1,4 @@
-import { getByUsername } from '@/shared/users';
+import { getByUsername } from '@/shared/actions/users';
 import { LightGradient } from '@/components/backdroung-texture';
 import Section from '@/components/section';
 import ProfileTabs from './profile-tabs';

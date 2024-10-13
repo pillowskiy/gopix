@@ -1,8 +1,8 @@
 import type { DetailedAlbum } from "@/types/albums";
-import { $sapi } from "./drill-interceptor";
+import { $api } from "../api-interceptor";
 
 export async function getUserAlbums(userId: string): Promise<DetailedAlbum[]> {
-  return $sapi
+  return $api
     .get(`albums/users/${userId}`)
     .then((res) => res.json<DetailedAlbum[]>());
 }

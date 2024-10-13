@@ -1,4 +1,4 @@
-import { getUserAlbums } from '@/shared/albums';
+import { getUserAlbums } from '@/shared/actions/albums';
 import styles from './albums-page.module.scss';
 import { AlbumCard, AlbumCardSkeleton } from '@/components/album-card';
 

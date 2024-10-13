@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { getByUsername } from '@/shared/users';
+import { getByUsername } from '@/shared/actions/users';
 import { UserAlbums, UserAlbumsFallback } from './user-albums-section';
 
 export default async function UserAlbumsPage({ params }: { params: Record<string, string> }) {
