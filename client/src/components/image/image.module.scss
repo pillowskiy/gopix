@@ -1,0 +1,10 @@
+@import 'src/styles/utils';
+
+.image {
+  background: foreground(0.1);
+  transition: 512ms ease-in-out;
+
+  &[data-loading] {
+    filter: blur(8px);
+  }
+}

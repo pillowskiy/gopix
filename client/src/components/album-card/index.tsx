@@ -1,6 +1,6 @@
 import type { DetailedAlbum } from '@/types/albums';
 import { Skeleton } from '../ui/skeleton';
-import Image from 'next/image';
+import { CDNImage } from '../image';
 import cc from 'classcat';
 import styles from './album-card.module.scss';
 import Link from 'next/link';
@@ -24,9 +24,15 @@ export function AlbumCard({ album }: AlbumCardProps) {
 	return (
 		<Link href={`/a/${album.id}`} className={styles.cardWrapper}>
 			<div className={cc([styles.cardCover, calcCoverStyle(album.cover.length)])}>
-				{album.cover.map((image) => (
-					<div className={styles.cardCoverImage} key={image.id}>
-						<Image src='/photo.jpg' alt={image.title} width={256} height={256} />
+				{album.cover.map((image, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+					<div className={styles.cardCoverImage} key={i}>
+						<CDNImage
+							path={image.path}
+							alt={image.title ?? `Image ${image.path}`}
+							width={256}
+							height={256}
+						/>
 					</div>
 				))}
 			</div>
