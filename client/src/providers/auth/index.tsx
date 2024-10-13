@@ -1,4 +1,4 @@
-import { getMe } from '@/shared/users';
+import { getMe } from '@/shared/actions/users';
 import AuthStoreProvider from './auth-provider';
 
 export default async function AuthClientWrapper({ children }: React.PropsWithChildren) {

@@ -1,3 +1,4 @@
+import { getMe } from "@/shared/actions/users";
 import type { User } from "@/types/users";
 import { createContext, useContext } from "react";
 import { createStore } from "zustand";
@@ -7,8 +8,8 @@ export interface UserProps {
   dirty: boolean;
 }
 
-interface UserState extends UserProps {
-  setData: (data: User | null) => void;
+export interface UserState extends UserProps {
+  resolve: () => Promise<void>;
 }
 
 export type UserStore = ReturnType<typeof createUserStore>;
@@ -17,7 +18,11 @@ export const createUserStore = (init?: Partial<UserProps>) => {
   return createStore<UserState>()((set) => ({
     ...DEFAULT_PROPS,
     ...init,
-    setData: (data: User | null) => set({ data, dirty: true }),
+    resolve: async () => {
+      const user = await getMe().catch(() => null);
+
+      set({ data: user, dirty: false });
+    },
   }));
 };
 
