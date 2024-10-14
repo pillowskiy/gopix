@@ -1,14 +1,14 @@
-import { getByUsername } from '@/shared/actions/users';
 import { LightGradient } from '@/components/backdroung-texture';
 import Section from '@/components/section';
 import ProfileTabs from './profile-tabs';
 import ProfileCard from './profile-card';
+import getByUsernameCached from './getByUsernameCached';
 
 export default async function ProfileLayout({
 	params,
 	children
-}: React.PropsWithChildren<{ params: Record<string, string> }>) {
-	const user = await getByUsername(params.username);
+}: { params: Record<string, string>; children: React.ReactElement }) {
+	const user = await getByUsernameCached(params.username);
 
 	return (
 		<>
