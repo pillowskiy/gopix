@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
+	"github.com/pillowskiy/gopix/internal/repository/postgres/pgutils"
 	"github.com/pillowskiy/gopix/pkg/batch"
 	"github.com/pkg/errors"
 )
@@ -70,13 +71,19 @@ func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
 		return errors.Wrap(err, "imageRepository.batchViews.SliceScan")
 	}
 
-	aggQuery := `
-    UPDATE images_analytics AS ia
-    SET views_count = ia.views_count + p.count
-    FROM (VALUES (CAST(:image_id AS bigint), CAST(:count AS bigint))) AS p(image_id, count)
-    WHERE ia.image_id = p.image_id
-  `
-	if _, err := tx.NamedExecContext(ctx, aggQuery, aggResult); err != nil {
+	aggValues, aggParams, err := pgutils.BulkUpdateValues(aggResult, "image_id::bigint,count::int")
+	if err != nil {
+		return errors.Wrap(err, "imageRepository.batchViews.BulkUpdateValues")
+	}
+
+	aggQuery := fmt.Sprintf(`
+  UPDATE images_analytics AS ia
+  SET views_count = ia.views_count + p.count
+  FROM (%s) AS p(image_id, count)
+  WHERE ia.image_id = p.image_id;
+  `, aggValues)
+
+	if _, err := tx.ExecContext(ctx, aggQuery, aggParams...); err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
 	}
 
@@ -124,20 +131,27 @@ func (r *imageRepository) processLikesBatch(likes []likeBatchItem) error {
 		likesAnalytics = append(likesAnalytics, delLikesAnalytics...)
 	}
 
-	aggQuery := `
-    UPDATE images_analytics AS ia
-    SET likes_count = ia.likes_count + p.inserted_count - p.removed_count
-    FROM (
-      VALUES (CAST(:image_id AS bigint), CAST(:inserted_count AS bigint), CAST(:removed_count AS bigint))
-    ) AS p(image_id, inserted_count, removed_count)
-    WHERE ia.image_id = p.image_id
-  `
-	if _, err := tx.NamedExecContext(ctx, aggQuery, likesAnalytics); err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.AnalyticsExecContext")
+	aggValues, aggParams, err := pgutils.BulkUpdateValues(
+		likesAnalytics,
+		"image_id::bigint,inserted_count::int,removed_count::int",
+	)
+	if err != nil {
+		return errors.Wrap(err, "imageRepository.processLikesBatch.BulkUpdateValues")
+	}
+
+	aggQuery := fmt.Sprintf(`
+  UPDATE images_analytics AS ia
+  SET likes_count = ia.likes_count + p.inserted_count - p.removed_count
+  FROM (%s) AS p(image_id, inserted_count, removed_count)
+  WHERE ia.image_id = p.image_id;
+  `, aggValues)
+
+	if _, err := tx.ExecContext(ctx, aggQuery, aggParams...); err != nil {
+		return errors.Wrap(err, "imageRepository.processLikesBatch.AnalyticsExecContext")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return errors.Wrap(err, "imageRepository.batchViews.Commit")
+		return errors.Wrap(err, "imageRepository.processLikesBatch.Commit")
 	}
 
 	return nil
@@ -149,12 +163,12 @@ func (r *imageRepository) queryBulkWriteLikes(
 	likes []likeBatchItem,
 ) ([]imageLikesAnalytics, error) {
 	if len(likes) == 0 {
-		return nil, errors.New("empty batch")
+		return make([]imageLikesAnalytics, 0), nil
 	}
 
-	call, error := r.likesBulkWriteInTx(likes)
-	if error != nil {
-		return nil, error
+	call, err := r.likesBulkWriteInTx(likes)
+	if err != nil {
+		return nil, err
 	}
 
 	return r.queryBulkLikesCall(ctx, tx, call)
@@ -166,12 +180,12 @@ func (r *imageRepository) queryBulkDeleteLikes(
 	likes []likeBatchItem,
 ) ([]imageLikesAnalytics, error) {
 	if len(likes) == 0 {
-		return nil, errors.New("empty batch")
+		return make([]imageLikesAnalytics, 0), nil
 	}
 
-	call, error := r.likesBulkDeleteInTx(likes)
-	if error != nil {
-		return nil, error
+	call, err := r.likesBulkDeleteInTx(likes)
+	if err != nil {
+		return nil, err
 	}
 
 	return r.queryBulkLikesCall(ctx, tx, call)
