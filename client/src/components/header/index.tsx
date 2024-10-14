@@ -5,13 +5,16 @@ import { BellIcon } from '@heroicons/react/24/outline';
 import { CursorArrowRaysIcon } from '@heroicons/react/20/solid';
 import styles from './header.module.scss';
 import HeaderNav from './header-nav';
+import Link from 'next/link';
 
 export default function Header() {
 	return (
 		<header className={styles.header}>
 			<div className={styles.headerContent}>
 				<div className={styles.headerSection}>
-					<span className={styles.headerLogo}>GoPix</span>
+					<Link href='/' className={styles.headerLogo}>
+						GoPix
+					</Link>
 					<AttentionButton style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 						Upload <ArrowUpTrayIcon style={{ height: '16px', width: '16px' }} />
 					</AttentionButton>

@@ -44,8 +44,6 @@ export default function HeaderNav() {
 		setNavItems(buildNavItems(user.data?.username));
 	}, [user.data?.username]);
 
-	console.log(path);
-
 	return (
 		<nav className={cc([styles.headerSection, styles.nav])}>
 			{navItems.map((item) => (
