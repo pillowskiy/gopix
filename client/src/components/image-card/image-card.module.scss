@@ -1,0 +1,35 @@
+@import 'src/styles/variables';
+@import 'src/styles/mixins';
+@import 'src/styles/utils';
+
+.card {
+  width: 100%;
+  border-radius: $rounded-global;
+  overflow: hidden;
+
+  &Image {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+
+  &Title {
+    @include font-small;
+    font-weight: 500;
+  }
+
+  &Author {
+    &Avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: $rounded-full;
+    }
+
+    &Name {
+      @include font-small;
+      color: foreground(0.6);
+    }
+  }
+}

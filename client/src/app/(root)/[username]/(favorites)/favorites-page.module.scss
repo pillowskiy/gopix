@@ -14,3 +14,10 @@
     color: foreground(0.6);
   }
 }
+
+.favorites {
+  &Section {
+    columns: 6;
+    column-gap: 20px;
+  }
+}

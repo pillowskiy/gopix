@@ -6,6 +6,8 @@ export async function getFavoriteImages(
   userId: string,
 ): Promise<Paginated<ImageWithAuthor>> {
   return $api
-    .get(`/api/images/favorites/${userId}`)
+    .get(`images/favorites/${userId}`, {
+      searchParams: { limit: 50, page: 1, sort: "popular" },
+    })
     .then((res) => res.json<Paginated<ImageWithAuthor>>());
 }
