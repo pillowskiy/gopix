@@ -66,7 +66,7 @@ func (r *imageRepository) processViewsBatch(views []viewBatchItem) error {
 		return errors.Wrap(err, "imageRepository.batchViews.QueryxContext")
 	}
 
-	aggResult, err := scanToStructSliceOf[imageAnalyticsAgg](rows)
+	aggResult, err := pgutils.ScanToStructSliceOf[imageAnalyticsAgg](rows)
 	if err != nil {
 		return errors.Wrap(err, "imageRepository.batchViews.SliceScan")
 	}
@@ -201,7 +201,7 @@ func (r *imageRepository) queryBulkLikesCall(
 		return nil, errors.Wrap(err, "imageRepository.processLikesBatch.InTxQueryCall")
 	}
 
-	agg, err := scanToStructSliceOf[imageLikesAnalytics](rowx)
+	agg, err := pgutils.ScanToStructSliceOf[imageLikesAnalytics](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.processLikesBatch.SliceScan")
 	}
@@ -217,7 +217,7 @@ func (r *imageRepository) likesBulkWriteInTx(likes []likeBatchItem) (InTxQueryCa
       ON CONFLICT DO NOTHING
       RETURNING image_id
     )
-    SELECT image_id, COUNT(*) AS inserted_count, 0 AS removed_count 
+    SELECT image_id, COUNT(*) AS inserted_count, 0 AS removed_count
     FROM inserted
     GROUP BY image_id;
   `

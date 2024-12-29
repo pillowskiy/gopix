@@ -93,7 +93,7 @@ func (r *imageRepository) FindMany(
 		return nil, errors.Wrap(err, "ImageRepository.FindMany.QueryxContext")
 	}
 
-	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rows)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rows)
 	if err != nil {
 		return nil, errors.Wrap(err, "ImageRepository.FindMany.scanToStructSliceOf")
 	}
@@ -205,7 +205,7 @@ func (r *imageRepository) Discover(
 	}
 	defer rowx.Close()
 
-	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Discover.Scan")
 	}
@@ -245,7 +245,7 @@ func (r *imageRepository) Favorites(
 	}
 	defer rowx.Close()
 
-	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Favorites.Scan")
 	}

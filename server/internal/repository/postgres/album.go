@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/repository"
+	"github.com/pillowskiy/gopix/internal/repository/postgres/pgutils"
 	"github.com/pkg/errors"
 )
 
@@ -69,7 +70,7 @@ func (repo *albumRepository) GetAlbumImages(
 		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.QueryxContext")
 	}
 
-	images, err := scanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.scanToStructSliceOf")
 	}
@@ -160,7 +161,7 @@ func (repo *albumRepository) Update(
 	album *domain.Album,
 ) (*domain.Album, error) {
 	q := `
-  UPDATE albums SET 
+  UPDATE albums SET
     name = COALESCE(NULLIF($1, ''), name),
     description = COALESCE(NULLIF($2, ''), description)
   WHERE id = $3 RETURNING *`

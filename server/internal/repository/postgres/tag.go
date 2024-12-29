@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/repository"
+	"github.com/pillowskiy/gopix/internal/repository/postgres/pgutils"
 	"github.com/pkg/errors"
 )
 
@@ -93,7 +94,7 @@ func (repo *tagRepository) Search(ctx context.Context, name string) ([]domain.Ta
 		return nil, errors.Wrap(err, "TagRepository.Search.QueryxContext")
 	}
 
-	tags, err := scanToStructSliceOf[domain.Tag](rows)
+	tags, err := pgutils.ScanToStructSliceOf[domain.Tag](rows)
 	if err != nil {
 		return nil, errors.Wrap(err, "TagRepository.Search.scanToStructSliceOf")
 	}

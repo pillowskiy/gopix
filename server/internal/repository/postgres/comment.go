@@ -69,7 +69,7 @@ func (repo *commentRepository) GetByImageID(
 	}
 	defer rowx.Close()
 
-	cmts, err := scanToStructSliceOf[domain.DetailedComment](rowx)
+	cmts, err := pgutils.ScanToStructSliceOf[domain.DetailedComment](rowx)
 	if err != nil {
 		return nil, fmt.Errorf("CommentRepository.GetByImageID.scanToStructSliceOf: %v", err)
 	}
@@ -170,7 +170,7 @@ func (repo *commentRepository) GetReplies(ctx context.Context, commentID domain.
 		return nil, fmt.Errorf("CommentRepository.GetReplies.QueryxContext: %v", err)
 	}
 
-	cmts, err := scanToStructSliceOf[domain.DetailedComment](rows)
+	cmts, err := pgutils.ScanToStructSliceOf[domain.DetailedComment](rows)
 	if err != nil {
 		return nil, fmt.Errorf("CommentRepository.GetReplies.scanToStructSliceOf: %v", err)
 	}
