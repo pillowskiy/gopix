@@ -8,12 +8,13 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/repository"
+	"github.com/pillowskiy/gopix/internal/repository/postgres/pgutils"
 	"github.com/pkg/errors"
 )
 
-var commentSortQuery = NewSortQueryBuilder().
-	AddField(string(domain.CommentNewestSort), SortField{Field: "created_at", Order: sortOrderDESC}).
-	AddField(string(domain.CommentOldestSort), SortField{Field: "created_at", Order: sortOrderASC})
+var commentSortQuery = pgutils.NewSortQueryBuilder().
+	AddField(string(domain.CommentNewestSort), pgutils.SortField{Field: "created_at", Order: pgutils.SortOrderDESC}).
+	AddField(string(domain.CommentOldestSort), pgutils.SortField{Field: "created_at", Order: pgutils.SortOrderASC})
 
 type commentRepository struct {
 	db *sqlx.DB

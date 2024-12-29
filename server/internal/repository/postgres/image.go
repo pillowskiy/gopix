@@ -9,15 +9,19 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/repository"
+	"github.com/pillowskiy/gopix/internal/repository/postgres/pgutils"
 	"github.com/pillowskiy/gopix/pkg/batch"
 	"github.com/pkg/errors"
 )
 
-var imagesSortQuery = NewSortQueryBuilder().
-	AddField(string(domain.ImageNewestSort), SortField{Field: "uploaded_at", Order: sortOrderDESC}).
-	AddField(string(domain.ImageOldestSort), SortField{Field: "uploaded_at", Order: sortOrderASC}).
-	AddField(string(domain.ImagePopularSort), SortField{Field: "a.likes_count", Order: sortOrderDESC}).
-	AddField(string(domain.ImageMostViewedSort), SortField{Field: "a.views_count", Order: sortOrderDESC})
+// I think it's better to organize the builder like this,
+// we can prevent sql injections and unnecessary errors
+// but it's harder to read and understand
+var imagesSortQuery = pgutils.NewSortQueryBuilder().
+	AddField(string(domain.ImageNewestSort), pgutils.SortField{Field: "uploaded_at", Order: pgutils.SortOrderDESC}).
+	AddField(string(domain.ImageOldestSort), pgutils.SortField{Field: "uploaded_at", Order: pgutils.SortOrderASC}).
+	AddField(string(domain.ImagePopularSort), pgutils.SortField{Field: "a.likes_count", Order: pgutils.SortOrderDESC}).
+	AddField(string(domain.ImageMostViewedSort), pgutils.SortField{Field: "a.views_count", Order: pgutils.SortOrderDESC})
 
 type imageRepository struct {
 	PostgresRepository
@@ -226,7 +230,7 @@ func (r *imageRepository) Favorites(
     u.id AS "author.id",
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url"
-  FROM images_to_likes il 
+  FROM images_to_likes il
   LEFT JOIN images i ON il.image_id = i.id
   LEFT JOIN users u ON i.author_id = u.id
   JOIN images_analytics a ON a.image_id = i.id
