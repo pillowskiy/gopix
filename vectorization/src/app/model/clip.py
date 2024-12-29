@@ -32,5 +32,4 @@ class ClipModel:
         with torch.no_grad():
             vec = model.encode_image(img)
             vec = vec / vec.norm(dim=-1, keepdim=True)
-
         return vec.cpu().numpy().squeeze()

@@ -1,5 +1,5 @@
-import logging
 import time
+import os
 from flask import Blueprint, jsonify, request
 
 from .repository.milvus import MilvusRepository
@@ -10,7 +10,11 @@ from .service.vectorization import VectorizationService
 main = Blueprint("main", __name__)
 
 model = ClipModel()
-repo = MilvusRepository("clip_collection", 512)
+
+milvus_collection = os.getenv("MILVUS_COLLECTION", "clip_collection")
+milvus_dim = os.getenv("MILVUS_DIM", 512)
+repo = MilvusRepository(milvus_collection, milvus_dim)
+
 service = VectorizationService(model, repo)
 
 @main.route("/features", methods=["POST"])

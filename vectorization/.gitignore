@@ -25,5 +25,5 @@ docker-compose.override.yml
 # Windows specific
 Thumbs.db
 
-hub/
-.milvus_data
+models/
+.milvus_data/
