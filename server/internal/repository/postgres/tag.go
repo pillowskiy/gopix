@@ -41,13 +41,15 @@ func (repo *tagRepository) UpsertImageTags(
 	err := repo.DoInTransaction(ctx, func(ctx context.Context) error {
 		upTag, err := repo.GetByName(ctx, tag.Name)
 		if err != nil {
-			if errors.Is(err, repository.ErrNotFound) {
+			switch err {
+			case repository.ErrNotFound:
 				upTag, err = repo.Create(ctx, tag)
 				if err != nil {
 					return err
 				}
+			default:
+				return err
 			}
-			return err
 		}
 
 		if _, err := repo.ext(ctx).ExecContext(ctx, relationQuery, imageID, upTag.ID); err != nil {
