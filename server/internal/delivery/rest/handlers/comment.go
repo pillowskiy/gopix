@@ -266,23 +266,17 @@ func (h *CommentHandlers) responseWithUseCaseErr(c echo.Context, err error, trac
 	switch {
 	case errors.Is(err, usecase.ErrIncorrectImageRef):
 		restErr = rest.NewBadRequestError("Incorrect image reference provided")
-		break
 	case errors.Is(err, usecase.ErrForbidden):
 		restErr = rest.NewForbiddenError("You don't have permissions to perform this action")
-		break
 	case errors.Is(err, usecase.ErrUnprocessable):
 		restErr = rest.NewBadRequestError("Incorrect data provided")
-		break
 	case errors.Is(err, usecase.ErrAlreadyExists):
 		restErr = rest.NewConflictError("You've already commented this image")
-		break
 	case errors.Is(err, usecase.ErrNotFound):
 		restErr = rest.NewNotFoundError("Comment not found")
-		break
 	default:
 		h.logger.Errorf("CommentUseCase.%s: %v", trace, err)
 		restErr = rest.NewInternalServerError()
-		break
 	}
 
 	return c.JSON(restErr.Response())

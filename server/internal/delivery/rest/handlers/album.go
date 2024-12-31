@@ -260,17 +260,13 @@ func (h *AlbumHandlers) responseWithUseCaseErr(c echo.Context, err error, trace 
 	switch {
 	case errors.Is(err, usecase.ErrIncorrectImageRef):
 		restErr = rest.NewBadRequestError("Incorrect image reference provided")
-		break
 	case errors.Is(err, usecase.ErrForbidden):
 		restErr = rest.NewForbiddenError("You don't have permissions to perform this action")
-		break
 	case errors.Is(err, usecase.ErrNotFound):
 		restErr = rest.NewNotFoundError("Album not found")
-		break
 	default:
 		h.logger.Errorf("AlbumUseCase.%s: %v", trace, err)
 		restErr = rest.NewInternalServerError()
-		break
 	}
 
 	return c.JSON(restErr.Response())

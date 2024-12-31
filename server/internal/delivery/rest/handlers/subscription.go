@@ -87,11 +87,9 @@ func (h *SubscriptionHandlers) responseWithUseCaseErr(c echo.Context, err error,
 	switch {
 	case errors.Is(err, usecase.ErrIncorrectUserRef):
 		restErr = rest.NewBadRequestError("Incorrect user reference provided")
-		break
 	default:
 		h.logger.Errorf("SubscriptionUseCase.%s: %v", trace, err)
 		restErr = rest.NewInternalServerError()
-		break
 	}
 
 	return c.JSON(restErr.Response())
