@@ -8,8 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const fileHeaderSize int64 = 512
-
 var (
 	errNotAllowedImageExt = NewBadRequestError("Prohibited image extension")
 	errInvalidImageData   = NewBadRequestError("Invalid image data")
@@ -17,6 +15,7 @@ var (
 
 func ReadEchoImage(c echo.Context, field string) (*multipart.FileHeader, error) {
 	image, err := c.FormFile(field)
+
 	if err != nil {
 		return nil, errInvalidImageData
 	}
