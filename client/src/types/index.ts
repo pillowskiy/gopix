@@ -8,7 +8,7 @@ export interface Pagination extends PaginationInput {
 }
 
 export interface Paginated<T extends object> extends Pagination {
-  data: T[];
+  items: T[];
 }
 
 export type SafeResult<S extends ReadableObject, E extends ReadableObject> =
