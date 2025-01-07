@@ -20,6 +20,11 @@ const nextConfig = {
 				pathname: PATHNAME ? `/${PATHNAME}/*` : '*'
 			}
 		]
+	},
+	logging: {
+		fetches: {
+			fullUrl: true
+		}
 	}
 };
 
