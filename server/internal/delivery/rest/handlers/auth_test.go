@@ -92,7 +92,7 @@ func TestAuthHandlers_Register(t *testing.T) {
 			HttpOnly: mockCfg.HttpOnly,
 			Path:     "/",
 			MaxAge:   int((mockCfg.Expire * time.Second).Seconds()),
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteStrictMode,
 		}
 
 		mockAuthUC.EXPECT().Register(ctx, gomock.Any()).Return(userWithToken, nil)
@@ -201,7 +201,7 @@ func TestAuthHandlers_Login(t *testing.T) {
 			HttpOnly: mockCfg.HttpOnly,
 			Path:     "/",
 			MaxAge:   int((mockCfg.Expire * time.Second).Seconds()),
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteStrictMode,
 		}
 
 		mockAuthUC.EXPECT().Login(ctx, gomock.Any()).Return(userWithToken, nil)
