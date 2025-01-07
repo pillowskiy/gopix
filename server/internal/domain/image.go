@@ -28,12 +28,16 @@ type Image struct {
 	Title       string           `json:"title,omitempty" db:"title"`
 	Description string           `json:"description,omitempty" db:"description"`
 	AccessLevel ImageAccessLevel `json:"accessLevel" db:"access_level"`
-	Mime        string           `json:"mime" db:"mime"`
-	Ext         string           `json:"ext" db:"ext"`
-	Url         string           `json:"url"`
 	ExpiresAt   *time.Time       `json:"expiresAt,omitempty" db:"expires_at"`
 	CreatedAt   time.Time        `json:"createdAt" db:"uploaded_at"`
 	UpdatedAt   time.Time        `json:"updatedAt" db:"updated_at"`
+}
+
+type ImageProperties struct {
+	Mime   string `json:"mime" db:"mime"`
+	Ext    string `json:"ext" db:"ext"`
+	Height int    `json:"height" db:"height"`
+	Width  int    `json:"width" db:"width"`
 }
 
 type ImageStates struct {

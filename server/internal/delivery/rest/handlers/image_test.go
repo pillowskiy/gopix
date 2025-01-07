@@ -43,27 +43,67 @@ func TestImageHandlers_Upload(t *testing.T) {
 	mockImages := map[string]mockImage{
 		"image/jpeg": {
 			Name: "test.jpg",
-			Data: []byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01},
+			Data: []byte{
+				0xFF, 0xD8, 0xFF, 0xE0, // SOI and APP0 markers
+				0x00, 0x13, // Length of the marker (17 bytes - until 0xFF (another marker))
+				0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, // "JFIF" identifier
+				0x01, 0x01, // Version
+				0x00,       // Units
+				0x00, 0x01, // X density
+				0x00, 0x01, // Y density
+				0x00, 0x00, // X thumbnail
+				0x00, 0x00, // Y thumbnail
+				0xFF, 0xC0, // SOF0 marker
+				0x00, 0x0B, // Length of the marker
+				0x08,       // Precision (8 bits)
+				0x00, 0x02, // Height
+				0x00, 0x01, // Width
+				0x01,       // Number of components
+				0x01,       // Component ID
+				0x00,       // Horizontal sampling factor
+				0x00,       // Vertical sampling factor
+				0xFF, 0xDA, // SOS marker
+				0xFF, 0xD9, // EOI (End of Image)
+			},
 		},
 		"image/png": {
 			Name: "test.png",
-			Data: []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A},
+			Data: []byte{
+				0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG header
+				0x00, 0x00, 0x00, 0x0D, // Length of the IHDR chunk
+				0x49, 0x48, 0x44, 0x52, // IHDR chunk type
+				0x00, 0x00, 0x00, 0x01, // Width (1 pixel)
+				0x00, 0x00, 0x00, 0x01, // Height (1 pixel)
+				0x08,                   // Bit depth
+				0x06,                   // Color type (RGBA)
+				0x00,                   // Compression method
+				0x00,                   // Filter method
+				0x00,                   // Interlace method
+				0x3E, 0xF4, 0xF1, 0xA0, // CRC for IHDR
+				0x00, 0x00, 0x00, 0x00, // Length of the IDAT chunk (0)
+				0x73, 0x2B, 0x00, 0x00, // Compressed data
+				0x00, 0x00, 0x00, 0x00, // Length of the IEND chunk (0)
+				0x49, 0x45, 0x4E, 0x44, // IEND chunk type
+				0xAE, 0x42, 0x60, 0x82, // CRC for IEND
+			},
 		},
 		"image/gif": {
 			Name: "test.gif",
-			Data: []byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61},
+			Data: []byte{
+				0x47, 0x49, 0x46, 0x38, 0x39, 0x61, // GIF89a
+				0x01, 0x00, 0x01, 0x00, // Width: 1, Height: 1
+			},
 		},
 		"image/webp": {
 			Name: "test.webp",
-			Data: []byte{0x52, 0x49, 0x46, 0x46, 0x20, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20},
-		},
-		"image/x-icon": {
-			Name: "test.ico",
-			Data: []byte{0x00, 0x00, 0x01, 0x00, 0x01, 0x00},
-		},
-		"image/bmp": {
-			Name: "test.bmp",
-			Data: []byte{0x42, 0x4D},
+			Data: []byte{
+				0x52, 0x49, 0x46, 0x46, // RIFF
+				0x00, 0x00, 0x00, 0x00, // File size (to be filled later)
+				0x57, 0x45, 0x42, 0x50, // WEBP
+				0x56, 0x50, 0x38, 0x20, // VP8
+				0x00, 0x00, 0x00, 0x00, // Width and height
+				0x00, 0x00, 0x00, 0x00, // Image data,
+			},
 		},
 	}
 
@@ -77,6 +117,7 @@ func TestImageHandlers_Upload(t *testing.T) {
 	) (echo.Context, *httptest.ResponseRecorder) {
 		body := new(bytes.Buffer)
 		writer := multipart.NewWriter(body)
+		defer writer.Close()
 
 		imageHeader := make(textproto.MIMEHeader)
 
@@ -84,9 +125,14 @@ func TestImageHandlers_Upload(t *testing.T) {
 		imageHeader.Set("Content-Disposition", dataHeader)
 		imageHeader.Set("Content-Type", mime)
 
-		part, _ := writer.CreatePart(imageHeader)
-		part.Write(file.Data)
-		writer.Close()
+		part, err := writer.CreatePart(imageHeader)
+		if err != nil {
+			t.Fatalf("failed to create part of multipart.writer: %v", err)
+		}
+
+		if _, err := part.Write(file.Data); err != nil {
+			t.Fatalf("failed to write part to multipart section; %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/images", body)
 		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())

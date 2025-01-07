@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	domain "github.com/pillowskiy/gopix/internal/domain"
-	"github.com/pillowskiy/gopix/internal/repository"
+	repository "github.com/pillowskiy/gopix/internal/repository"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -242,6 +242,21 @@ func (m *MockImageRepository) DoInTransaction(arg0 context.Context, arg1 reposit
 func (mr *MockImageRepositoryMockRecorder) DoInTransaction(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoInTransaction", reflect.TypeOf((*MockImageRepository)(nil).DoInTransaction), arg0, arg1)
+}
+
+// Favorites mocks base method.
+func (m *MockImageRepository) Favorites(ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Favorites", ctx, userID, pagInput)
+	ret0, _ := ret[0].(*domain.Pagination[domain.ImageWithAuthor])
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Favorites indicates an expected call of Favorites.
+func (mr *MockImageRepositoryMockRecorder) Favorites(ctx, userID, pagInput any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Favorites", reflect.TypeOf((*MockImageRepository)(nil).Favorites), ctx, userID, pagInput)
 }
 
 // FindMany mocks base method.

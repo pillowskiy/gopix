@@ -1,7 +1,6 @@
 package s3
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,13 +22,11 @@ func NewImageStorage(s3 *storage.S3, bucket string) *imageStorage {
 }
 
 func (s *imageStorage) Put(ctx context.Context, file *domain.FileNode) error {
-	reader := bytes.NewReader(file.Data)
-
 	if file.Size < multipartUploadThreshold {
 		_, err := s.s3.PutObjectWithContext(ctx, &s3.PutObjectInput{
 			Bucket:      aws.String(s.bucket),
 			Key:         aws.String(file.Name),
-			Body:        reader,
+			Body:        file.Reader,
 			ContentType: aws.String(file.ContentType),
 		})
 		return err
@@ -38,7 +35,7 @@ func (s *imageStorage) Put(ctx context.Context, file *domain.FileNode) error {
 	_, err := s.s3.Uploader.UploadWithContext(ctx, &manager.UploadInput{
 		Bucket:      aws.String(s.bucket),
 		Key:         aws.String(file.Name),
-		Body:        reader,
+		Body:        file.Reader,
 		ContentType: aws.String(file.ContentType),
 	})
 

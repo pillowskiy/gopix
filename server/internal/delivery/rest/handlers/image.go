@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -52,7 +50,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		user, err := GetContextUser(c)
 		if err != nil {
 			h.logger.Errorf("Upload.GetContextUser: %v", err)
-			return c.JSON(rest.NewUnauthorizedError("Unauthorized").Response())
+			return err
 		}
 
 		fileHeader, err := rest.ReadEchoImage(c, "file")
@@ -72,23 +70,21 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		}
 		defer file.Close()
 
-		binImage := bytes.NewBuffer(nil)
-		if _, err := io.Copy(binImage, file); err != nil {
-			h.logger.Errorf("Upload.Copy: %v", err)
+		contentType, err := image.DetectMimeFileType(file)
+		if err != nil {
+			h.logger.Errorf("Upload.DetectMimeFileType: %v", err)
 			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
-		imgBytes := binImage.Bytes()
-		contentType := image.DetectMimeFileType(imgBytes)
-		ext, err := image.GetExtByMime(contentType)
+		info, err := image.GetImageInfo(file)
 		if err != nil {
-			h.logger.Errorf("Upload.GetMimeFileExt: %v", err)
-			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
+			h.logger.Errorf("Upload.GetImageSize: %v", err)
+			return c.JSON(rest.NewInternalServerError().Response())
 		}
 
 		fileNode := &domain.FileNode{
-			Data:        imgBytes,
-			Name:        image.GenerateUniqueFilename(ext),
+			Reader:      file,
+			Name:        image.GenerateUniqueFilename(info.Format),
 			Size:        fileHeader.Size,
 			ContentType: contentType,
 		}
@@ -97,7 +93,15 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
 		}
 
-		img := &domain.Image{AuthorID: user.ID, Ext: ext, Mime: contentType}
+		imgProps := domain.ImageProperties{
+			Ext:    info.Format,
+			Mime:   contentType,
+			Width:  info.Width,
+			Height: info.Height,
+		}
+
+		h.logger.Infof("Got image properties for %s: %+v", fileNode.Name, imgProps)
+		img := &domain.Image{AuthorID: user.ID}
 		createdImg, err := h.uc.Create(ctx, img, fileNode)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Create")
@@ -177,8 +181,8 @@ func (h *ImageHandlers) GetDetailed() echo.HandlerFunc {
 
 func (h *ImageHandlers) Update() echo.HandlerFunc {
 	type updateDTO struct {
-		Title       string `json:"title" validate:"required"`
-		Description string `json:"description" validate:"required"`
+		Title       string `json:"title" validate:"lte=256"`
+		Description string `json:"description" validate:"lte=1024"`
 		AccessLevel string `json:"accessLevel" validate:"oneof=link private public"`
 	}
 	return func(c echo.Context) error {
@@ -366,17 +370,13 @@ func (h *ImageHandlers) responseWithUseCaseErr(c echo.Context, err error, trace 
 	switch {
 	case errors.Is(err, usecase.ErrForbidden):
 		restErr = rest.NewForbiddenError("You don't have permissions to perform this action")
-		break
 	case errors.Is(err, usecase.ErrUnprocessable):
 		restErr = rest.NewBadRequestError("Image cannot be processed because it may conflict")
-		break
 	case errors.Is(err, usecase.ErrNotFound):
 		restErr = rest.NewNotFoundError("Image not found")
-		break
 	default:
 		h.logger.Errorf("ImageUseCase.%s: %v", trace, err)
 		restErr = rest.NewInternalServerError()
-		break
 	}
 
 	return c.JSON(restErr.Response())

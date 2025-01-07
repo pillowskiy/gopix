@@ -112,6 +112,21 @@ func (mr *MockimageUseCaseMockRecorder) Discover(ctx, pagInput, sort any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Discover", reflect.TypeOf((*MockimageUseCase)(nil).Discover), ctx, pagInput, sort)
 }
 
+// Favorites mocks base method.
+func (m *MockimageUseCase) Favorites(ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput) (*domain.Pagination[domain.ImageWithAuthor], error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Favorites", ctx, userID, pagInput)
+	ret0, _ := ret[0].(*domain.Pagination[domain.ImageWithAuthor])
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Favorites indicates an expected call of Favorites.
+func (mr *MockimageUseCaseMockRecorder) Favorites(ctx, userID, pagInput any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Favorites", reflect.TypeOf((*MockimageUseCase)(nil).Favorites), ctx, userID, pagInput)
+}
+
 // GetDetailed mocks base method.
 func (m *MockimageUseCase) GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error) {
 	m.ctrl.T.Helper()

@@ -1,6 +1,7 @@
 package usecase_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -38,9 +39,9 @@ func TestImageUseCase_Create(t *testing.T) {
 	}
 
 	mockFile := &domain.FileNode{
-		Name: "test.png",
-		Size: 1024,
-		Data: []byte{1, 2, 3},
+		Name:   "test.png",
+		Size:   1024,
+		Reader: bytes.NewReader([]byte{1, 2, 3}),
 	}
 
 	expectedTxCall := func(ctx context.Context) {

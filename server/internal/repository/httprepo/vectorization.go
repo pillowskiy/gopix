@@ -44,13 +44,16 @@ func (repo *vectorRepository) Features(
 		return fmt.Errorf("failed to create form file: %w", err)
 	}
 
-	_, err = io.Copy(part, bytes.NewReader(file.Data))
-	if err != nil {
-		return fmt.Errorf("failed to copy file data: %w", err)
+	if _, err := io.Copy(part, file.Reader); err != nil {
+		return fmt.Errorf("failed to copy reader into writer: %w", err)
 	}
+
 	writer.Close()
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, &body)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
@@ -60,12 +63,11 @@ func (repo *vectorRepository) Features(
 	}
 	defer resp.Body.Close()
 
-	data := make(map[string]interface{})
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return fmt.Errorf("failed to unmarshal response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
+		data := make(map[string]interface{})
+		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+			return fmt.Errorf("failed to unmarshal response body: %w", err)
+		}
 		return fmt.Errorf("server returned non-200 status: %d. message: %v", resp.StatusCode, data)
 	}
 
@@ -78,6 +80,9 @@ func (repo *vectorRepository) Similar(
 	url := fmt.Sprintf("%s/similar/%s?limit=%v", repo.baseURL, imageID.String(), 20)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := repo.client.Do(req)
@@ -115,6 +120,9 @@ func (repo *vectorRepository) DeleteFeatures(ctx context.Context, imageID domain
 	url := fmt.Sprintf("%s/features/%s", repo.baseURL, imageID.String())
 
 	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := repo.client.Do(req)

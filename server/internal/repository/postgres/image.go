@@ -54,8 +54,6 @@ func (r *imageRepository) Create(ctx context.Context, image *domain.Image) (*dom
 		image.Description,
 		image.AccessLevel,
 		image.ExpiresAt,
-		image.Mime,
-		image.Ext,
 	)
 
 	if err := rowx.StructScan(img); err != nil {
@@ -119,8 +117,6 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domai
 		&detailedImage.Path,
 		&detailedImage.Title,
 		&detailedImage.Description,
-		&detailedImage.Ext,
-		&detailedImage.Mime,
 		&detailedImage.AccessLevel,
 		&detailedImage.ExpiresAt,
 		&detailedImage.CreatedAt,
@@ -132,7 +128,6 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domai
 		&detailedImage.Views,
 		&tagsJSON,
 	)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
