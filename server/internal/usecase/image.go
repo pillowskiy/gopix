@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/repository"
@@ -25,7 +26,7 @@ type ImageCache interface {
 type ImageRepository interface {
 	Create(ctx context.Context, image *domain.Image) (*domain.Image, error)
 	GetByID(ctx context.Context, id domain.ID) (*domain.Image, error)
-	FindMany(ctx context.Context, ids []domain.ID) ([]domain.ImageWithAuthor, error)
+	FindMany(ctx context.Context, ids []domain.ID) ([]domain.ImageWithMeta, error)
 	Delete(ctx context.Context, id domain.ID) error
 	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id domain.ID, image *domain.Image) (*domain.Image, error)
@@ -33,20 +34,21 @@ type ImageRepository interface {
 	States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error)
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
-	) (*domain.Pagination[domain.ImageWithAuthor], error)
+	) (*domain.Pagination[domain.ImageWithMeta], error)
 	HasLike(ctx context.Context, imageID domain.ID, userID domain.ID) (bool, error)
 	AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
 	RemoveLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
 	Favorites(
 		ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
-	) (*domain.Pagination[domain.ImageWithAuthor], error)
+	) (*domain.Pagination[domain.ImageWithMeta], error)
 
 	repository.Transactional
 }
 
-type ImageVecRepository interface {
+type ImageFeaturesUseCase interface {
+	CreateFileNode(ctx context.Context, file *domain.File) (*domain.FileNode, error)
+	ExtractFeatures(ctx context.Context, imageID domain.ID, file *domain.FileNode) error
 	Similar(ctx context.Context, imageID domain.ID) ([]domain.ID, error)
-	Features(ctx context.Context, imageID domain.ID, file *domain.FileNode) error
 	DeleteFeatures(ctx context.Context, imageID domain.ID) error
 }
 
@@ -55,57 +57,60 @@ type ImageAccessPolicy interface {
 }
 
 type imageUseCase struct {
-	storage ImageFileStorage
-	cache   ImageCache
-	repo    ImageRepository
-	vecRepo ImageVecRepository
-	logger  logger.Logger
-	acl     ImageAccessPolicy
+	storage    ImageFileStorage
+	cache      ImageCache
+	repo       ImageRepository
+	featuresUC ImageFeaturesUseCase
+	acl        ImageAccessPolicy
+	logger     logger.Logger
 }
 
 func NewImageUseCase(
 	storage ImageFileStorage,
 	cache ImageCache,
 	repo ImageRepository,
-	vecRepo ImageVecRepository,
+	featuresUC ImageFeaturesUseCase,
 	acl ImageAccessPolicy,
 	logger logger.Logger,
 ) *imageUseCase {
 	return &imageUseCase{
-		storage: storage,
-		repo:    repo,
-		vecRepo: vecRepo,
-		cache:   cache,
-		acl:     acl,
-		logger:  logger,
+		storage:    storage,
+		repo:       repo,
+		featuresUC: featuresUC,
+		cache:      cache,
+		acl:        acl,
+		logger:     logger,
 	}
 }
 
 func (uc *imageUseCase) Create(
 	ctx context.Context,
 	image *domain.Image,
-	file *domain.FileNode,
+	file *domain.File,
 ) (img *domain.Image, err error) {
-	image.Path = file.Name
-
 	err = uc.repo.DoInTransaction(ctx, func(ctx context.Context) error {
+		fileNode, err := uc.featuresUC.CreateFileNode(ctx, file)
+		if err != nil {
+			return fmt.Errorf("failed to create file node: %w", err)
+		}
+		image.Path = fileNode.Name
+
 		createdImg, err := uc.repo.Create(ctx, image)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create image: %w", err)
 		}
 
-		if err := uc.vecRepo.Features(ctx, createdImg.ID, file); err != nil {
-			return err
+		if err := uc.featuresUC.ExtractFeatures(ctx, createdImg.ID, fileNode); err != nil {
+			return fmt.Errorf("failed to extract features: %w", err)
 		}
 
-		if err := uc.storage.Put(ctx, file); err != nil {
-			return err
+		if err := uc.storage.Put(ctx, fileNode); err != nil {
+			return fmt.Errorf("failed to store raw image: %w", err)
 		}
 
 		img = createdImg
 		return nil
 	})
-
 	if err != nil {
 		uc.logger.Error(err)
 	}
@@ -115,12 +120,12 @@ func (uc *imageUseCase) Create(
 
 func (uc *imageUseCase) Similar(
 	ctx context.Context, id domain.ID,
-) ([]domain.ImageWithAuthor, error) {
+) ([]domain.ImageWithMeta, error) {
 	if _, err := uc.GetByID(ctx, id); err != nil {
 		return nil, err
 	}
 
-	ids, err := uc.vecRepo.Similar(ctx, id)
+	ids, err := uc.featuresUC.Similar(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -151,13 +156,12 @@ func (uc *imageUseCase) Delete(
 			return err
 		}
 
-		if err := uc.vecRepo.DeleteFeatures(ctx, id); err != nil {
+		if err := uc.featuresUC.DeleteFeatures(ctx, id); err != nil {
 			uc.logger.Errorf("Failed to delete features: %v", err)
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		uc.logger.Error(err)
 		return err
@@ -209,7 +213,7 @@ func (uc *imageUseCase) Discover(
 	ctx context.Context,
 	pagInput *domain.PaginationInput,
 	sort domain.ImageSortMethod,
-) (*domain.Pagination[domain.ImageWithAuthor], error) {
+) (*domain.Pagination[domain.ImageWithMeta], error) {
 	pag, err := uc.repo.Discover(ctx, pagInput, sort)
 	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
 		return nil, ErrUnprocessable
@@ -222,7 +226,7 @@ func (uc *imageUseCase) Favorites(
 	ctx context.Context,
 	userID domain.ID,
 	pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.ImageWithAuthor], error) {
+) (*domain.Pagination[domain.ImageWithMeta], error) {
 	pag, err := uc.repo.Favorites(ctx, userID, pagInput)
 	if err != nil && errors.Is(err, repository.ErrIncorrectInput) {
 		return nil, ErrUnprocessable

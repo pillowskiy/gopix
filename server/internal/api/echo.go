@@ -10,6 +10,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
+	"github.com/pillowskiy/gopix/internal/infrastructure/features"
 	"github.com/pillowskiy/gopix/internal/infrastructure/oauth"
 	"github.com/pillowskiy/gopix/internal/policy"
 	"github.com/pillowskiy/gopix/internal/repository/httprepo"
@@ -56,6 +57,15 @@ func (s *EchoServer) Listen() error {
 }
 
 func (s *EchoServer) MapHandlers() error {
+	metrics, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.Name)
+	if err != nil {
+		s.logger.Error("CreateMetrics", err.Error())
+	}
+
+	s.echo.Use(middlewares.MetricsMiddleware(metrics))
+	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
+	s.echo.Use(middlewares.CORSMiddleware(s.cfg.Server.CORS))
+
 	followingRepo := postgres.NewFollowingRepository(s.sh.Postgres)
 	followingUC := usecase.NewFollowingUseCase(followingRepo)
 
@@ -76,12 +86,16 @@ func (s *EchoServer) MapHandlers() error {
 	subscriptionUC := usecase.NewSubscriptionUseCase(followingUC, userUC)
 
 	vecRepo := httprepo.NewVectorizationRepository(s.cfg.VecService.URL)
+	featExtractor := features.NewBasicFeatureExtractor()
+	imagePropsRepo := postgres.NewImagePropsRepository(s.sh.Postgres)
+	imageFeatUC := usecase.NewImageFeaturesUseCase(vecRepo, imagePropsRepo, featExtractor, s.logger)
+
 	imageCache := redis.NewImageCache(s.sh.Redis)
 	imageRepo := postgres.NewImageRepository(s.sh.Postgres)
 	imageStorage := s3.NewImageStorage(s.sh.S3, s.sh.S3.PublicBucket)
 	imageACL := policy.NewImageAccessPolicy()
 	imageUC := usecase.NewImageUseCase(
-		imageStorage, imageCache, imageRepo, vecRepo, imageACL, s.logger,
+		imageStorage, imageCache, imageRepo, imageFeatUC, imageACL, s.logger,
 	)
 
 	commentRepo := postgres.NewCommentRepository(s.sh.Postgres)
@@ -95,15 +109,6 @@ func (s *EchoServer) MapHandlers() error {
 	tagRepo := postgres.NewTagRepository(s.sh.Postgres)
 	tagACL := policy.NewTagAccessPolicy()
 	tagUC := usecase.NewTagUseCase(tagRepo, tagACL, imageUC)
-
-	metrics, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.Name)
-	if err != nil {
-		s.logger.Error("CreateMetrics", err.Error())
-	}
-
-	s.echo.Use(middlewares.MetricsMiddleware(metrics))
-	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
-	s.echo.Use(middlewares.CORSMiddleware(s.cfg.Server.CORS))
 
 	v1 := s.echo.Group("/api/v1")
 	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Server.Cookie)
