@@ -8,25 +8,24 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/usecase"
-	"github.com/pillowskiy/gopix/pkg/image"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/rest"
 	"github.com/pillowskiy/gopix/pkg/validator"
 )
 
 type imageUseCase interface {
-	Create(ctx context.Context, image *domain.Image, file *domain.FileNode) (*domain.Image, error)
+	Create(ctx context.Context, image *domain.Image, file *domain.File) (*domain.Image, error)
 	Delete(ctx context.Context, id domain.ID, executor *domain.User) error
-	Similar(ctx context.Context, id domain.ID) ([]domain.ImageWithAuthor, error)
+	Similar(ctx context.Context, id domain.ID) ([]domain.ImageWithMeta, error)
 	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
 	Update(ctx context.Context, id domain.ID, image *domain.Image, executor *domain.User) (*domain.Image, error)
 	AddView(ctx context.Context, imageID domain.ID, userID *domain.ID) error
 	Discover(
 		ctx context.Context, pagInput *domain.PaginationInput, sort domain.ImageSortMethod,
-	) (*domain.Pagination[domain.ImageWithAuthor], error)
+	) (*domain.Pagination[domain.ImageWithMeta], error)
 	Favorites(
 		ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
-	) (*domain.Pagination[domain.ImageWithAuthor], error)
+	) (*domain.Pagination[domain.ImageWithMeta], error)
 
 	States(ctx context.Context, imageID domain.ID, userID domain.ID) (*domain.ImageStates, error)
 	AddLike(ctx context.Context, imageID domain.ID, userID domain.ID) error
@@ -70,39 +69,13 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		}
 		defer file.Close()
 
-		contentType, err := image.DetectMimeFileType(file)
-		if err != nil {
-			h.logger.Errorf("Upload.DetectMimeFileType: %v", err)
-			return c.JSON(rest.NewInternalServerError().Response())
+		dFile := &domain.File{
+			Reader: file,
+			Size:   fileHeader.Size,
 		}
 
-		info, err := image.GetImageInfo(file)
-		if err != nil {
-			h.logger.Errorf("Upload.GetImageSize: %v", err)
-			return c.JSON(rest.NewInternalServerError().Response())
-		}
-
-		fileNode := &domain.FileNode{
-			Reader:      file,
-			Name:        image.GenerateUniqueFilename(info.Format),
-			Size:        fileHeader.Size,
-			ContentType: contentType,
-		}
-
-		if !fileNode.HasAllowedContentType() {
-			return c.JSON(rest.NewBadRequestError("Unsupported image format").Response())
-		}
-
-		imgProps := domain.ImageProperties{
-			Ext:    info.Format,
-			Mime:   contentType,
-			Width:  info.Width,
-			Height: info.Height,
-		}
-
-		h.logger.Infof("Got image properties for %s: %+v", fileNode.Name, imgProps)
 		img := &domain.Image{AuthorID: user.ID}
-		createdImg, err := h.uc.Create(ctx, img, fileNode)
+		createdImg, err := h.uc.Create(ctx, img, dFile)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Create")
 		}

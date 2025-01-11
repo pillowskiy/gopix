@@ -79,7 +79,7 @@ func (r *imageRepository) GetByID(ctx context.Context, id domain.ID) (*domain.Im
 
 func (r *imageRepository) FindMany(
 	ctx context.Context, ids []domain.ID,
-) ([]domain.ImageWithAuthor, error) {
+) ([]domain.ImageWithMeta, error) {
 	query, args, err := sqlx.In(findManyImagesQuery, ids)
 	if err != nil {
 		return nil, errors.Wrap(err, "ImageRepository.FindMany.In")
@@ -91,7 +91,7 @@ func (r *imageRepository) FindMany(
 		return nil, errors.Wrap(err, "ImageRepository.FindMany.QueryxContext")
 	}
 
-	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rows)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithMeta](rows)
 	if err != nil {
 		return nil, errors.Wrap(err, "ImageRepository.FindMany.scanToStructSliceOf")
 	}
@@ -109,25 +109,13 @@ func (r *imageRepository) Delete(ctx context.Context, id domain.ID) error {
 
 func (r *imageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error) {
 	var detailedImage domain.DetailedImage
-	var tagsJSON []byte
 
-	err := r.ext(ctx).QueryRowxContext(ctx, getDetailedImageQuery, id).Scan(
-		&detailedImage.ID,
-		&detailedImage.AuthorID,
-		&detailedImage.Path,
-		&detailedImage.Title,
-		&detailedImage.Description,
-		&detailedImage.AccessLevel,
-		&detailedImage.ExpiresAt,
-		&detailedImage.CreatedAt,
-		&detailedImage.UpdatedAt,
-		&detailedImage.Author.ID,
-		&detailedImage.Author.Username,
-		&detailedImage.Author.AvatarURL,
-		&detailedImage.Likes,
-		&detailedImage.Views,
-		&tagsJSON,
-	)
+	var dbRes struct {
+		domain.DetailedImage
+		Tags []byte `db:"tags"`
+	}
+
+	err := r.ext(ctx).QueryRowxContext(ctx, getDetailedImageQuery, id).StructScan(&dbRes)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound
@@ -135,9 +123,10 @@ func (r *imageRepository) GetDetailed(ctx context.Context, id domain.ID) (*domai
 		return nil, errors.Wrap(err, "imageRepository.GetDetailed.Scan")
 	}
 
+	detailedImage = dbRes.DetailedImage
 	detailedImage.Tags = []domain.ImageTag{}
-	if len(tagsJSON) > 0 {
-		if err := json.Unmarshal(tagsJSON, &detailedImage.Tags); err != nil {
+	if len(dbRes.Tags) > 0 {
+		if err := json.Unmarshal(dbRes.Tags, &detailedImage.Tags); err != nil {
 			return nil, errors.Wrap(err, "imageRepository.GetDetailed.Unmarshal")
 		}
 	}
@@ -174,7 +163,7 @@ func (r *imageRepository) Discover(
 	ctx context.Context,
 	pagInput *domain.PaginationInput,
 	sort domain.ImageSortMethod,
-) (*domain.Pagination[domain.ImageWithAuthor], error) {
+) (*domain.Pagination[domain.ImageWithMeta], error) {
 	sortQuery, ok := imagesSortQuery.SortQuery(string(sort))
 	if !ok {
 		return nil, repository.ErrIncorrectInput
@@ -186,9 +175,14 @@ func (r *imageRepository) Discover(
     u.id AS "author.id",
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url"
+    MAX(ip.width) AS "properties.width",
+    MAX(ip.height) AS "properties.height",
+    MAX(ip.ext) AS "properties.ext",
+    MAX(ip.mime) AS "properties.mime",
   FROM images i
   LEFT JOIN users u ON i.author_id = u.id
   JOIN images_analytics a ON a.image_id = i.id
+  LEFT JOIN image_properties ip ON ip.image_id = i.id
   WHERE access_level = 'public'::access_level
   ORDER BY %s LIMIT $1 OFFSET $2
   `, sortQuery)
@@ -200,12 +194,12 @@ func (r *imageRepository) Discover(
 	}
 	defer rowx.Close()
 
-	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithMeta](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Discover.Scan")
 	}
 
-	pagination := &domain.Pagination[domain.ImageWithAuthor]{
+	pagination := &domain.Pagination[domain.ImageWithMeta]{
 		PaginationInput: *pagInput,
 		Items:           images,
 	}
@@ -218,17 +212,23 @@ func (r *imageRepository) Discover(
 
 func (r *imageRepository) Favorites(
 	ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.ImageWithAuthor], error) {
+) (*domain.Pagination[domain.ImageWithMeta], error) {
 	q := `
   SELECT
     i.*,
     u.id AS "author.id",
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url"
+
+    MAX(ip.width) AS "properties.width",
+    MAX(ip.height) AS "properties.height",
+    MAX(ip.ext) AS "properties.ext",
+    MAX(ip.mime) AS "properties.mime",
   FROM images_to_likes il
   LEFT JOIN images i ON il.image_id = i.id
   LEFT JOIN users u ON i.author_id = u.id
   JOIN images_analytics a ON a.image_id = i.id
+  LEFT JOIN image_properties ip ON ip.image_id = i.id
   WHERE user_id = $1 AND access_level = 'public'::access_level
   LIMIT $2 OFFSET $3
   `
@@ -240,12 +240,12 @@ func (r *imageRepository) Favorites(
 	}
 	defer rowx.Close()
 
-	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithMeta](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "imageRepository.Favorites.Scan")
 	}
 
-	pagination := &domain.Pagination[domain.ImageWithAuthor]{
+	pagination := &domain.Pagination[domain.ImageWithMeta]{
 		PaginationInput: *pagInput,
 		Items:           images,
 	}

@@ -16,6 +16,12 @@ SELECT
   u.id AS "author.id",
   u.username AS "author.username",
   u.avatar_url AS "author.avatar_url",
+
+  MAX(ip.width) AS "properties.width",
+  MAX(ip.height) AS "properties.height",
+  MAX(ip.ext) AS "properties.ext",
+  MAX(ip.mime) AS "properties.mime",
+
   COALESCE(a.likes_count, 0) AS likes,
   COALESCE(a.views_count, 0) AS views,
   TO_JSON(COALESCE(
@@ -34,6 +40,8 @@ LEFT JOIN
   tags t ON it.tag_id = t.id
 LEFT JOIN
   images_analytics a ON a.image_id = i.id
+LEFT JOIN
+  image_properties ip ON ip.image_id = i.id
 WHERE
   i.id = $1
 GROUP BY
@@ -45,9 +53,15 @@ SELECT
   u.id AS "author.id",
   u.username AS "author.username",
   u.avatar_url AS "author.avatar_url",
+  MAX(ip.width) AS "properties.width",
+  MAX(ip.height) AS "properties.height",
+  MAX(ip.ext) AS "properties.ext",
+  MAX(ip.mime) AS "properties.mime",
   i.*
 FROM images i
 INNER JOIN users u ON i.author_id = u.id
+LEFT JOIN
+  image_properties ip ON ip.image_id = i.id
 WHERE i.id IN(?);
 `
 

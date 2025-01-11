@@ -22,7 +22,6 @@ func NewAlbumRepository(db *sqlx.DB) *albumRepository {
 
 func (repo *albumRepository) Create(ctx context.Context, album *domain.Album) (*domain.Album, error) {
 	q := `INSERT INTO albums (name,description,author_id) VALUES ($1, $2, $3) RETURNING *`
-
 	rowx := repo.db.QueryRowxContext(ctx, q, album.Name, album.Description, album.AuthorID)
 
 	createdAlbum := new(domain.Album)
@@ -51,16 +50,21 @@ func (repo *albumRepository) GetByID(ctx context.Context, albumID domain.ID) (*d
 
 func (repo *albumRepository) GetAlbumImages(
 	ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.ImageWithAuthor], error) {
+) (*domain.Pagination[domain.ImageWithMeta], error) {
 	q := `
   SELECT
     i.*,
+    MAX(ip.width) AS "properties.width",
+    MAX(ip.height) AS "properties.height",
+    MAX(ip.ext) AS "properties.ext",
+    MAX(ip.mime) AS "properties.mime",
     u.id AS "author.id",
     u.username AS "author.username",
     u.avatar_url AS "author.avatar_url"
   FROM images_to_albums ia
   JOIN images i ON i.id = ia.image_id AND i.access_level = 'public'::access_level
   JOIN users u ON u.id = i.author_id
+  JOIN image_properties ip ON i.id = ip.image_id
   WHERE ia.album_id = $1
   LIMIT $2 OFFSET $3
   `
@@ -70,12 +74,12 @@ func (repo *albumRepository) GetAlbumImages(
 		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.QueryxContext")
 	}
 
-	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithAuthor](rowx)
+	images, err := pgutils.ScanToStructSliceOf[domain.ImageWithMeta](rowx)
 	if err != nil {
 		return nil, errors.Wrap(err, "AlbumRepository.GetAlbumImages.scanToStructSliceOf")
 	}
 
-	pag := &domain.Pagination[domain.ImageWithAuthor]{
+	pag := &domain.Pagination[domain.ImageWithMeta]{
 		PaginationInput: *pagInput,
 		Items:           images,
 	}

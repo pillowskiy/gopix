@@ -15,7 +15,7 @@ type AlbumRepository interface {
 	GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error)
 	GetAlbumImages(
 		ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
-	) (*domain.Pagination[domain.ImageWithAuthor], error)
+	) (*domain.Pagination[domain.ImageWithMeta], error)
 	Delete(ctx context.Context, albumID domain.ID) error
 	Update(ctx context.Context, albumID domain.ID, album *domain.Album) (*domain.Album, error)
 
@@ -51,7 +51,6 @@ func (uc *albumUseCase) Create(ctx context.Context, album *domain.Album) (*domai
 
 func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) ([]domain.DetailedAlbum, error) {
 	album, err := uc.repo.GetByAuthorID(ctx, authorID)
-
 	if err != nil {
 		if goErrors.Is(err, repository.ErrNotFound) {
 			return nil, ErrNotFound
@@ -65,7 +64,6 @@ func (uc *albumUseCase) GetByAuthorID(ctx context.Context, authorID domain.ID) (
 
 func (uc *albumUseCase) GetByID(ctx context.Context, albumID domain.ID) (*domain.Album, error) {
 	album, err := uc.repo.GetByID(ctx, albumID)
-
 	if err != nil {
 		if goErrors.Is(err, repository.ErrNotFound) {
 			return nil, ErrNotFound
@@ -79,7 +77,7 @@ func (uc *albumUseCase) GetByID(ctx context.Context, albumID domain.ID) (*domain
 
 func (uc *albumUseCase) GetAlbumImages(
 	ctx context.Context, albumID domain.ID, pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.ImageWithAuthor], error) {
+) (*domain.Pagination[domain.ImageWithMeta], error) {
 	if _, err := uc.GetByID(ctx, albumID); err != nil {
 		return nil, err
 	}
@@ -134,7 +132,6 @@ func (uc *albumUseCase) DeleteImage(
 	}
 
 	return uc.repo.DeleteImage(ctx, albumID, imageID)
-
 }
 
 func (uc *albumUseCase) ExistsAndModifiable(
