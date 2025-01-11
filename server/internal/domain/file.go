@@ -24,11 +24,15 @@ var Unstable_AllowedContentTypes = map[string]struct{}{
 	"wmv":  {},
 }
 
+type File struct {
+	Reader io.ReadSeeker `json:"-"`
+	Size   int64         `json:"-"`
+}
+
 type FileNode struct {
-	Reader      io.ReadSeeker `json:"-"`
-	Name        string        `json:"-"`
-	Size        int64         `json:"-"`
-	ContentType string        `json:"content_type,omitempty"`
+	File
+	Name        string `json:"-"`
+	ContentType string `json:"content_type,omitempty"`
 }
 
 func (f *FileNode) HasAllowedContentType() bool {
