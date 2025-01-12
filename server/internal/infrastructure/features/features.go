@@ -33,8 +33,8 @@ func (e *basicFeatureExtractor) MakeFileNode(ctx context.Context, file *domain.F
 	}, nil
 }
 
-func (e *basicFeatureExtractor) Features(ctx context.Context, file *domain.FileNode) (imgProps *domain.ImageProperties, err error) {
-	info, err := image.GetImageInfo(file.Reader.(io.ReaderAt))
+func (e *basicFeatureExtractor) Features(ctx context.Context, fileNode *domain.FileNode) (imgProps *domain.ImageProperties, err error) {
+	info, err := image.GetImageInfo(fileNode.Reader.(io.ReaderAt))
 	if err != nil {
 		err = fmt.Errorf("failed to get image info: %w", err)
 		return

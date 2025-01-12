@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/repository"
 	"github.com/pillowskiy/gopix/pkg/logger"
+	"github.com/pillowskiy/gopix/pkg/worker"
 )
 
 type ImageVecRepository interface {
@@ -29,11 +31,17 @@ type FeaturesExtractor interface {
 	Features(ctx context.Context, fileNode *domain.FileNode) (*domain.ImageProperties, error)
 }
 
+type featureExtractionTask struct {
+	imageID  domain.ID
+	fileNode *domain.FileNode
+}
+
 type imageFeaturesUseCase struct {
 	vecRepo       ImageVecRepository
 	imgPropsRepo  ImagePropsRepository
 	featExtractor FeaturesExtractor
 	logger        logger.Logger
+	wrk           *worker.Worker[featureExtractionTask]
 }
 
 func NewImageFeaturesUseCase(
@@ -42,16 +50,35 @@ func NewImageFeaturesUseCase(
 	featExtractor FeaturesExtractor,
 	logger logger.Logger,
 ) *imageFeaturesUseCase {
-	return &imageFeaturesUseCase{
+	// FIXME: hard coded number
+	wrk := worker.NewWorker[featureExtractionTask](10)
+
+	uc := &imageFeaturesUseCase{
 		vecRepo:       vecRepo,
 		imgPropsRepo:  imgPropsRepo,
 		featExtractor: featExtractor,
 		logger:        logger,
+		wrk:           wrk,
 	}
+
+	go wrk.Handle(uc.handleFeatureVectorExtraction)
+
+	return uc
 }
 
 func (uc *imageFeaturesUseCase) CreateFileNode(ctx context.Context, file *domain.File) (*domain.FileNode, error) {
 	return uc.featExtractor.MakeFileNode(ctx, file)
+}
+
+func (uc *imageFeaturesUseCase) handleFeatureVectorExtraction(task featureExtractionTask) {
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	uc.logger.Infof("Start to extracting the features vector of %s (id: %s)", task.fileNode.Name, task.imageID)
+
+	if err := uc.vecRepo.Features(ctx, task.imageID, task.fileNode); err != nil {
+		uc.logger.Errorf("Failed to extract features vector: %v", err)
+	}
 }
 
 func (uc *imageFeaturesUseCase) ExtractFeatures(ctx context.Context, imageID domain.ID, fileNode *domain.FileNode) error {
@@ -70,9 +97,7 @@ func (uc *imageFeaturesUseCase) ExtractFeatures(ctx context.Context, imageID dom
 			return fmt.Errorf("failed to store image properties: %w", err)
 		}
 
-		if err := uc.vecRepo.Features(ctx, imageID, fileNode); err != nil {
-			return fmt.Errorf("failed to extract features vector: %w", err)
-		}
+		uc.wrk.AddTask(featureExtractionTask{imageID: imageID, fileNode: fileNode})
 
 		return nil
 	})
