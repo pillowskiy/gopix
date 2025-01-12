@@ -57,14 +57,7 @@ func (s *EchoServer) Listen() error {
 }
 
 func (s *EchoServer) MapHandlers() error {
-	metrics, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.Name)
-	if err != nil {
-		s.logger.Error("CreateMetrics", err.Error())
-	}
-
-	s.echo.Use(middlewares.MetricsMiddleware(metrics))
-	s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
-	s.echo.Use(middlewares.CORSMiddleware(s.cfg.Server.CORS))
+	s.prepareMiddlewares()
 
 	followingRepo := postgres.NewFollowingRepository(s.sh.Postgres)
 	followingUC := usecase.NewFollowingUseCase(followingRepo)
@@ -145,4 +138,22 @@ func (s *EchoServer) MapHandlers() error {
 	routes.MapAlbumRoutes(albumsGroup, albumsHandlers, guardMiddlewares)
 
 	return nil
+}
+
+func (s *EchoServer) prepareMiddlewares() {
+	s.echo.Use(middlewares.CORSMiddleware(s.cfg.Server.CORS))
+
+	if s.cfg.Server.Mode == config.ProductionMode {
+		metrics, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.Name)
+		if err != nil {
+			s.logger.Error("CreateMetrics", err.Error())
+		}
+
+		s.echo.Use(middlewares.MetricsMiddleware(metrics))
+	}
+
+	if s.cfg.Server.Mode == config.DevelopmentMode {
+		s.echo.Use(middlewares.MetricsLoggingMiddleware(s.logger))
+		s.echo.GET("/debug/pprof/*", echo.WrapHandler(http.DefaultServeMux))
+	}
 }
