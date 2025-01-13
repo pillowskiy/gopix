@@ -174,16 +174,17 @@ func (r *imageRepository) Discover(
     i.*,
     u.id AS "author.id",
     u.username AS "author.username",
-    u.avatar_url AS "author.avatar_url"
+    u.avatar_url AS "author.avatar_url",
     MAX(ip.width) AS "properties.width",
     MAX(ip.height) AS "properties.height",
     MAX(ip.ext) AS "properties.ext",
-    MAX(ip.mime) AS "properties.mime",
+    MAX(ip.mime) AS "properties.mime"
   FROM images i
   LEFT JOIN users u ON i.author_id = u.id
   JOIN images_analytics a ON a.image_id = i.id
   LEFT JOIN image_properties ip ON ip.image_id = i.id
   WHERE access_level = 'public'::access_level
+  GROUP BY i.id, u.id
   ORDER BY %s LIMIT $1 OFFSET $2
   `, sortQuery)
 
@@ -218,12 +219,12 @@ func (r *imageRepository) Favorites(
     i.*,
     u.id AS "author.id",
     u.username AS "author.username",
-    u.avatar_url AS "author.avatar_url"
+    u.avatar_url AS "author.avatar_url",
 
     MAX(ip.width) AS "properties.width",
     MAX(ip.height) AS "properties.height",
     MAX(ip.ext) AS "properties.ext",
-    MAX(ip.mime) AS "properties.mime",
+    MAX(ip.mime) AS "properties.mime"
   FROM images_to_likes il
   LEFT JOIN images i ON il.image_id = i.id
   LEFT JOIN users u ON i.author_id = u.id
