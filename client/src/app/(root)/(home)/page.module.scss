@@ -1,26 +1,61 @@
+@import "src/styles/variables";
+@import "src/styles/mixins";
+
 .page {
-  --gray-rgb: 0, 0, 0;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-
   display: grid;
   grid-template-rows: 20px 1fr 20px;
-  align-items: center;
   justify-items: center;
   gap: 64px;
   font-family: var(--font-geist-sans);
+  height: 100%;
 }
 
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+.container {
+  column-count: 7;
+  column-gap: 16px;
 
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
+  width: 100%;
+  text-align: center;
+  gap: 16px;
+  padding: 0 8px;
+  height: fit-content;
+}
+
+.header {
+  @include container;
+
+  &Title {
+    margin: 96px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-wrap: pretty;
+    line-height: 1.25;
+
+    @media (min-width: $screen-sm) {
+      font-size: clamp(2rem, 3.25vw, 3rem);
+    }
   }
+}
+
+.card {
+  @include space-y(8px);
+  margin-bottom: 16px;
+  break-inside: avoid;
+  vertical-align: middle;
+
+  width: 100%;
+  height: fit-content;
+}
+
+.image {
+  border-radius: $rounded-global;
+  aspect-ratio: var(--aspect-ratio);
+  overflow: hidden;
+}
+
+.image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
 }

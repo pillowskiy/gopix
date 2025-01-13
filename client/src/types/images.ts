@@ -7,17 +7,21 @@ export interface Image {
   title: string;
   description: string;
   accessLevel: string;
-  mime: string;
-  ext: string;
-  url: string;
   createdAt: string;
 }
 
-export interface ImageWithAuthor extends Image {
+export interface ImageProperties {
+  ext: string;
+  width: number;
+  height: number;
+}
+
+export interface ImageWithMeta extends Image {
+  properties: ImageProperties;
   author: PublicUser;
 }
 
-export interface DetailedImage extends ImageWithAuthor {
+export interface DetailedImage extends ImageWithMeta {
   likes: number;
   views: number;
   tags: Tag[];
