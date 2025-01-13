@@ -63,17 +63,6 @@ func GetExtByMime(mime string) (string, error) {
 }
 
 func DetectMimeFileType(reader io.ReadSeeker) (mime string, err error) {
-	if _, err = reader.Seek(0, io.SeekStart); err != nil {
-		err = fmt.Errorf("failed to seek start: %w", err)
-		return
-	}
-
-	defer func() {
-		if _, err = reader.Seek(0, io.SeekStart); err != nil {
-			err = fmt.Errorf("failed to seek start: %w", err)
-		}
-	}()
-
 	var data [512]byte
 	if _, err := io.ReadFull(reader, data[:]); err != nil {
 		return fallbackMime, nil

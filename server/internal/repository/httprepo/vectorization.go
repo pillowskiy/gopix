@@ -47,7 +47,6 @@ func (repo *vectorRepository) Features(
 	if _, err := io.Copy(part, file.Reader); err != nil {
 		return fmt.Errorf("failed to copy reader into writer: %w", err)
 	}
-
 	writer.Close()
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, &body)

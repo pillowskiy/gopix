@@ -1,6 +1,8 @@
 package domain
 
-import "io"
+import (
+	"io"
+)
 
 // TEMP: Uncertain where to handle allowed extensions
 // Currently handled in the infrastructure layer,
@@ -27,6 +29,11 @@ var Unstable_AllowedContentTypes = map[string]struct{}{
 type File struct {
 	Reader io.ReadSeeker `json:"-"`
 	Size   int64         `json:"-"`
+}
+
+func (f *File) Restore() (err error) {
+	_, err = f.Reader.Seek(0, io.SeekStart)
+	return
 }
 
 type FileNode struct {
