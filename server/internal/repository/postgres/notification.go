@@ -23,14 +23,16 @@ func NewNotificationRepository(db *sqlx.DB) *notificationRepository {
 	}
 }
 
-func (repo *notificationRepository) Push(ctx context.Context, recieverID domain.ID, notif *domain.Notification) (err error) {
-	const q = `INSERT INTO notifications (user_id, title, message, hidden) VALUES($1, $2, $3, $4)`
+func (repo *notificationRepository) Push(ctx context.Context, recieverID domain.ID, notif *domain.Notification) (*domain.Notification, error) {
+	const q = `INSERT INTO notifications (user_id, title, message, hidden) VALUES($1, $2, $3, $4) RETURNING *`
 
-	_, err = repo.ext(ctx).ExecContext(ctx, q, recieverID, notif.UserID, notif.Message, notif.Hidden)
-	if err != nil {
-		err = fmt.Errorf("NotificationRepository.Push.ExecContext: %w", err)
+	rowx := repo.ext(ctx).QueryRowxContext(ctx, q, recieverID, notif.UserID, notif.Message, notif.Hidden)
+
+	createdNotif := new(domain.Notification)
+	if err := rowx.StructScan(createdNotif); err != nil {
+		return nil, fmt.Errorf("NotificationRepository.Push.ExecContext: %w", err)
 	}
-	return
+	return createdNotif, nil
 }
 
 func (repo *notificationRepository) Stats(ctx context.Context, userID domain.ID) (*domain.NotificationStats, error) {

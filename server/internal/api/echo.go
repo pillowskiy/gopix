@@ -10,6 +10,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/delivery/rest/handlers"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/middlewares"
 	"github.com/pillowskiy/gopix/internal/delivery/rest/routes"
+	"github.com/pillowskiy/gopix/internal/domain"
 	"github.com/pillowskiy/gopix/internal/infrastructure/features"
 	"github.com/pillowskiy/gopix/internal/infrastructure/oauth"
 	"github.com/pillowskiy/gopix/internal/policy"
@@ -20,6 +21,7 @@ import (
 	"github.com/pillowskiy/gopix/internal/usecase"
 	"github.com/pillowskiy/gopix/pkg/logger"
 	"github.com/pillowskiy/gopix/pkg/metric"
+	"github.com/pillowskiy/gopix/pkg/signal"
 	"github.com/pillowskiy/gopix/pkg/storage"
 	"github.com/pillowskiy/gopix/pkg/token"
 
@@ -103,6 +105,9 @@ func (s *EchoServer) MapHandlers() error {
 	tagACL := policy.NewTagAccessPolicy()
 	tagUC := usecase.NewTagUseCase(tagRepo, tagACL, imageUC)
 
+	notifRepo := postgres.NewNotificationRepository(s.sh.Postgres)
+	notifUC := usecase.NewNotificationUseCase(notifRepo, signal.NewSignal[*domain.Notification](), s.logger)
+
 	v1 := s.echo.Group("/api/v1")
 	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Server.Cookie)
 
@@ -136,6 +141,11 @@ func (s *EchoServer) MapHandlers() error {
 	albumsGroup := v1.Group("/albums")
 	albumsHandlers := handlers.NewAlbumHandlers(albumUC, s.logger)
 	routes.MapAlbumRoutes(albumsGroup, albumsHandlers, guardMiddlewares)
+
+	notifGroup := v1.Group("/notifications")
+	notifHandlers := handlers.NewNotificationHandlers(notifUC, s.logger)
+	routes.MapNotificationRoutes(notifGroup, notifHandlers, guardMiddlewares)
+	s.echo.File("/", "./index.html")
 
 	return nil
 }

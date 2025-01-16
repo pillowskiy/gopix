@@ -7,32 +7,27 @@ import (
 
 var ErrEmpty = errors.New("no topic found")
 
-type topic struct {
-	listeners []chan<- struct{}
+type topic[T any] struct {
+	listeners []chan<- T
 	mu        *sync.Mutex
 }
 
-type Signal interface {
-	Subscribe(id string) (<-chan struct{}, func())
-	Publish(id string) error
-}
-
-type signal struct {
+type Signal[T any] struct {
 	listeners *sync.Map
 }
 
-func NewSignal() Signal {
-	return &signal{
+func NewSignal[T any]() *Signal[T] {
+	return &Signal[T]{
 		listeners: new(sync.Map),
 	}
 }
 
-func (c *signal) Subscribe(id string) (<-chan struct{}, func()) {
-	topicInf, _ := c.listeners.LoadOrStore(id, &topic{mu: new(sync.Mutex)})
-	t := topicInf.(*topic)
+func (c *Signal[T]) Subscribe(id string) (<-chan T, func()) {
+	topicInf, _ := c.listeners.LoadOrStore(id, &topic[T]{mu: new(sync.Mutex)})
+	t := topicInf.(*topic[T])
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	ch := make(chan struct{}, 1)
+	ch := make(chan T, 1)
 	t.listeners = append(t.listeners, ch)
 	return ch, func() {
 		t.mu.Lock()
@@ -45,23 +40,18 @@ func (c *signal) Subscribe(id string) (<-chan struct{}, func()) {
 	}
 }
 
-func (c *signal) Publish(id string) error {
+func (c *Signal[T]) Publish(id string, item T) error {
 	topicInf, ok := c.listeners.Load(id)
 	if !ok {
 		return ErrEmpty
 	}
-	topic := topicInf.(*topic)
+	topic := topicInf.(*topic[T])
 	l := len(topic.listeners)
 	if l == 0 {
 		return ErrEmpty
 	}
 	for i := 0; i < l; i++ {
-		topic.listeners[i] <- struct{}{}
+		topic.listeners[i] <- item
 	}
 	return nil
-}
-
-func (c *signal) HasListener(id string) bool {
-	_, ok := c.listeners.Load(id)
-	return ok
 }

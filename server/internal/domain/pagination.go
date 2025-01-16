@@ -10,3 +10,8 @@ type PaginationInput struct {
 	Page    int `json:"page"`
 	PerPage int `json:"perPage"`
 }
+
+type OffsetPaginationInput struct {
+	PaginationInput
+	Offset int `json:"offset"`
+}

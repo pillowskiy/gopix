@@ -12,7 +12,7 @@ import (
 )
 
 type NotificationRepository interface {
-	Push(ctx context.Context, recieverID domain.ID, notif *domain.Notification) error
+	Push(ctx context.Context, recieverID domain.ID, notif *domain.Notification) (*domain.Notification, error)
 	Stats(ctx context.Context, userID domain.ID) (*domain.NotificationStats, error)
 	GetNotifications(
 		ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
@@ -21,8 +21,8 @@ type NotificationRepository interface {
 }
 
 type NotificationSignal interface {
-	Subscribe(id string) (<-chan struct{}, func())
-	Publish(id string) error
+	Subscribe(id string) (<-chan *domain.Notification, func())
+	Publish(id string, item *domain.Notification) error
 }
 
 type notifactionUseCase struct {
@@ -37,32 +37,19 @@ func NewNotificationUseCase(repo NotificationRepository, signal NotificationSign
 }
 
 func (uc *notifactionUseCase) Notify(ctx context.Context, userID domain.ID, notif *domain.Notification) error {
-	if err := uc.repo.Push(ctx, userID, notif); err != nil {
+	createdNotif, err := uc.repo.Push(ctx, userID, notif)
+	if err != nil {
 		return fmt.Errorf("NotificationUseCase.Notify.Push: %w", err)
 	}
 
 	subKey := uc.subKey(userID)
-	if err := uc.signal.Publish(subKey); err != nil {
+	if err := uc.signal.Publish(subKey, createdNotif); err != nil {
 		uc.logger.Errorf("Failed to push notification for sub %s: %v", subKey, err)
-	} else {
-		uc.logger.Infof("Notified user with key %s", subKey)
 	}
-
 	return nil
 }
 
-func (uc *notifactionUseCase) GetNotifications(
-	ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
-) (*domain.Pagination[domain.Notification], error) {
-	stats, err := uc.getStats(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	if stats.Unread > 0 {
-		return uc.getAndReadNotifications(ctx, userID, pagInput)
-	}
-
+func (uc *notifactionUseCase) WaitForNotification(ctx context.Context, userID domain.ID) (*domain.Notification, error) {
 	subKey := uc.subKey(userID)
 	ch, cancel := uc.signal.Subscribe(subKey)
 	defer cancel()
@@ -73,9 +60,15 @@ func (uc *notifactionUseCase) GetNotifications(
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	case <-ch:
-		return uc.getAndReadNotifications(ctx, userID, pagInput)
+	case notif := <-ch:
+		return notif, nil
 	}
+}
+
+func (uc *notifactionUseCase) GetNotifications(
+	ctx context.Context, userID domain.ID, pagInput *domain.PaginationInput,
+) (*domain.Pagination[domain.Notification], error) {
+	return uc.getAndReadNotifications(ctx, userID, pagInput)
 }
 
 func (uc *notifactionUseCase) GetStats(ctx context.Context, userID domain.ID) (*domain.NotificationStats, error) {
