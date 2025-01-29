@@ -1,0 +1,20 @@
+@import "src/styles/variables";
+
+.trigger {
+  position: relative;
+
+  &UnreadCounter {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-radius: $rounded-full;
+
+    aspect-ratio: 1/1;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+
+    transform: translate(50%, -25%);
+    background: red;
+  }
+}
