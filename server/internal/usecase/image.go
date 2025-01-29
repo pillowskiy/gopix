@@ -56,12 +56,17 @@ type ImageAccessPolicy interface {
 	CanModify(user *domain.User, image *domain.Image) bool
 }
 
+type NotificationManager interface {
+	Notify(ctx context.Context, userID domain.ID, notif *domain.Notification) error
+}
+
 type imageUseCase struct {
 	storage    ImageFileStorage
 	cache      ImageCache
 	repo       ImageRepository
 	featuresUC ImageFeaturesUseCase
 	acl        ImageAccessPolicy
+	notifMng   NotificationManager
 	logger     logger.Logger
 }
 
@@ -71,6 +76,7 @@ func NewImageUseCase(
 	repo ImageRepository,
 	featuresUC ImageFeaturesUseCase,
 	acl ImageAccessPolicy,
+	notifMng NotificationManager,
 	logger logger.Logger,
 ) *imageUseCase {
 	return &imageUseCase{
@@ -79,6 +85,7 @@ func NewImageUseCase(
 		featuresUC: featuresUC,
 		cache:      cache,
 		acl:        acl,
+		notifMng:   notifMng,
 		logger:     logger,
 	}
 }
@@ -87,6 +94,7 @@ func (uc *imageUseCase) Create(
 	ctx context.Context,
 	image *domain.Image,
 	file *domain.File,
+	executor *domain.User,
 ) (img *domain.Image, err error) {
 	err = uc.repo.DoInTransaction(ctx, func(ctx context.Context) error {
 		fileNode, err := uc.featuresUC.CreateFileNode(ctx, file)
@@ -101,7 +109,14 @@ func (uc *imageUseCase) Create(
 		}
 
 		if err := uc.featuresUC.ExtractFeatures(ctx, createdImg.ID, fileNode); err != nil {
-			return fmt.Errorf("failed to extract features: %w", err)
+			if featErr, ok := err.(*extractImgFeatErr); ok && !featErr.fatal {
+				uc.notifMng.Notify(ctx, executor.ID, &domain.Notification{
+					Title:   "Failed to extract features from image",
+					Message: fmt.Sprintf("We're sorry, but we were unable to extract the features of your image %s, which may affect the indexing of your image. Please, try again manually", image.Path),
+				})
+			} else {
+				return fmt.Errorf("failed to extract features: %w", err)
+			}
 		}
 
 		if err := uc.storage.Put(ctx, fileNode); err != nil {

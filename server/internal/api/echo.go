@@ -74,6 +74,9 @@ func (s *EchoServer) MapHandlers() error {
 	authUC := usecase.NewAuthUseCase(userRepo, userCache, s.logger, jwtTokenGen)
 	userUC := usecase.NewUserUseCase(userRepo, userCache, followingUC, s.logger)
 
+	notifRepo := postgres.NewNotificationRepository(s.sh.Postgres)
+	notifUC := usecase.NewNotificationUseCase(notifRepo, signal.NewSignal[*domain.Notification](), s.logger)
+
 	oauthRepo := postgres.NewOAuthRepository(s.sh.Postgres)
 	oauthClient := oauth.NewOAuthClient(&s.cfg.OAuth)
 	oauthUC := usecase.NewOAuthUseCase(oauthRepo, authUC, oauthClient)
@@ -90,7 +93,7 @@ func (s *EchoServer) MapHandlers() error {
 	imageStorage := s3.NewImageStorage(s.sh.S3, s.sh.S3.PublicBucket)
 	imageACL := policy.NewImageAccessPolicy()
 	imageUC := usecase.NewImageUseCase(
-		imageStorage, imageCache, imageRepo, imageFeatUC, imageACL, s.logger,
+		imageStorage, imageCache, imageRepo, imageFeatUC, imageACL, notifUC, s.logger,
 	)
 
 	commentRepo := postgres.NewCommentRepository(s.sh.Postgres)
@@ -104,9 +107,6 @@ func (s *EchoServer) MapHandlers() error {
 	tagRepo := postgres.NewTagRepository(s.sh.Postgres)
 	tagACL := policy.NewTagAccessPolicy()
 	tagUC := usecase.NewTagUseCase(tagRepo, tagACL, imageUC)
-
-	notifRepo := postgres.NewNotificationRepository(s.sh.Postgres)
-	notifUC := usecase.NewNotificationUseCase(notifRepo, signal.NewSignal[*domain.Notification](), s.logger)
 
 	v1 := s.echo.Group("/api/v1")
 	guardMiddlewares := middlewares.NewGuardMiddlewares(authUC, s.logger, s.cfg.Server.Cookie)

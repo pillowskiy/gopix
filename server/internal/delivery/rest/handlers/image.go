@@ -14,7 +14,7 @@ import (
 )
 
 type imageUseCase interface {
-	Create(ctx context.Context, image *domain.Image, file *domain.File) (*domain.Image, error)
+	Create(ctx context.Context, image *domain.Image, file *domain.File, ext *domain.User) (*domain.Image, error)
 	Delete(ctx context.Context, id domain.ID, executor *domain.User) error
 	Similar(ctx context.Context, id domain.ID) ([]domain.ImageWithMeta, error)
 	GetDetailed(ctx context.Context, id domain.ID) (*domain.DetailedImage, error)
@@ -75,7 +75,7 @@ func (h *ImageHandlers) Upload() echo.HandlerFunc {
 		}
 
 		img := &domain.Image{AuthorID: user.ID}
-		createdImg, err := h.uc.Create(ctx, img, dFile)
+		createdImg, err := h.uc.Create(ctx, img, dFile, user)
 		if err != nil {
 			return h.responseWithUseCaseErr(c, err, "Create")
 		}

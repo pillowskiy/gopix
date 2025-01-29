@@ -26,7 +26,7 @@ func NewNotificationRepository(db *sqlx.DB) *notificationRepository {
 func (repo *notificationRepository) Push(ctx context.Context, recieverID domain.ID, notif *domain.Notification) (*domain.Notification, error) {
 	const q = `INSERT INTO notifications (user_id, title, message, hidden) VALUES($1, $2, $3, $4) RETURNING *`
 
-	rowx := repo.ext(ctx).QueryRowxContext(ctx, q, recieverID, notif.UserID, notif.Message, notif.Hidden)
+	rowx := repo.ext(ctx).QueryRowxContext(ctx, q, recieverID, notif.Title, notif.Message, notif.Hidden)
 
 	createdNotif := new(domain.Notification)
 	if err := rowx.StructScan(createdNotif); err != nil {

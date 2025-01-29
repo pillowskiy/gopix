@@ -30,6 +30,15 @@ type FeaturesExtractor interface {
 	Features(ctx context.Context, fileNode *domain.FileNode) (*domain.ImageProperties, error)
 }
 
+type extractImgFeatErr struct {
+	fatal bool
+	src   error
+}
+
+func (e *extractImgFeatErr) Error() string {
+	return e.src.Error()
+}
+
 type featureExtractionTask struct {
 	imageID  domain.ID
 	fileNode *domain.FileNode
@@ -72,15 +81,16 @@ func (uc *imageFeaturesUseCase) ExtractFeatures(ctx context.Context, imageID dom
 	return uc.imgPropsRepo.DoInTransaction(ctx, func(ctx context.Context) error {
 		imgProps, err := uc.featExtractor.Features(ctx, fileNode)
 		if err != nil {
-			return fmt.Errorf("failed to extract features: %w", err)
+			return &extractImgFeatErr{src: fmt.Errorf("failed to extract features: %w", err), fatal: true}
 		}
 
 		if err := uc.imgPropsRepo.Create(ctx, imageID, imgProps); err != nil {
-			return fmt.Errorf("failed to store image properties: %w", err)
+			return &extractImgFeatErr{src: fmt.Errorf("failed to store image properties: %w", err), fatal: true}
 		}
 
 		if err := uc.vecRepo.Features(ctx, imageID, fileNode); err != nil {
 			uc.logger.Errorf("Failed to extract features vector: %v", err)
+			return &extractImgFeatErr{src: err}
 		}
 
 		return nil
