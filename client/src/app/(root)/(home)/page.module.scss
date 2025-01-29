@@ -1,4 +1,5 @@
 @import "src/styles/variables";
+@import "src/styles/utils";
 @import "src/styles/mixins";
 
 .page {
@@ -36,26 +37,4 @@
       font-size: clamp(2rem, 3.25vw, 3rem);
     }
   }
-}
-
-.card {
-  @include space-y(8px);
-  margin-bottom: 16px;
-  break-inside: avoid;
-  vertical-align: middle;
-
-  width: 100%;
-  height: fit-content;
-}
-
-.image {
-  border-radius: $rounded-global;
-  aspect-ratio: var(--aspect-ratio);
-  overflow: hidden;
-}
-
-.image img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
 }

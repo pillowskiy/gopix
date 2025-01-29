@@ -1,35 +1,66 @@
-@import 'src/styles/variables';
-@import 'src/styles/mixins';
-@import 'src/styles/utils';
+@import "src/styles/variables";
+@import "src/styles/mixins";
+@import "src/styles/utils";
 
 .card {
+  margin-bottom: 16px;
+  break-inside: avoid;
+  vertical-align: middle;
+  position: relative;
+
   width: 100%;
-  border-radius: $rounded-global;
-  overflow: hidden;
+  height: fit-content;
 
   &Image {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-radius: inherit;
+    border-radius: $rounded-global;
+    aspect-ratio: var(--aspect-ratio);
     overflow: hidden;
-  }
 
-  &Title {
-    @include font-small;
-    font-weight: 500;
-  }
-
-  &Author {
-    &Avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: $rounded-full;
+    & img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
     }
+  }
 
-    &Name {
-      @include font-small;
-      color: foreground(0.6);
+  &:hover &Actions {
+    display: flex;
+  }
+
+  &Actions {
+    position: absolute;
+    display: none;
+
+    justify-content: end;
+    padding: 16px;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: primary(0.4);
+    z-index: 10;
+
+    &Author {
+      width: 100%;
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &Avatar {
+        aspect-ratio: 1/1;
+        width: 36px;
+        height: auto;
+        overflow: hidden;
+        border-radius: $rounded-full;
+
+        & img {
+          width: 100%;
+          height: auto;
+          object-fit: cover;
+        }
+      }
     }
   }
 }
