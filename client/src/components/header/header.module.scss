@@ -1,20 +1,19 @@
-@import 'src/styles/mixins';
-@import 'src/styles/variables';
-@import 'src/styles/utils';
+@import "src/styles/mixins";
+@import "src/styles/variables";
+@import "src/styles/utils";
 
 .header {
-  background: primary(0.8);
-  backdrop-filter: blur(6px);
+  background: primary(0.9);
+  backdrop-filter: blur(12px);
   z-index: 30;
   position: sticky;
   top: 0;
 
   &Content {
-    @include container;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 32px !important;
+    padding: 24px 32px !important;
     height: fit-content;
 
     @media screen and (max-width: $screen-md) {
@@ -53,7 +52,6 @@
   left: 50%;
   transform: translate(-50%, -50%);
 
-
   &Item {
     @include font-xl;
     font-weight: 500;
@@ -66,7 +64,7 @@
       color: $foreground;
     }
 
-    @media(hover:hover) {
+    @media (hover: hover) {
       &:hover {
         color: $foreground;
       }
